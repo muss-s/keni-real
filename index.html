@@ -4003,7 +4003,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
 
   // the same filters as the map's list, for any one place (the basic places use it for their dots and the Explore list)
   const passes = (v) => { const q = ui.q.trim().toLowerCase(); return !S.hidden.includes(v.id)
-    && (ui.crave ? cravesOf(v).includes(ui.crave) : (!ui.trip || !TRIP[ui.trip] || v.cats.some((c) => TRIP[ui.trip][3].includes(c)))) && (!ui.vibe || !VIBE[ui.vibe] || vibesOf(v).includes(ui.vibe))
+    && (!ui.crave || cravesOf(v).includes(ui.crave)) && (!ui.trip || !TRIP[ui.trip] || v.cats.some((c) => TRIP[ui.trip][3].includes(c))) && (!ui.vibe || !VIBE[ui.vibe] || vibesOf(v).includes(ui.vibe))
     && (ui.cat === 'all' || v.cats.includes(ui.cat)) && (ui.area === 'all' || v.area === ui.area) && (!ui.open || status(v).open)
     && (!ui.price || (v.price != null && v.price <= ui.price)) && (!ui.am.length || ui.am.every((k) => hasAmen(v, k)))
     && (!ui.sf || !core.hooks.sfHas || core.hooks.sfHas(v, ui.sf)) && (!q || (core.hooks.qMatch ? core.hooks.qMatch(v, q) : hay(v).includes(q))); };
@@ -4012,8 +4012,8 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
     let list = VENUES.filter((v) => !S.hidden.includes(v.id));
     if (ui.view === 'saved') list = [...list.filter((v) => S.saved.includes(v.id)), ...((window.KENI || {}).BASIC || []).filter((v) => S.saved.includes(v.id))]; // saved basic places too
     const ic = intentCats(); if (ic) list = list.filter((v) => v.cats.some((c) => ic.includes(c)));
-    if (ui.crave && CRAVE[ui.crave] && ui.view === 'map') list = list.filter((v) => cravesOf(v).includes(ui.crave)); // a craving is more exact than its plan
-    else if (ui.trip && TRIP[ui.trip] && ui.view === 'map') list = list.filter((v) => v.cats.some((c) => TRIP[ui.trip][3].includes(c)));
+    if (ui.crave && CRAVE[ui.crave] && ui.view === 'map') list = list.filter((v) => cravesOf(v).includes(ui.crave)); // a craving works together with the plan: ramen at a cafe, ramen at an inuman
+    if (ui.trip && TRIP[ui.trip] && ui.view === 'map') list = list.filter((v) => v.cats.some((c) => TRIP[ui.trip][3].includes(c)));
     if (ui.vibe && VIBE[ui.vibe] && ui.view === 'map') list = list.filter((v) => vibesOf(v).includes(ui.vibe));
     if (ui.cat !== 'all') list = list.filter((v) => v.cats.includes(ui.cat));
     if (ui.area !== 'all') list = list.filter((v) => v.area === ui.area);
@@ -4118,10 +4118,10 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
     const justV = ui.vibeJust; ui.vibeJust = '';
     const fj = ui.foldJust; ui.foldJust = ''; // the row that was just opened, so its chips slide in
     const vibeRow = () => {
-      const vs = VIBES.filter((x) => x.id === ui.vibe || VENUES.some((v) => !S.hidden.includes(v.id) && (ui.crave ? cravesOf(v).includes(ui.crave) : inTrip(v, ui.trip)) && (ui.cat === 'all' || v.cats.includes(ui.cat)) && vibesOf(v).includes(x.id)));
+      const vs = VIBES.filter((x) => x.id === ui.vibe || VENUES.some((v) => !S.hidden.includes(v.id) && (!ui.crave || cravesOf(v).includes(ui.crave)) && inTrip(v, ui.trip) && (ui.cat === 'all' || v.cats.includes(ui.cat)) && vibesOf(v).includes(x.id)));
       return vs.length ? `<div class="chips vibe-row" role="group" aria-label="Vibe">${foldQ('vibe', 'Vibes')}${vs.map((x, i) => [x, i]).filter(([x]) => !fold.vibe || x.id === ui.vibe).map(([x, i]) => `<button class="chip vibe-chip${x.id === justV ? ' just' : ''}${fj === 'vibe' ? ' fold-in' : ''}" data-vibe="${x.id}" aria-pressed="${ui.vibe === x.id}" style="--i:${i};--h:${x.hue}"><span>${x.emoji}</span>${esc(x.label)}${ui.vibe === x.id ? ' <b>✕</b>' : ''}</button>`).join('')}</div>` : '';
     };
-    // the third row on the map: Cravings. Picking one also picks its plan, so one tap says both
+    // the third row on the map: Cravings. It works together with Plans (ramen at a cafe, ramen at an inuman)
     const craveRow = () => {
       const cs = cravesHere();
       return cs.length ? `<div class="chips vibe-row crave-row" role="group" aria-label="Cravings">${foldQ('crave', 'Cravings')}${cs.map((c, i) => [c, i]).filter(([c]) => !fold.crave || c.id === ui.crave).map(([c, i]) => `<button class="chip crave-chip${c.id === ui.craveJust ? ' just' : ''}${fj === 'crave' ? ' fold-in' : ''}" data-crave="${c.id}" aria-pressed="${ui.crave === c.id}" style="--i:${i}"><span>${c.e}</span>${esc(c.l)}${ui.crave === c.id ? ' <b>✕</b>' : ''}</button>`).join('')}</div>` : '';
@@ -4321,16 +4321,16 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
     if (fd) { const k = fd.dataset.fold; setFold(k, !fold[k]); ui.foldJust = fold[k] ? '' : k; return render(); }
     const trip = e.target.closest('[data-trip]');
     if (trip) { // "Anong trip mo?": tap to see it on the map, tap again to clear. Each choice teaches Keni a little.
-      const k = trip.dataset.trip; ui.crave = ''; // a new plan (or none) clears the craving it came with
+      const k = trip.dataset.trip;
       if (ui.trip === k) ui.trip = '';
-      else { const first = !trips().length && !(S.privacy && S.privacy.learn === false); ui.trip = k; ui.tripJust = k; ui.cat = 'all'; ui.sf = null; if (ui.vibe && !VENUES.some((v) => inTrip(v, k) && vibesOf(v).includes(ui.vibe))) ui.vibe = ''; logTrip(k); reanalyze(); if (first) toast('Got it. Keni learns what you’re up for, by day and time ✦'); }
+      else { const first = !trips().length && !(S.privacy && S.privacy.learn === false); ui.trip = k; ui.tripJust = k; ui.cat = 'all'; ui.sf = null; logTrip(k); reanalyze(); if (first) toast('Got it. Keni learns what you’re up for, by day and time ✦'); }
       return render();
     }
     const cr = e.target.closest('[data-crave]');
     if (cr) { // Cravings: tap to see only places that have it (and its plan), tap again to clear
       const k = cr.dataset.crave;
-      if (ui.crave === k) { ui.crave = ''; if (CRAVE[k] && ui.trip === CRAVE[k].plan) ui.trip = ''; }
-      else if (CRAVE[k]) { ui.crave = k; ui.craveJust = k; ui.trip = CRAVE[k].plan; ui.cat = 'all'; ui.sf = null; if (ui.vibe && !VENUES.some((v) => cravesOf(v).includes(k) && vibesOf(v).includes(ui.vibe))) ui.vibe = ''; }
+      if (ui.crave === k) ui.crave = '';
+      else if (CRAVE[k]) { ui.crave = k; ui.craveJust = k; ui.cat = 'all'; ui.sf = null; } // it does not touch the plan: the two work together
       return render();
     }
     const vibe = e.target.closest('[data-vibe]');
@@ -5600,7 +5600,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
       case 'bk-crave': { // any number of cravings; picking the first one also answers their trip if they hadn't
         const f = everyone().find((x) => x.id === id), c = CRAVE[t.dataset.v]; if (!f || !c) return;
         const now = cravesIn(tonight(f)), on = now.includes(c.id), next = on ? now.filter((x) => x !== c.id) : [...now, c.id];
-        const ans = { crave: next }; if (!on && !(tonightAll().by[id] || {}).trip) ans.trip = c.plan;
+        const ans = { crave: next };
         setTonight(id, ans); return refresh();
       }
       case 'bk-tn': ui.bkTn = ui.bkTn === id ? null : id; return refresh();
