@@ -3717,8 +3717,9 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
     S.subs = t.subs.filter((x) => S.picks.includes(SUB[x].kind));
   }
 
-  /* last step — your name (real accounts come with the backend; for now the name stays on this device) */
+  /* last step — your name, and your email if you want an account (Keni emails a sign-in link: see Keni · accounts) */
   const nameField = () => `<div class="wm-name"><input id="wm-name" maxlength="28" placeholder="Your name" aria-label="Your name" autocomplete="given-name">
+    <input id="wm-email" type="email" inputmode="email" maxlength="80" placeholder="Email, to keep your account" aria-label="Email" autocomplete="email">
     <button class="btn primary" type="button" data-act="su-name">Continue ${icon('arrow')}</button></div>`;
   function signupHTML() {
     return `<div class="step">${head(4, 'What should we <em>call you?</em>', 'Your name shows to your tropa.')}
@@ -3882,9 +3883,14 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
     else if (a === 'to-area') gotoStep(6);
     else if (a === 'su-name') {
       const inp = $('#wm-name'), name = inp ? inp.value.trim().replace(/[<>]/g, '').slice(0, 28) : '';
+      const em = $('#wm-email'), email = em ? em.value.trim() : '', acc = core.account;
       if (!name) { toast('Add your name first, or skip for now'); if (inp) inp.focus(); return; }
+      if (email && acc && !acc.isEmail(email)) { toast('That email doesn’t look right'); return em.focus(); }
       S.user = { name, provider: '', role: 'explorer', since: Date.now() };
-      persist(); toast(`Hi, <b>${esc(name.split(' ')[0])}</b> ✦`); gotoStep(5);
+      persist(); gotoStep(5);
+      if (!email || !acc) return toast(`Hi, <b>${esc(name.split(' ')[0])}</b> ✦`);
+      act.disabled = true;
+      acc.sendLink(email, name).then((err) => { act.disabled = false; toast(err || `Check <b>${esc(email)}</b> and tap the link to finish signing in ✉️`); });
     }
     else if (a === 'skip-su') gotoStep(5);
     else if (a === 'own-su') core.openLogin && core.openLogin('business'); // owners sign in and claim their listing straight from the welcome page
@@ -3896,7 +3902,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
     else if (a === 'noop') e.preventDefault();
   });
 
-  onboard.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.id === 'wm-name') { e.preventDefault(); const b = $('[data-act="su-name"]', onboard); if (b) b.click(); } });
+  onboard.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.target.id === 'wm-name' || e.target.id === 'wm-email')) { e.preventDefault(); const b = $('[data-act="su-name"]', onboard); if (b) b.click(); } });
   onboard.addEventListener('submit', (e) => {
     if (e.target.id !== 'su') return;
     e.preventDefault();
@@ -5773,6 +5779,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
       <p class="sub">${acct === 'business' ? 'Run a café, bar or shop? Add your name, then claim your place or request a listing.' : 'Your name shows to your tropa. Your taste and tropas are saved on this phone.'}</p>
       <div class="seg acct" role="tablist"><button role="tab" data-lg="acct" data-v="explorer" aria-pressed="${acct !== 'business'}">${icon('user')} I’m exploring</button><button role="tab" data-lg="acct" data-v="business" aria-pressed="${acct === 'business'}">${icon('store')} I own a place</button></div>
       <label class="fm-l">Your name<input id="lg-name" maxlength="28" placeholder="e.g. Juan" autocomplete="given-name" value="${esc(S.user ? S.user.name : '')}"></label>
+      ${K.account && !K.account.email() ? `<label class="fm-l">Email <small>${acct === 'business' ? '(needed, so your requests reach the Keni team)' : '(optional: keeps your account, no password)'}</small><input id="lg-email" type="email" inputmode="email" maxlength="80" placeholder="you@email.com" autocomplete="email"></label>` : ''}
       <button class="btn primary wide" data-lg="go">Continue ${icon('arrow')}</button>
       ${acct === 'business' ? '' : '<div class="or"><span>or</span></div><button class="btn ghost wide" data-lg="guest">Continue as guest</button>'}</div>`;
   }
@@ -5780,13 +5787,22 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
   function openLogin(acct = 'explorer') {
     const m = K.openModal(loginHTML(acct), 'login-sheet');
     const focus = () => setTimeout(() => { const i = $('#lg-name', m); if (i) i.focus(); }, 300);
-    const go = () => {
+    const go = async () => {
       const name = (($('#lg-name', m) || {}).value || '').trim().replace(/[<>]/g, '').slice(0, 28);
+      const emEl = $('#lg-email', m), email = emEl ? emEl.value.trim() : '', A = K.account;
       if (!name) { toast('Add your name first'); return focus(); }
-      S.user = { ...(S.user || {}), name, provider: '', role: acct === 'business' ? 'business' : (S.user && S.user.role) || 'explorer', since: (S.user && S.user.since) || Date.now() };
-      persist(); if (K.finishWelcome) K.finishWelcome(); K.render();
+      if (emEl && acct === 'business' && !email) { toast('Add your email, so your requests reach the Keni team'); return emEl.focus(); }
+      if (email && A && !A.isEmail(email)) { toast('That email doesn’t look right'); return emEl.focus(); }
+      if (email && A) {
+        const b = $('[data-lg="go"]', m); b.disabled = true;
+        const err = await A.sendLink(email, name); b.disabled = false;
+        if (err) return toast(err);
+      }
+      S.user = { ...(S.user || {}), name, provider: S.user ? S.user.provider : '', role: acct === 'business' ? 'business' : (S.user && S.user.role) || 'explorer', since: (S.user && S.user.since) || Date.now() };
+      persist(); if (K.finishWelcome) K.finishWelcome(); K.render(); if (A) A.saveProfile();
+      if (email) toast(`Check <b>${esc(email)}</b> and tap the link to finish signing in ✉️`);
       if (acct === 'business') return K.biz.ownerFlow(m, () => K.setView('biz'));
-      K.closeModal(); toast(`Hi, <b>${esc(first(name))}</b> ✦`);
+      K.closeModal(); if (!email) toast(`Hi, <b>${esc(first(name))}</b> ✦`);
       burst(innerWidth / 2, innerHeight * 0.4, { n: 26, spread: 200 });
     };
     m.addEventListener('click', (e) => {
@@ -5796,7 +5812,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
       else if (k === 'guest') { K.closeModal(); toast('Browsing as a guest'); }
       else if (k === 'go') go();
     });
-    m.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.id === 'lg-name') { e.preventDefault(); go(); } });
+    m.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.target.id === 'lg-name' || e.target.id === 'lg-email')) { e.preventDefault(); go(); } });
     focus();
   }
 
@@ -5811,7 +5827,8 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
         <div class="pf-id">
           ${u ? `<div class="pf-name"><b id="pf-name">${esc(u.name)}</b></div>
             ${u.handle ? `<small class="pf-user">@${esc(u.handle)}</small>` : ''}
-            ${u.role === 'business' ? '<small><b>Owner</b></small>' : ''}` : `<div class="pf-name"><b>Guest</b></div><small>Add your name so your tropa knows it’s you</small>`}
+            ${u.role === 'business' ? '<small><b>Owner</b></small>' : ''}
+            ${K.account ? (K.account.email() ? `<small>✉️ Signed in as ${esc(K.account.email())}</small>` : '<small>Saved on this phone only · <button class="link-btn" data-pf="login">Keep it with your email</button></small>') : ''}` : `<div class="pf-name"><b>Guest</b></div><small>Add your name so your tropa knows it’s you</small>`}
           ${u && u.bio ? `<p class="pf-bio">${esc(u.bio)}</p>` : ''}${u && VBY[u.fave] ? `<p class="pf-bio">❤️ Favourite spot: <button class="link-btn" data-act="open-detail" data-id="${u.fave}">${esc(VBY[u.fave].name)}</button></p>` : ''}
         </div></div>
       <div class="pf-acts">${u ? `<button class="btn ghost sm" data-pfx="edit">${icon('edit')} Edit profile</button>` : ''}<button class="btn ghost sm" data-pfx="settings">⚙️ Settings</button>${u ? '<button class="btn ghost sm" data-pfx="privacy">🔒 Privacy</button>' : ''}</div>
@@ -5845,25 +5862,72 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
       else if (k === 'barkada') { K.closeModal(); ui.view = 'plan'; ui.tool = 'barkada'; K.render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
       else if (k === 'share-taste') copy(K.codec ? K.codec.myLink() : location.href, 'Link copied — send it to the friend who’s hosting the tropa');
       else if (k === 'signout') {
+        if (K.account) K.account.signOut();
         S.user = null; persist(); K.closeModal(); if (ui.view === 'biz') K.setView('map'); else K.render();
         toast('Signed out');
       } else if (k === 'rename') {
         const b = $('#pf-name', m); if (!b) return;
         const inp = document.createElement('input'); inp.className = 'pf-edit'; inp.value = S.user.name; inp.maxLength = 28; inp.setAttribute('aria-label', 'Your name');
         b.replaceWith(inp); inp.focus(); inp.select();
-        const save = () => { const n = inp.value.trim().replace(/[<>]/g, ''); if (n) { S.user.name = n; persist(); K.render(); } const nb = document.createElement('b'); nb.id = 'pf-name'; nb.textContent = S.user.name; inp.replaceWith(nb); const av = $('.me-av.lg', m); if (av) { av.firstChild.nodeValue = initial(S.user); av.style.setProperty('--h', hueOf(S.user)); } };
+        const save = () => { const n = inp.value.trim().replace(/[<>]/g, ''); if (n) { S.user.name = n; persist(); K.render(); if (K.account) K.account.saveProfile(); } const nb = document.createElement('b'); nb.id = 'pf-name'; nb.textContent = S.user.name; inp.replaceWith(nb); const av = $('.me-av.lg', m); if (av) { av.firstChild.nodeValue = initial(S.user); av.style.setProperty('--h', hueOf(S.user)); } };
         inp.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); save(); } else if (ev.key === 'Escape') { ev.stopPropagation(); inp.value = S.user.name; save(); } });
         inp.addEventListener('blur', save);
       } else if (k === 'reset') {
         if (!confirmReset) { confirmReset = true; t.textContent = 'Tap again to erase everything'; setTimeout(() => { confirmReset = false; if (t.isConnected) t.textContent = 'Reset Keni'; }, 3500); return; }
         try { localStorage.removeItem('keni.v1'); sessionStorage.clear(); } catch { /* storage blocked */ }
-        location.reload();
+        Promise.resolve(K.account && K.account.signOut()).finally(() => location.reload()); // signed out too, so the account doesn't come straight back
       }
     });
   }
 
   K.openLogin = openLogin; K.openProfile = openProfile;
   K.render();
+})();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js" crossorigin="anonymous"></script>
+<script>/* Keni · accounts (Supabase Auth). Sign-in is an email link: no password. The account is who you are (public.profiles: name,
+   photo, bio). Your taste, saves and tropas still stay on this phone for now. A guest, or someone who only gave a name, can use
+   everything as before. K.account: sendLink(email, name), saveProfile(), signOut(), email(). */
+(() => {
+  const K = window.KeniCore, DB = window.KENI_DB; if (!K || !DB) return;
+  const { S, persist, toast, esc } = K;
+  if (!window.supabase) { K.account = null; return; } // the sign-in library didn't load (offline): Keni works without accounts
+  const sb = window.supabase.createClient(DB.url, DB.key, { auth: { persistSession: true, detectSessionInUrl: true, autoRefreshToken: true } });
+  K.sb = sb;
+  let session = null;
+  const isEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+
+  async function sendLink(email, name) {
+    email = String(email || '').trim().toLowerCase();
+    if (!isEmail(email)) return 'That email doesn’t look right';
+    const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname, data: { name: String(name || '').slice(0, 28) } } });
+    if (!error) return '';
+    return /rate|seconds|too many/i.test(error.message) ? 'Too many sign-in emails just now. Try again in a few minutes.' : 'Couldn’t send the email. Check your connection and try again.';
+  }
+
+  // signed in (now, or from an earlier visit): the account's profile becomes this phone's profile
+  async function attach(user) {
+    const { data: p } = await sb.from('profiles').select('name, photo, bio').eq('id', user.id).maybeSingle();
+    const fresh = !S.user || S.user.id !== user.id;
+    S.user = { ...(S.user || {}), id: user.id, email: user.email, account: true, provider: 'email', role: (S.user && S.user.role) || 'explorer', since: (S.user && S.user.since) || Date.now() };
+    if (p) { if (p.name) S.user.name = p.name; if (p.photo) S.user.photo = p.photo; if (p.bio) S.user.bio = p.bio; }
+    if (!S.user.name) S.user.name = user.email.split('@')[0];
+    persist(); if (K.finishWelcome) K.finishWelcome(); K.render();
+    if (fresh) toast(`Signed in as <b>${esc(S.user.name)}</b> ✦`);
+  }
+  sb.auth.onAuthStateChange((ev, s) => {
+    session = s;
+    if (s && (ev === 'SIGNED_IN' || ev === 'INITIAL_SESSION')) setTimeout(() => attach(s.user), 0); // outside the auth callback, as the library asks
+  });
+
+  async function saveProfile() {
+    if (!session || !S.user) return;
+    const { error } = await sb.from('profiles').update({ name: String(S.user.name || '').slice(0, 28), photo: S.user.photo || null, bio: S.user.bio ? String(S.user.bio).slice(0, 300) : null }).eq('id', session.user.id);
+    if (error) toast('Saved on this phone. Couldn’t update your account just now.');
+  }
+  async function signOut() { if (session) await sb.auth.signOut(); session = null; }
+
+  K.account = { sendLink, saveProfile, signOut, isEmail, email: () => (session ? session.user.email : '') };
 })();
 </script>
   <script>/* Keni · community — place tags ("people tag the places") and Add a place ("add yours").
@@ -8602,6 +8666,7 @@ html.keni-nochips body[data-page="map"] #filters > .chips { display: none; }
           Object.assign(S.user, { name, handle, bio: D.bio.trim().slice(0, 160), fave: D.fave, photo: D.photo, emoji: D.photo ? '' : D.emoji, hue: D.hue, about, photos: D.photos.slice(0, MAX_PH) });
           prefs().hide = D.hide; persist();
           try { if ((JSON.parse(localStorage.getItem('keni.v1')).user.photos || []).length !== D.photos.length) throw 0; } catch { S.user.photos = []; persist(); toast('Those photos didn’t fit in this phone’s storage, so they weren’t kept'); } // (storage full: the rest of the profile is still saved)
+          if (K.account) K.account.saveProfile();
           K.render(); K.closeModal(); toast('Profile saved ✦');
           return void setTimeout(() => K.openProfile && K.openProfile(), 330);
         }
@@ -8640,11 +8705,11 @@ html.keni-nochips body[data-page="map"] #filters > .chips { display: none; }
         else if (a === 'tune') { K.closeModal(); return void setTimeout(() => K.startOnboarding(1), 300); }
         else if (a === 'tour') { K.closeModal(); return void setTimeout(() => K.tour && K.tour.start(), 350); }
         else if (a === 'privacy') return openPrivacy();
-        else if (a === 'out') { S.user = null; persist(); K.render(); K.closeModal(); return toast('Signed out'); }
+        else if (a === 'out') { if (K.account) K.account.signOut(); S.user = null; persist(); K.render(); K.closeModal(); return toast('Signed out'); }
         else if (a === 'wipe') {
           if (!ui.wipeAsk) { ui.wipeAsk = true; return repaint(m, settingsHTML()); }
           try { localStorage.removeItem('keni.v1'); localStorage.removeItem('keni.photos.v1'); } catch { /* storage blocked */ }
-          return location.reload();
+          return void Promise.resolve(K.account && K.account.signOut()).finally(() => location.reload());
         }
         ui.wipeAsk = false; persist(); apply(); K.render(); repaint(m, settingsHTML());
       });
@@ -9398,10 +9463,10 @@ body[data-page="map"] .topbar #look-btn { display: grid; place-items: center; po
 @keyframes wmRipple { 0% { opacity: .75; transform: scale(1); } 70%, 100% { opacity: 0; transform: scale(3.4); } }
 .wm-cta { display: grid; justify-items: center; gap: 14px; width: 100%; margin-top: 10px; animation: wmUp .6s ease-out 1.2s backwards; }
 /* your name, then Continue */
-.wm-name { display: flex; gap: 8px; width: min(100%, 340px); animation: wmPop .5s cubic-bezier(.3, 1.5, .5, 1) 1.35s backwards; }
-.wm-name input { flex: 1; min-width: 0; height: 46px; padding: 0 1rem; border-radius: 999px; border: 1px solid rgba(196, 176, 255, .4); background: rgba(255, 255, 255, .07); color: #fff; font: inherit; font-size: 16px; }
+.wm-name { display: grid; gap: 8px; width: min(100%, 340px); animation: wmPop .5s cubic-bezier(.3, 1.5, .5, 1) 1.35s backwards; }
+.wm-name input { min-width: 0; height: 46px; padding: 0 1rem; border-radius: 999px; border: 1px solid rgba(196, 176, 255, .4); background: rgba(255, 255, 255, .07); color: #fff; font: inherit; font-size: 16px; }
 .wm-name input:focus { outline: none; border-color: #c4b0ff; box-shadow: 0 0 0 3px rgba(196, 176, 255, .25); }
-.wm-name .btn { height: 46px; flex: none; }
+.wm-name .btn { height: 46px; justify-content: center; }
 @keyframes wmPop { from { opacity: 0; scale: .4; translate: 0 10px; } }
 .wm-own { height: 40px; padding: 0 1.1rem; color: #fff; border-color: rgba(196, 176, 255, .55); background: rgba(196, 176, 255, .12); animation: wmPop .5s cubic-bezier(.2, .9, .3, 1.3) 1.7s backwards; }
 .wm-own:hover { background: rgba(196, 176, 255, .22); }
