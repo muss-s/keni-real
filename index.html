@@ -5173,7 +5173,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
           <button class="btn primary big" data-p="bk-go" data-s="tonight">Next ${icon('arrow')}</button></div>
         <details class="bk-fold glass" data-k="manage"${solo ? ' open' : ''}><summary>Manage crew &amp; tropas</summary>
           ${K.tropa ? K.tropa.bar() : ''}
-          <div class="bk-acts"><button class="btn ghost sm" data-p="bk-add">${icon('plus')} Add friend</button><button class="btn ghost sm" data-p="bk-invite">${icon('link')} Invite</button></div>
+          <div class="bk-acts"><button class="btn ghost sm" data-p="bk-add">${icon('plus')} Add friend</button><button class="btn ghost sm" data-p="bk-invite">${icon('link')} Invite</button>${K.tsync ? '<button class="btn ghost sm" data-ts="code">Join with a code</button>' : ''}</div>
           <ul class="crew-list">${all.map(card).join('')}${solo ? `<li class="cc-empty" data-k="empty"><div><b>It’s just you so far</b><small>Add a friend here, or send them an invite link.</small></div>
             <button class="btn primary sm" data-p="bk-invite">${icon('link')} Invite</button></li>` : ''}</ul>
           ${solo ? '' : '<div class="bk-foot"><span><button class="link-btn" data-p="bk-clear">Remove all</button></span></div>'}
@@ -5881,7 +5881,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
       <button class="btn ghost" type="button" data-ac-mode="in">Sign in</button>` },
     up1: { n: 1, h: 'What should we <em>call you?</em>', note: 'Your tropa sees this name.', body: (d) => inp('name', 'text', 'Your name', 'given-name', `maxlength="28" value="${esc(d.name || '')}"`), btn: 'Next', back: 'start' },
     up2: { n: 2, h: 'Your <em>email</em>', note: 'We’ll send a code to check it’s yours.', body: (d) => inp('email', 'email', 'Email', 'email', `inputmode="email" maxlength="80" value="${esc(d.email || '')}"`), btn: 'Send me a code', back: 'up1' },
-    code: { n: 3, h: 'Check your <em>email</em>', note: '', body: (d) => `<p class="acf-note">We sent a code to <b>${esc(d.email || '')}</b>. It can take a minute (check spam too).</p>` + inp('code', 'text', '6-digit code', 'one-time-code', 'inputmode="numeric" maxlength="10" pattern="[0-9]*"'), btn: 'Verify',
+    code: { n: 3, h: 'Check your <em>email</em>', note: '', body: (d) => `<p class="acf-note">We sent a code to <b>${esc(d.email || '')}</b>. It can take a minute (check spam too).</p>` + inp('code', 'text', '6-digit code', 'one-time-code', 'inputmode="numeric" maxlength="6" pattern="[0-9]*"'), btn: 'Verify',
       links: '<button class="link-btn" type="button" data-ac="resend">Resend code</button><button class="link-btn" type="button" data-ac-mode="up2">Change email</button>' },
     up3: { n: 4, h: 'Make a <em>password</em>', note: `Email checked ✓ At least ${MIN} characters.`, body: () => inp('pass', 'password', 'Password', 'new-password', 'maxlength="72"') + inp('pass2', 'password', 'Confirm password', 'new-password', 'maxlength="72"'), btn: 'Make my account' },
     in: { h: 'Welcome <em>back</em>', body: (d) => inp('email', 'email', 'Email', 'email', `inputmode="email" maxlength="80" value="${esc(d.email || '')}"`) + inp('pass', 'password', 'Password', 'current-password', 'maxlength="72"'), btn: 'Sign in',
@@ -5921,7 +5921,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
     const pass = ($('[data-f="pass"]', form) || {}).value || '';
     if (mode === 'up1') { const name = v('name').replace(/[<>]/g, '').slice(0, 28); if (!name) return bad('Add your name', 'name'); d.name = name; fill(slot, 'up2'); return false; }
     if (mode === 'up2' || mode === 'in' || mode === 'reset') { const email = v('email').toLowerCase(); if (!isEmail(email)) return bad('That email doesn’t look right', 'email'); d.email = email; }
-    if (mode === 'code' && !/^\d{6,10}$/.test(v('code'))) return bad('Type the code from the email', 'code');
+    if (mode === 'code' && !/^\d{6}$/.test(v('code'))) return bad('Type the code from the email', 'code');
     if (mode === 'up3' && pass.length < MIN) return bad(`Your password needs at least ${MIN} characters`, 'pass');
     if (mode === 'up3' && pass !== (($('[data-f="pass2"]', form) || {}).value || '')) return bad('The two passwords don’t match', 'pass2');
     if (mode === 'in' && !pass) return bad('Type your password', 'pass');
@@ -6726,7 +6726,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
   const fresh = (x) => x && x.at && Date.now() - x.at < 8 * 36e5;
   const ans = (x) => (fresh(x) ? { trip: x.trip ?? null, budget: x.budget ?? null, vibe: x.vibe ?? null, at: x.at } : null);
   const meMember = (b) => ({ local: 'me', name: (S.user && S.user.name) || 'Me', emoji: (S.user && S.user.emoji) || '🙂', hue: (S.user && S.user.hue) || 268,
-    photo: (S.user && S.user.photo) || null, picks: S.picks, vibes: S.vibes, nos: b.nos || [], budget: S.budget, area: S.area, tonight: ans(byOf(b).me), out: false });
+    photo: (S.user && S.user.photo) || null, picks: S.picks || [], vibes: S.vibes || [], nos: b.nos || [], budget: S.budget || 2, area: S.area || null, tonight: ans(byOf(b).me), out: false });
   const friendMember = (b, f) => ({ local: f.id, name: f.name, emoji: f.emoji || '🙂', hue: f.hue ?? 260, photo: f.img || null, picks: f.picks || [], vibes: f.vibes || [], nos: f.nos || [],
     budget: f.budget || 2, area: f.area || null, tonight: ans(byOf(b)[f.id]), out: (b.off || []).includes(f.id) });
   const stateOf = (b) => ({ area: b.area || 'any', pin: b.pin || null, range: b.range || null, open: !!b.open, locked: b.locked || null, owed: b.owed || {} });
@@ -6756,8 +6756,8 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
   }
 
   /* ── push what changed here, then pull everyone else ── */
-  async function push(t, srv) {
-    const R = t.remote, b = bkOf(t), L = last[R.code]; if (!L) return; // nothing to compare against until the first pull
+  async function push(t) {
+    const R = t.remote, b = bkOf(t), L = last[t.id]; if (!L || L.code !== R.code) return; // nothing to compare against until the first pull
     const patches = [], add = [];
     const meNow = meMember(b), meWas = L.members[R.me];
     if (meWas) { const p = diff(meNow, meWas); if (p) patches.push({ id: R.me, ...p }); }
@@ -6767,12 +6767,17 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
       const id = f.id.slice(2), was = L.members[id]; if (!was) continue;
       const p = diff(now, was); if (p) patches.push({ id, ...p }); // only fields that changed on this phone are sent
     }
+    // people leave a tropa ONLY when someone taps Remove (or Remove all) on this phone, never because a list looks shorter
     const here = new Set(b.friends.map((f) => f.id));
-    const remove = Object.keys(L.members).filter((id) => id !== R.me && !here.has('m:' + id));
+    const remove = (R.removing ? Object.keys(L.members) : []).filter((id) => id !== R.me && !here.has('m:' + id));
     const tNow = tropaOf(t, b), tChanged = JSON.stringify(tNow) !== JSON.stringify(L.tropa);
-    if (!patches.length && !add.length && !remove.length && !tChanged) return;
+    if (!patches.length && !add.length && !remove.length && !tChanged) { R.removing = false; return; }
     const r = await rpc('tropa_save', { p_code: R.code, p_secret: R.secret, p_tropa: tChanged ? tNow : null, p_members: [...patches, ...add], p_remove: remove });
+    R.removing = false;
     remap(b, idsMap(r.ids));
+    // remember what was sent, so the same change isn't sent again on every round
+    for (const p of patches) L.members[p.id] = { ...L.members[p.id], ...p };
+    L.tropa = tNow;
   }
   const KEYS = ['name', 'emoji', 'hue', 'photo', 'picks', 'vibes', 'nos', 'budget', 'area', 'tonight', 'out'];
   function diff(now, was) {
@@ -6800,7 +6805,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
     if (g.name) t.name = g.name; if (g.emoji) t.emoji = g.emoji;
     // remember what the server has, to compare against next time
     const members = {}; for (const m of g.members) members[m.id] = { name: m.name, emoji: m.emoji, hue: m.hue, photo: m.photo, picks: m.picks, vibes: m.vibes, nos: m.nos, budget: m.budget, area: m.area, tonight: ans(m.tonight), out: m.out };
-    last[R.code] = { members, tropa: tropaOf(t, b) };
+    last[t.id] = { code: R.code, members, tropa: tropaOf(t, b) };
     const changed = JSON.stringify(b) !== before;
     if (changed) persist();
     return changed;
@@ -6812,7 +6817,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
     if (!force && (document.hidden || ui.view !== 'plan')) return;
     busy = true;
     try {
-      const g0 = last[t.remote.code] ? null : await rpc('tropa_get', { p_code: t.remote.code, p_secret: t.remote.secret });
+      const g0 = last[t.id] && last[t.id].code === t.remote.code ? null : await rpc('tropa_get', { p_code: t.remote.code, p_secret: t.remote.secret });
       if (g0) apply(t, g0); // first time: learn what the server has before sending anything
       await push(t);
       const g = await rpc('tropa_get', { p_code: t.remote.code, p_secret: t.remote.secret });
@@ -6821,10 +6826,16 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
     } catch (e) { console.warn('Keni tropa sync:', e); }
     finally { busy = false; }
   }
+  { const seen = new Set(), keep = S.tropas.filter((t) => { if (!t.remote) return true; if (seen.has(t.remote.code)) return false; seen.add(t.remote.code); return true; });
+    if (keep.length !== S.tropas.length) { const a = active(); S.tropas = keep; if (!keep.includes(a)) K.tropa.switchTo(keep[0].id); persist(); } }
   setInterval(tick, EVERY);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
   // a tap in Tropa mode is sent right away instead of waiting for the next round
-  document.addEventListener('click', (e) => { if (e.target.closest('#planview [data-p], .modal [data-fm="save"], .modal [data-fm="remove"], [data-tr]')) setTimeout(() => tick(true), 250); });
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#planview [data-p], .modal [data-fm="save"], .modal [data-fm="remove"], [data-tr]')) return;
+    const t = active(); if (t && t.remote && e.target.closest('.modal [data-fm="remove"], #planview [data-p="bk-clear"]')) t.remote.removing = true; // a real Remove tap
+    setTimeout(() => tick(true), 250);
+  });
   document.addEventListener('change', (e) => { if (e.target.matches('[data-tr-name]')) setTimeout(() => tick(true), 250); });
 
   /* ── the invite sheet ── */
@@ -6837,7 +6848,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
     let R; try { R = await ensureRemote(t); } catch (e) { console.warn(e); $('#ts-link', m).innerHTML = '<p class="fine">Couldn’t make a link. Check your connection and try again.</p>'; return; }
     const url = linkOf(R.code);
     $('#ts-link', m).innerHTML = `<div class="copyrow"><input readonly value="${esc(url)}" aria-label="Invite link"><button class="btn primary sm" data-ts="share">${navigator.share ? 'Share' : 'Copy'}</button></div>
-      <small class="fine">Tropa code <b>${esc(R.code)}</b></small>`;
+      <small class="fine">Or tell them the code <b class="ts-code">${esc(R.code)}</b>: in Keni, Tropa mode → Join with a code.</small>`;
     m.addEventListener('click', async (e) => {
       if (!e.target.closest('[data-ts="share"]')) return;
       const text = `Join ${t.name} on Keni and let's decide where to go 🧲`;
@@ -6846,6 +6857,23 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
     });
     tick(true);
   }
+
+  /* ── join with a code (when the link won't open, or someone just tells you the code) ── */
+  function codeSheet() {
+    const m = K.openModal(`<div class="fm"><span class="eyebrow">Join a tropa</span><h2 class="display">Got a <em>code?</em></h2>
+      <p class="sub">Type the tropa code your friend gave you. It’s the last part of their invite link too.</p>
+      <label class="fm-l">Tropa code<input id="ts-code" class="ts-code-in" maxlength="40" placeholder="e.g. 2EMWFRA" autocomplete="off" autocapitalize="characters" spellcheck="false"></label>
+      <div class="fm-acts"><button class="btn ghost" data-m="close">Cancel</button><span></span><button class="btn primary" data-ts="code-go">Find tropa ${icon('arrow')}</button></div></div>`, 'fm-sheet');
+    const go = () => {
+      const raw = ($('#ts-code', m).value || '').trim(), code = (/#t=([A-Za-z0-9]+)/.exec(raw) || [0, raw])[1].replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+      if (code.length < 5) { toast('Type the whole code'); return $('#ts-code', m).focus(); }
+      K.closeModal(); setTimeout(() => joinFlow(code), 300);
+    };
+    m.addEventListener('click', (e) => { if (e.target.closest('[data-ts="code-go"]')) go(); });
+    m.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.id === 'ts-code') { e.preventDefault(); go(); } });
+    setTimeout(() => { const i = $('#ts-code', m); if (i) i.focus(); }, 350);
+  }
+  document.addEventListener('click', (e) => { if (e.target.closest('[data-ts="code"]')) codeSheet(); });
 
   /* ── "Your friends on Keni" in Add friend ── */
   const pickerHTML = () => (K.account && K.account.email() ? '<div class="fm-l ts-friends" id="ts-friends"><small class="fine">Looking for your friends on Keni…</small></div>' : '');
@@ -6937,7 +6965,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
   }
   if (K.sb) K.sb.auth.onAuthStateChange((ev) => { if (ev === 'SIGNED_IN' || ev === 'INITIAL_SESSION') setTimeout(restore, 800); });
 
-  K.tsync = { invite, pickerHTML, tick, ensureRemote };
+  K.tsync = { invite, pickerHTML, tick, ensureRemote, codeSheet };
   setTimeout(() => tick(true), 500);
 })();
 </script>
@@ -9856,6 +9884,8 @@ button.ct-row:hover { background: rgba(255, 255, 255, .07); }
 .ts-faces { display: flex; gap: 6px; margin: 10px 0 14px; }
 .ts-av { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; vertical-align: middle; }
 .ts-friends .chips { margin-top: 6px; }
+.ts-code { letter-spacing: .12em; color: #fff; }
+.ts-code-in { text-transform: uppercase; letter-spacing: .2em; font-weight: 700; }
 .acf-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; font-size: .85rem; }
 .acf-links b { color: #e6dcff; }
 .wm-name input { min-width: 0; height: 46px; padding: 0 1rem; border-radius: 999px; border: 1px solid rgba(196, 176, 255, .4); background: rgba(255, 255, 255, .07); color: #fff; font: inherit; font-size: 16px; }
