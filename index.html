@@ -3041,7 +3041,7 @@ window.KENI = (() => {
   const COVERS = { cafe: 'tambayan-kape', foodtrip: 'sisig-barkada-haus', sweets: 'brown-sugar-club', inuman: 'bar-lihim', ktv: 'videoke-villa', outdoors: 'clark-green-loop', gala: 'tibok-tibok-tindahan' };
   CATS.forEach((c) => { c.cover = COVERS[c.id] ? IMG(`images/${COVERS[c.id]}.jpg`) : null; });
 
-  return { AREAS, AREA, CATS, VIBES, PERKS, VENUES, CAT, VIBE, VBY, SUBS, SUB, KIND_OF, toKinds };
+  return { AREAS, AREA, CATS, VIBES, PERKS, VENUES, CAT, VIBE, VBY, SUBS, SUB, KIND_OF, toKinds, HOURS, slug };
 })();
 </script>
   <script>/* Keni · sample menus
@@ -3193,6 +3193,83 @@ window.KENI_SPOTS = {"t":[["📍","Spot"],["🍽️","Restaurant"],["☕","Café
   }
   out.forEach((v) => { K.VBY[v.id] = v; });
   K.BASIC = out;
+})();
+</script>
+  <script>/* Keni · places from the database (Supabase, table public.places). The database is the source of truth for places:
+   the lists above (REAL and the basic places) are only what a phone shows the very first time, or offline.
+   On open: the last copy saved on this phone is used straight away (no waiting), then the app asks the database for the latest
+   and, if anything changed, swaps it in and saves it for next time. Add, edit, promote or hide places in the Supabase dashboard. */
+window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_publishable_API1H-c6W-Cj7pi35cjWFA_04IVXyRU' };
+(() => {
+  const K = window.KENI; if (!K || !K.toKinds) return;
+  const CACHE = 'keni.places';
+  const norm = (s) => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+  const areaOk = (a) => (K.AREA[a] ? a : 'balibago');
+
+  // one database row → the shape the app uses (the same as R(...) and the basic places above)
+  function toVenue(r) {
+    const kinds = (r.kinds || []).filter((c) => K.SUB[c] || K.CAT[c]);
+    const cats = K.toKinds(kinds.length ? kinds : ['foodtrip']);
+    const v = {
+      id: r.id, name: r.name, area: areaOk(r.area), cats, subs: kinds.filter((c) => K.SUB[c]), vibes: r.vibes || [], price: r.price ?? null, blurb: r.blurb || '',
+      rating: null, real: true, perks: r.perks || [], hoursKnown: Array.isArray(r.hours), hours: Array.isArray(r.hours) ? r.hours : (K.HOURS[kinds[0]] || K.HOURS[cats[0]] || [10, 22]),
+      off: r.off_days || [], days: r.days || null, hoursNote: r.hours_note || '', lat: r.lat, lng: r.lng, ct: r.contacts || {}, src: r.source === 'osm' ? 'osm' : 'g', img: r.photo || undefined,
+    };
+    if (r.level === 'basic') {
+      const an = (K.AREA[v.area] || {}).name || 'Angeles';
+      Object.assign(v, { basic: true, key: Math.round(r.lat * 1e5) + ',' + Math.round(r.lng * 1e5), addr: r.addr || `Pinned on the map, ${an} area`,
+        blurb: r.blurb || `A ${(K.CAT[cats[0]] || { label: 'place' }).label.toLowerCase()} on the map. So far Keni only has its name and where it is.` });
+    } else v.addr = r.addr || (K.AREA[v.area] || {}).addr || '';
+    return v;
+  }
+
+  // swap the places in, keeping the same arrays and lookup (the rest of the app holds on to them)
+  function apply(rows) {
+    if (!Array.isArray(rows) || !rows.length) return false;
+    const vs = rows.map(toVenue), full = vs.filter((v) => !v.basic);
+    // a big listing replaces a small pin of the same place (same name, about 250 m apart)
+    const fn = full.map((v) => ({ n: norm(v.name), lat: v.lat, lng: v.lng }));
+    const dup = (b) => { const n = norm(b.name); return fn.some((f) => Math.abs(f.lat - b.lat) < 0.0025 && Math.abs(f.lng - b.lng) < 0.0025 && (f.n.includes(n) || n.includes(f.n))); };
+    const basic = vs.filter((v) => v.basic && !dup(v));
+    const keep = K.VENUES.filter((v) => !v.real); // places people added on this phone stay
+    for (const id of Object.keys(K.VBY)) if (K.VBY[id].real) delete K.VBY[id];
+    K.VENUES.length = 0; K.VENUES.push(...full, ...keep);
+    K.BASIC = K.BASIC || []; K.BASIC.length = 0; K.BASIC.push(...basic);
+    [...full, ...basic].forEach((v) => { K.VBY[v.id] = v; });
+    window.KENI_MORE = window.KENI_MORE || {};
+    rows.forEach((r) => { if (Array.isArray(r.more_photos) && r.more_photos.length) window.KENI_MORE[r.id] = r.more_photos; });
+    return true;
+  }
+
+  // 1 · the copy saved on this phone, straight away
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(CACHE) || 'null'); } catch { /* storage blocked */ }
+  if (saved && saved.rows) apply(saved.rows);
+
+  // 2 · the latest from the database. First a tiny check (how many places, and when the last one changed), so the full list
+  //     is only downloaded when something is different. Adding, editing, hiding or deleting a place all change that check.
+  const get = (q, extra) => fetch(`${KENI_DB.url}/rest/v1/places?${q}`, { headers: { apikey: KENI_DB.key, ...extra } }).then((r) => { if (!r.ok) throw new Error('places ' + r.status); return r; });
+  async function check() {
+    const r = await get('select=updated_at&order=updated_at.desc&limit=1', { Prefer: 'count=exact' });
+    const last = await r.json();
+    return `${(r.headers.get('content-range') || '').split('/')[1]}|${last[0] ? last[0].updated_at : ''}`;
+  }
+  async function fetchAll() { // in pages: the database hands out at most 1,000 rows at a time
+    const out = [], N = 1000;
+    for (let from = 0; ; from += N) {
+      const page = await (await get(`select=*&order=id&limit=${N}&offset=${from}`)).json(); out.push(...page);
+      if (page.length < N) return out;
+    }
+  }
+  K.placesReady = check().then(async (sig) => {
+    if (saved && saved.sig === sig) return false;
+    const rows = await fetchAll();
+    try { localStorage.setItem(CACHE, JSON.stringify({ sig, rows })); } catch { /* full or blocked: it still works, just fetched again next time */ }
+    if (!apply(rows)) return false;
+    const C = window.KeniCore; // the app is running by now: redraw with the new places
+    if (C && C.reanalyze) { C.reanalyze(); if (C.resetCards) C.resetCards(); C.render(); }
+    return true;
+  }).catch((e) => { console.warn('Keni places:', e); return false; }); // offline or the database is down: the saved copy (or the built-in list) stays
 })();
 </script>
   <script>/* Keni — app logic. Vanilla JS, no build step. */
@@ -9501,7 +9578,8 @@ body.pins-pop #bigmap .kpin:not(.was) { animation: kPop .42s cubic-bezier(.3, 1.
   const MINZ = 15;
 
   // ── the map ──
-  let map = null, layer = null, ren = null, base = '';
+  let map = null, layer = null, ren = null;
+  const HINT = / <span class="kb-hint">[\s\S]*$/; // the count's own text is always taken fresh, so the hint never puts back an old count
   function draw() {
     if (!map || !layer) return;
     layer.clearLayers();
@@ -9519,14 +9597,13 @@ body.pins-pop #bigmap .kpin:not(.was) { animation: kPop .42s cubic-bezier(.3, 1.
       }
     }
     const cnt = $('#map-count');
-    if (cnt && show) cnt.innerHTML = base + (z >= MINZ ? (n ? ` <span class="kb-hint">+ ${n} basic</span>` : '') : ' <span class="kb-hint">· zoom for more</span>');
+    if (cnt && show) cnt.innerHTML = cnt.innerHTML.replace(HINT, '') + (z >= MINZ ? (n ? ` <span class="kb-hint">+ ${n} basic</span>` : '') : ' <span class="kb-hint">· zoom for more</span>');
   }
   const prevDraw = K.hooks.mapDraw;
   K.hooks.mapDraw = (list) => {
     if (prevDraw) prevDraw(list);
     const parts = K.mapParts ? K.mapParts() : {}; if (!parts.map || !window.L) return;
     if (map !== parts.map) { map = parts.map; ren = window.L.canvas({ padding: 0.3 }); layer = window.L.layerGroup().addTo(map); map.on('moveend zoomend', draw); }
-    const cnt = $('#map-count'); base = cnt ? cnt.innerHTML.replace(/ <span class="kb-hint">[\s\S]*$/, '') : '';
     draw();
   };
 
