@@ -5204,7 +5204,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
         <p class="cs-sub">Moods change, so Keni asks every time. ${mine && tonight(mine).trip && !answered(mine) ? 'Your usual is already picked. Change it only if today is different.' : 'Say what you want right now and what you can spend.'}</p></div></div>
       ${mine ? `<section class="tn-card glass" data-k="me">${ask(mine)}</section>` : ''}
       ${others.length ? `<section class="tn-card glass" data-k="crew"><div class="tn-q"><b>Your tropa</b></div><ul class="tn-list">${others.map(row).join('')}</ul>
-        <p class="fine">Demo: you answer for your friends here. With real accounts, each friend answers on their own phone and only Keni sees their budget.</p></section>` : ''}
+        <p class="fine">${K.tropa && K.tropa.active() && K.tropa.active().remote ? 'Friends who joined with your link answer on their own phone. You can still tap to answer for anyone.' : 'Answer for friends you added by hand, or send them the invite link so they answer on their own phone.'}</p></section>` : ''}
       <p class="bk-vibe" data-k="sum">✨ ${sum}${g.vibe ? ` Vibe: <b>${VIBE[g.vibe.id].emoji} ${esc(VIBE[g.vibe.id].label)}</b>, so the pick will be a place where that vibe is confirmed.` : ''}</p>
       ${n > 1 && ms.some(owedOf) ? `<p class="fair-note" data-k="fair">🔁 ${fairLine(ms.filter(owedOf))}</p>` : ''}
       <div class="bk-cta"><button class="btn ghost" data-s="crew" data-p="bk-go">${icon('back')} Crew</button>
@@ -5873,15 +5873,17 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
   const back = location.origin + location.pathname; // where confirm and reset emails send people back to
 
   /* ── the form: a few short steps instead of one long page ──
-     start → (make an account: name → email → password) or (sign in: email + password, with "forgot password").
+     start → (make an account: name → email → the 6-digit code we email → password) or (sign in: email + password, with "forgot password").
      What was typed in earlier steps is kept on the slot (slot._d) until the account is made. */
   const inp = (f, type, ph, ac, extra = '') => `<input data-f="${f}" type="${type}" placeholder="${ph}" aria-label="${ph}" autocomplete="${ac}" ${extra}>`;
   const STEPS = {
     start: { h: '', body: () => `<button class="btn primary" type="button" data-ac-mode="up1">Make an account ${icon('arrow')}</button>
       <button class="btn ghost" type="button" data-ac-mode="in">Sign in</button>` },
     up1: { n: 1, h: 'What should we <em>call you?</em>', note: 'Your tropa sees this name.', body: (d) => inp('name', 'text', 'Your name', 'given-name', `maxlength="28" value="${esc(d.name || '')}"`), btn: 'Next', back: 'start' },
-    up2: { n: 2, h: 'Your <em>email</em>', note: 'You’ll use it to sign in.', body: (d) => inp('email', 'email', 'Email', 'email', `inputmode="email" maxlength="80" value="${esc(d.email || '')}"`), btn: 'Next', back: 'up1' },
-    up3: { n: 3, h: 'Make a <em>password</em>', note: `At least ${MIN} characters.`, body: () => inp('pass', 'password', 'Password', 'new-password', 'maxlength="72"') + inp('pass2', 'password', 'Confirm password', 'new-password', 'maxlength="72"'), btn: 'Make my account', back: 'up2' },
+    up2: { n: 2, h: 'Your <em>email</em>', note: 'We’ll send a code to check it’s yours.', body: (d) => inp('email', 'email', 'Email', 'email', `inputmode="email" maxlength="80" value="${esc(d.email || '')}"`), btn: 'Send me a code', back: 'up1' },
+    code: { n: 3, h: 'Check your <em>email</em>', note: '', body: (d) => `<p class="acf-note">We sent a code to <b>${esc(d.email || '')}</b>. It can take a minute (check spam too).</p>` + inp('code', 'text', '6-digit code', 'one-time-code', 'inputmode="numeric" maxlength="10" pattern="[0-9]*"'), btn: 'Verify',
+      links: '<button class="link-btn" type="button" data-ac="resend">Resend code</button><button class="link-btn" type="button" data-ac-mode="up2">Change email</button>' },
+    up3: { n: 4, h: 'Make a <em>password</em>', note: `Email checked ✓ At least ${MIN} characters.`, body: () => inp('pass', 'password', 'Password', 'new-password', 'maxlength="72"') + inp('pass2', 'password', 'Confirm password', 'new-password', 'maxlength="72"'), btn: 'Make my account' },
     in: { h: 'Welcome <em>back</em>', body: (d) => inp('email', 'email', 'Email', 'email', `inputmode="email" maxlength="80" value="${esc(d.email || '')}"`) + inp('pass', 'password', 'Password', 'current-password', 'maxlength="72"'), btn: 'Sign in',
       links: '<button class="link-btn" type="button" data-ac-mode="reset">Forgot password?</button><button class="link-btn" type="button" data-ac-mode="up1">New here? <b>Make an account</b></button>' },
     reset: { h: 'Reset your <em>password</em>', note: 'We’ll email you a link to pick a new one.', body: (d) => inp('email', 'email', 'Your account’s email', 'email', `inputmode="email" maxlength="80" value="${esc(d.email || '')}"`), btn: 'Email me a link', back: 'in' },
@@ -5889,7 +5891,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
   const formHTML = (mode = 'start', d = {}) => {
     const s = STEPS[mode] || STEPS.start;
     return `<div class="wm-name acf" data-mode="${mode}">
-      ${s.n ? `<div class="acf-top"><button class="link-btn" type="button" data-ac-mode="${s.back}">${icon('back')} Back</button><span>Step ${s.n} of 3</span></div><i class="acf-bar" style="--p:${s.n / 3}"></i>` : s.back ? `<div class="acf-top"><button class="link-btn" type="button" data-ac-mode="${s.back}">${icon('back')} Back</button><span></span></div>` : ''}
+      ${s.n ? `<div class="acf-top">${s.back ? `<button class="link-btn" type="button" data-ac-mode="${s.back}">${icon('back')} Back</button>` : '<span></span>'}<span>Step ${s.n} of 4</span></div><i class="acf-bar" style="--p:${s.n / 4}"></i>` : s.back ? `<div class="acf-top"><button class="link-btn" type="button" data-ac-mode="${s.back}">${icon('back')} Back</button><span></span></div>` : ''}
       ${s.h ? `<h3 class="acf-h display">${s.h}</h3>` : ''}${s.note ? `<p class="acf-note">${s.note}</p>` : ''}
       ${s.body(d)}
       ${s.btn ? `<button class="btn primary" type="button" data-ac="go">${s.btn} ${icon('arrow')}</button>` : ''}
@@ -5910,13 +5912,16 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
   const nice = (e) => (ERR.find(([re]) => re.test(e.message)) || [0, 'Something went wrong. Check your connection and try again.'])[1];
 
   // returns true once the person is signed up or signed in; moving between steps returns false
+  // Making an account checks the email FIRST: a code is emailed (signInWithOtp), the code is checked (verifyOtp), and only then
+  // is a password set (updateUser). While that runs, `K.account.signingUp` stops attach() from closing the welcome page early.
+  const sendCode = (d) => sb.auth.signInWithOtp({ email: d.email, options: { shouldCreateUser: true, data: { name: d.name }, emailRedirectTo: back } });
   async function submit(form, slot) {
     const mode = form.dataset.mode, d = slot._d, v = (f) => { const i = $(`[data-f="${f}"]`, form); return i ? i.value.trim() : ''; };
     const bad = (msg, f) => { toast(msg); const i = $(`[data-f="${f}"]`, form); if (i) i.focus(); return false; };
     const pass = ($('[data-f="pass"]', form) || {}).value || '';
     if (mode === 'up1') { const name = v('name').replace(/[<>]/g, '').slice(0, 28); if (!name) return bad('Add your name', 'name'); d.name = name; fill(slot, 'up2'); return false; }
-    if (mode !== 'up3') { const email = v('email').toLowerCase(); if (!isEmail(email)) return bad('That email doesn’t look right', 'email'); d.email = email; }
-    if (mode === 'up2') { fill(slot, 'up3'); return false; }
+    if (mode === 'up2' || mode === 'in' || mode === 'reset') { const email = v('email').toLowerCase(); if (!isEmail(email)) return bad('That email doesn’t look right', 'email'); d.email = email; }
+    if (mode === 'code' && !/^\d{6,10}$/.test(v('code'))) return bad('Type the code from the email', 'code');
     if (mode === 'up3' && pass.length < MIN) return bad(`Your password needs at least ${MIN} characters`, 'pass');
     if (mode === 'up3' && pass !== (($('[data-f="pass2"]', form) || {}).value || '')) return bad('The two passwords don’t match', 'pass2');
     if (mode === 'in' && !pass) return bad('Type your password', 'pass');
@@ -5933,23 +5938,42 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
         if (error) return bad(nice(error), 'pass');
         return true; // attach() fills in the profile
       }
-      const { data, error } = await sb.auth.signUp({ email: d.email, password: pass, options: { data: { name: d.name }, emailRedirectTo: back } });
-      if (error) { toast(nice(error)); if (/already/i.test(error.message)) fill(slot, 'in'); return false; }
-      if (data.user && Array.isArray(data.user.identities) && !data.user.identities.length) { toast('There’s already an account with that email. Sign in instead.'); fill(slot, 'in'); return false; }
+      if (mode === 'up2') {
+        const { error } = await sendCode(d);
+        if (error) return bad(nice(error), 'email');
+        toast(`Code sent to <b>${esc(d.email)}</b> ✉️`); fill(slot, 'code'); return false;
+      }
+      if (mode === 'code') {
+        K.account.signingUp = true;
+        const { data, error } = await sb.auth.verifyOtp({ email: d.email, token: v('code'), type: 'email' });
+        if (error) { K.account.signingUp = false; return bad(/expired|invalid/i.test(error.message) ? 'That code is wrong or has expired. Check the email, or tap Resend code.' : nice(error), 'code'); }
+        // this email already had an account: the code just signed them in, so there's no new password to make
+        const made = data.user && data.user.created_at ? Date.now() - new Date(data.user.created_at).getTime() : 0;
+        if (made > 30 * 6e4) { K.account.signingUp = false; toast('You already have an account with that email, so you’re signed in ✦'); if (data.user) attach(data.user); return true; }
+        fill(slot, 'up3'); return false;
+      }
+      // up3: the email is verified and signed in; the password finishes the account
+      const { error } = await sb.auth.updateUser({ password: pass, data: { name: d.name } });
+      if (error) return bad(nice(error), 'pass');
+      K.account.signingUp = false;
+      const { data: u } = await sb.auth.getUser();
+      if (u && u.user) await sb.from('profiles').update({ name: d.name }).eq('id', u.user.id);
       S.user = { ...(S.user || {}), name: d.name, email: d.email, provider: 'email', role: (S.user && S.user.role) || 'explorer', since: (S.user && S.user.since) || Date.now() };
-      persist(); K.render();
-      if (!data.session) toast(`Almost done: check <b>${esc(d.email)}</b> and tap the link to confirm your account ✉️`);
+      persist(); if (u && u.user) await attach(u.user);
       return true;
     } finally { btn.disabled = false; }
   }
 
   document.addEventListener('click', async (e) => {
-    const m = e.target.closest('[data-ac-mode]'); if (m) { const slot = m.closest('.ac-slot'); if (slot) fill(slot, m.dataset.acMode); return; }
+    const m = e.target.closest('[data-ac-mode]'); if (m) { const slot = m.closest('.ac-slot'); if (slot) { if (K.account) K.account.signingUp = false; fill(slot, m.dataset.acMode); } return; }
+    const rs = e.target.closest('[data-ac="resend"]');
+    if (rs) { const slot = rs.closest('.ac-slot'); if (!slot || !slot._d) return; rs.disabled = true; const { error } = await sendCode(slot._d); rs.disabled = false; return toast(error ? nice(error) : 'New code sent ✉️'); }
     const g = e.target.closest('[data-ac="go"]'); if (!g) return;
     const form = g.closest('.acf'), slot = form && form.closest('.ac-slot'); if (!slot) return;
     slot._d = slot._d || {};
     if (await submit(form, slot)) slot.dispatchEvent(new CustomEvent('keni:signed', { bubbles: true, detail: { mode: form.dataset.mode } }));
   });
+
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Enter' || !e.target.closest('.acf [data-f]')) return;
     e.preventDefault(); const b = $('[data-ac="go"]', e.target.closest('.acf')); if (b) b.click();
@@ -5965,7 +5989,9 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
     if (p) { if (p.name) S.user.name = p.name; if (p.photo) S.user.photo = p.photo; if (p.bio) S.user.bio = p.bio; }
     if (!S.user.name) S.user.name = user.email.split('@')[0];
     { const { data: adm } = await sb.rpc('is_admin'); if (K.account) K.account.admin = !!adm; } // only admins see the Admin button (the database checks again)
-    persist(); if (K.finishWelcome) K.finishWelcome(); K.render();
+    persist(); K.render();
+    if (K.account && K.account.signingUp) return; // still making the account: the password step comes first
+    if (K.finishWelcome) K.finishWelcome();
     if (fresh) toast(`Signed in as <b>${esc(S.user.name)}</b> ✦`);
   }
   // opened from a reset email: pick the new password right here
@@ -8456,7 +8482,7 @@ button.ms-rs:hover { filter: brightness(1.2); }
     ? `<button class="btn primary" data-ps="chat" data-id="${p.id}">💬 Open the chat</button><button class="btn ghost" data-ps="went" data-id="${p.id}">✅ We went!</button><button class="btn ghost" data-ps="${mineHost ? 'cancel' : 'leave'}" data-id="${p.id}">${mineHost ? 'Cancel Pasabit' : 'Leave'}</button>`
     : l ? `<button class="btn primary big" data-ps="join" data-id="${p.id}">🙋 ${p.approve ? 'Ask to tag along' : 'Pasabit ako!'}</button>` : '<button class="btn ghost" disabled>Full na — no spots left</button>'}</div>
       <div class="pss-acts"><button class="btn ghost sm" data-ps="send" data-id="${p.id}">💬 Send to a chat</button><button class="btn ghost sm" data-ps="share" data-id="${p.id}">${icon('share')} Share</button></div>
-      <p class="fine">Demo — the people here are made up. Joining opens a group chat for this Pasabit.</p></div>`;
+      <p class="fine">Joining opens a group chat for this Pasabit.</p></div>`;
   }
   // how a Pasabit looks when it's sent into a chat
   const card = (id) => {
@@ -8784,7 +8810,7 @@ button.ms-rs:hover { filter: brightness(1.2); }
       <ul class="tz-list"><li class="tz-row"><span class="fav" style="--h:270" aria-hidden="true">🙂</span><span class="tz-n"><b>You</b><small>Always in</small></span></li>${fr.map(row).join('')}</ul>
       ${add ? `<h4>Add people</h4><div class="chips wrap">${add}</div>` : '<p class="fine">Everyone you know on Keni is already in this tropa.</p>'}
       <div class="tz-acts"><button class="btn primary" data-tz="plan">${icon('users')} Plan in Tropa mode</button>${K.msg ? '<button class="btn ghost" data-tz="chat">💬 Group chat</button>' : ''}</div>
-      <p class="fine">Demo: the people here are made up, and your tropas stay on this device.</p></div>`;
+      </div>`;
   }
   const alive = () => M && document.body.contains(M) && !M.classList.contains('out');
   function paint() {
@@ -9054,7 +9080,7 @@ html.keni-nochips body[data-page="map"] #filters > .chips { display: none; }
       <h4>What Keni learns</h4>
       ${psw('learn', p.learn, 'Learn from “Anong trip mo?”', 'Off: your taps still filter the map, but are not remembered')}
       <div class="px-set"><span><b>${n ? `${n} tap${n === 1 ? '' : 's'} remembered` : 'Nothing remembered yet'}</b><small>The day and time of each tap, kept on this device</small></span>${n || Object.keys(S.boost || {}).length ? `<button class="btn ghost sm" data-pv="forget">${ui.forgetAsk ? 'Tap again' : 'Forget'}</button>` : ''}</div>
-      <p class="fine">Location and learning take effect right away. The who-can-see choices are saved now and apply once Keni has accounts online: today your profile only exists on this device.</p></div>`;
+      <p class="fine">Location and learning take effect right away. The who-can-see choices are saved on this phone for now.</p></div>`;
   }
   function openPrivacy() {
     if (!S.user) return toast('Sign in first to set your privacy');
@@ -9788,7 +9814,7 @@ body[data-page="map"] .topbar #look-btn { display: grid; place-items: center; po
 .acf-top .link-btn .ic { width: 15px; height: 15px; }
 .acf-bar { display: block; height: 4px; border-radius: 99px; background: rgba(255, 255, 255, .1); overflow: hidden; }
 .acf-bar::after { content: ''; display: block; height: 100%; width: calc(var(--p) * 100%); border-radius: inherit; background: linear-gradient(90deg, #8b6cff, #ff8fc8); transition: width .4s cubic-bezier(.3, 1.2, .5, 1); animation: acBar .5s cubic-bezier(.3, 1.2, .5, 1); }
-@keyframes acBar { from { width: calc((var(--p) - .333) * 100%); } }
+@keyframes acBar { from { width: calc((var(--p) - .25) * 100%); } }
 .acf-h { margin: 6px 0 0; font-size: 1.5rem; text-align: left; color: #fff; }
 .acf-note { margin: -2px 0 2px; font-size: .85rem; color: var(--ink-3); text-align: left; }
 .acf .btn.ghost { height: 46px; justify-content: center; }
