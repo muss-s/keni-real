@@ -9993,7 +9993,6 @@ body[data-page="map"] #filters .crave-chip[aria-pressed="true"] { color: #1b1033
 .cr-chip[aria-pressed="true"] { color: #1b1033; background: linear-gradient(135deg, #ffe2b8, #ffb07a); border-color: transparent; }
 .tag.cr-has { color: #1b1033; background: linear-gradient(135deg, #ffe2b8, #ffb07a); border-color: transparent; font-weight: 600; }
 .crave-chip.just { animation: apwPop .3s; }
-html:not(.keni-nochips) body[data-page="map"]:has(#filters .crave-row) .map-hud { top: calc(var(--top) + 172px); } /* Near me moves down one more row */
 .fold-in { animation: tripIn .4s cubic-bezier(.2, .9, .3, 1.2) backwards; animation-delay: calc(var(--i, 0) * 35ms); }
 @media (prefers-reduced-motion: reduce) { .fold-in, .fold-q .ic { animation: none; transition: none; } }
 .trip-chip.just { animation: apwPop .3s; }
@@ -10002,6 +10001,7 @@ body.pins-in .trip-q, body.pins-in .trip-chip { animation: tripIn .45s cubic-bez
 /* ── "Anong vibe?": the second row on the map, the vibe line on a place, and the vibe check once you've been ── */
 body[data-page="map"] #filters > .chips.vibe-row { flex: 1 1 100%; padding: 0 0 4px; gap: 6px; margin-right: 58px; } /* stops short of the round buttons on the right */
 html:not(.keni-nochips) body[data-page="map"]:has(#filters .vibe-row) .map-hud { top: calc(var(--top) + 132px); } /* the place count moves down a row to make room */
+html:not(.keni-nochips) body[data-page="map"]:has(#filters .crave-row):has(#filters .vibe-row:not(.crave-row)) .map-hud { top: calc(var(--top) + 178px); } /* Vibes and Cravings both showing: Near me goes under both (Cravings also has .vibe-row, so this rule must come after) */
 .vibe-chip b { font-weight: 500; opacity: .7; }
 body[data-page="map"] #filters .vibe-chip[aria-pressed="true"], .vc-chip[aria-pressed="true"] { color: #150e2b; background: linear-gradient(135deg, hsl(var(--h) 100% 90%), hsl(calc(var(--h) + 40) 100% 80%)); border-color: transparent; box-shadow: 0 8px 26px -8px hsl(var(--h) 100% 70% / .9); }
 .vibe-chip.just { animation: apwPop .3s; }
