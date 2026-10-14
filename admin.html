@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Keni Admin</title>
+<style>
+:root { --bg: #0b0a10; --card: #16141f; --card2: #1d1a29; --line: rgba(255, 255, 255, .09); --ink: #f6f1ff; --ink2: #c9c2db; --ink3: #8e86a3;
+  --ok: #7dffc0; --no: #ffb0bf; --hi: #c4b0ff; --grad: linear-gradient(135deg, #8b6cff, #ff8fc8); color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--ink); font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; border: 0; background: none; }
+.wrap { max-width: 860px; margin: 0 auto; padding: 16px 16px 60px; }
+header { display: flex; align-items: center; gap: 12px; padding: 6px 0 18px; }
+.logo { font-weight: 800; font-size: 1.25rem; letter-spacing: -.02em; }
+.logo em { font-style: normal; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+header .who { margin-left: auto; font-size: .85rem; color: var(--ink3); text-align: right; }
+.link { color: var(--hi); text-decoration: underline; padding: 0; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 18px; }
+.signin { max-width: 380px; margin: 12vh auto 0; display: grid; gap: 10px; animation: up .35s ease-out; }
+.signin h1 { margin: 0 0 4px; font-size: 1.4rem; }
+.signin p { margin: 0 0 6px; color: var(--ink3); font-size: .9rem; }
+input, select, textarea { width: 100%; height: 44px; padding: 0 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--card2); }
+textarea { height: 70px; padding: 10px 14px; resize: vertical; }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--hi); box-shadow: 0 0 0 3px rgba(196, 176, 255, .2); }
+.btn { height: 40px; padding: 0 16px; border-radius: 999px; font-weight: 600; background: var(--card2); border: 1px solid var(--line); transition: transform .15s, background .2s; white-space: nowrap; }
+.btn:hover { background: #262236; } .btn:active { transform: scale(.96); }
+.btn.primary { background: var(--grad); color: #160d24; border: 0; }
+.btn.ok { color: var(--ok); } .btn.no { color: var(--no); }
+.btn:disabled { opacity: .5; pointer-events: none; }
+.tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.tab { height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink2); font-size: .9rem; }
+.tab[aria-pressed="true"] { background: var(--ink); color: #160d24; border-color: transparent; }
+.tab b { display: inline-grid; place-items: center; min-width: 20px; height: 20px; margin-left: 6px; padding: 0 6px; border-radius: 99px; background: #ff5f8f; color: #fff; font-size: .72rem; }
+.bar { display: flex; align-items: center; gap: 10px; margin: 6px 0 14px; color: var(--ink3); font-size: .85rem; }
+.bar .grow { flex: 1; }
+.list { display: grid; gap: 12px; }
+.group { animation: up .3s ease-out backwards; }
+.g-head { display: flex; align-items: flex-start; gap: 10px; }
+.g-head h3 { margin: 0; font-size: 1.05rem; }
+.g-head small { display: block; color: var(--ink3); font-size: .78rem; }
+.count { margin-left: auto; flex: none; min-width: 30px; height: 30px; display: grid; place-items: center; border-radius: 10px; background: var(--card2); font-weight: 700; }
+.rep { display: grid; gap: 2px; padding: 10px 0; border-top: 1px solid var(--line); }
+.rep:first-of-type { margin-top: 12px; }
+.rep .what { font-weight: 600; } .rep .what i { font-style: normal; margin-right: 6px; }
+.rep .note { color: var(--ink2); }
+.rep .meta { color: var(--ink3); font-size: .78rem; }
+.pill { display: inline-block; padding: 1px 8px; margin-left: 6px; border-radius: 99px; font-size: .72rem; font-weight: 600; background: var(--card2); color: var(--ink3); vertical-align: 1px; }
+.pill.new { background: rgba(255, 95, 143, .18); color: #ff9bbb; } .pill.fixed { background: rgba(125, 255, 192, .14); color: var(--ok); }
+.acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.edit { display: grid; gap: 10px; margin-top: 12px; padding: 14px; border-radius: 16px; background: var(--card2); animation: up .25s ease-out; }
+.edit .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.edit label { display: grid; gap: 4px; font-size: .78rem; color: var(--ink3); }
+.edit .check { display: flex; align-items: center; gap: 8px; font-size: .9rem; color: var(--ink); }
+.edit .check input { width: 20px; height: 20px; }
+.empty { text-align: center; padding: 40px 16px; color: var(--ink3); }
+.empty b { display: block; font-size: 2rem; margin-bottom: 6px; }
+.toast { position: fixed; left: 50%; bottom: 22px; translate: -50% 0; padding: 10px 18px; border-radius: 999px; background: var(--ink); color: #160d24; font-weight: 600; box-shadow: 0 10px 30px #000; animation: up .25s ease-out; z-index: 9; }
+.note-soon { color: var(--ink3); font-size: .85rem; }
+@keyframes up { from { opacity: 0; translate: 0 8px; } }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+@media (max-width: 520px) { .edit .row { grid-template-columns: 1fr; } header .who span { display: none; } }
+</style>
+</head>
+<body>
+<div class="wrap" id="app"><div class="empty"><b>⏳</b>Loading…</div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js" crossorigin="anonymous"></script>
+<script>/* Keni Admin — reports from "Report a problem", and quick fixes to places. Sign in with a Keni account that is in public.admins.
+   The database decides who sees what (row level security), so this page shows nothing to anyone who isn't an admin. */
+(() => {
+  'use strict';
+  const sb = window.supabase.createClient('https://wlxkdivnktxdbwbertjw.supabase.co', 'sb_publishable_API1H-c6W-Cj7pi35cjWFA_04IVXyRU');
+  const app = document.getElementById('app');
+  const $ = (s, el = document) => el.querySelector(s);
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const toast = (t) => { const el = document.createElement('div'); el.className = 'toast'; el.textContent = t; document.body.append(el); setTimeout(() => el.remove(), 2600); };
+  const REASON = { kind: ['🏷️', 'Wrong kind'], closed: ['🚫', 'Closed for good'], where: ['📍', 'Wrong location'], fake: ['❓', 'Not a real place'], other: ['💬', 'Something else'] };
+  const KINDS = ['cafe', 'foodtrip', 'sweets', 'inuman', 'ktv', 'sports', 'outdoors', 'movies', 'gala', 'tambayan'];
+  const ago = (t) => { const m = Math.round((Date.now() - new Date(t)) / 6e4); return m < 1 ? 'just now' : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} d ago`; };
+  const st = { user: null, filter: 'new', reports: [], places: {}, editing: null, busy: false };
+
+  /* ── sign in ── */
+  function signInHTML(msg) {
+    return `<form class="card signin" id="si"><h1>Keni <span style="background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent">Admin</span></h1>
+      <p>${msg || 'Sign in with your Keni account.'}</p>
+      <input id="em" type="email" placeholder="Email" autocomplete="email" required>
+      <input id="pw" type="password" placeholder="Password" autocomplete="current-password" required>
+      <button class="btn primary" type="submit">Sign in</button></form>`;
+  }
+  function showSignIn(msg) {
+    app.innerHTML = signInHTML(msg);
+    $('#si').addEventListener('submit', async (e) => {
+      e.preventDefault(); const b = $('#si button'); b.disabled = true;
+      const { error } = await sb.auth.signInWithPassword({ email: $('#em').value.trim(), password: $('#pw').value });
+      b.disabled = false; if (error) toast(/invalid/i.test(error.message) ? 'Wrong email or password' : 'Couldn’t sign in. Try again.');
+    });
+    setTimeout(() => $('#em') && $('#em').focus(), 50);
+  }
+  async function onSession(session) {
+    if (!session) { st.user = null; return showSignIn(); }
+    st.user = session.user;
+    const { data: ok } = await sb.rpc('is_admin');
+    if (!ok) return notAllowed();
+    load();
+  }
+  function notAllowed() {
+    app.innerHTML = `<div class="card signin"><h1>Not allowed</h1><p>${esc(st.user.email)} isn’t a Keni admin.</p><button class="btn" data-a="out">Sign out</button></div>`;
+  }
+  sb.auth.onAuthStateChange((ev, s) => { if (ev === 'INITIAL_SESSION' || ev === 'SIGNED_IN' || ev === 'SIGNED_OUT') setTimeout(() => onSession(s), 0); });
+
+  /* ── data ── */
+  async function load(quiet) {
+    if (st.busy) return; st.busy = true;
+    const { data, error } = await sb.from('reports').select('*').order('created_at', { ascending: false }).limit(500);
+    st.busy = false;
+    if (error) { toast('Couldn’t load reports'); return; }
+    st.reports = data;
+    const ids = [...new Set(data.map((r) => r.place_id))].filter((id) => !st.places[id]);
+    if (ids.length) {
+      const { data: ps } = await sb.from('places').select('id, name, level, kinds, hours, hidden, lat, lng, addr').in('id', ids);
+      (ps || []).forEach((p) => { st.places[p.id] = p; });
+    }
+    if (!quiet || !st.editing) render();
+  }
+  setInterval(() => { if (st.user && !document.hidden) load(true); }, 30000);
+
+  /* ── page ── */
+  function render() {
+    const counts = { new: 0, fixed: 0, dismissed: 0 }; st.reports.forEach((r) => { counts[r.status]++; });
+    const list = st.reports.filter((r) => st.filter === 'all' || r.status === st.filter);
+    const groups = {}; list.forEach((r) => { (groups[r.place_id] = groups[r.place_id] || []).push(r); });
+    const order = Object.entries(groups).sort((a, b) => b[1].length - a[1].length || new Date(b[1][0].created_at) - new Date(a[1][0].created_at));
+    app.innerHTML = `<header><div class="logo">keni <em>admin</em></div><div class="who"><span>${esc(st.user.email)} · </span><button class="link" data-a="out">Sign out</button></div></header>
+      <div class="tabs">${[['new', 'New'], ['fixed', 'Fixed'], ['dismissed', 'Dismissed'], ['all', 'All']].map(([k, l]) => `<button class="tab" data-f="${k}" aria-pressed="${st.filter === k}">${l}${k === 'new' && counts.new ? `<b>${counts.new}</b>` : ''}</button>`).join('')}</div>
+      <div class="bar"><span>Reports from “Report a problem”, grouped by place</span><span class="grow"></span><button class="btn" data-a="reload">↻ Refresh</button></div>
+      <div class="list">${order.length ? order.map(([id, rs], i) => groupHTML(id, rs, i)).join('') : `<div class="card empty"><b>${st.filter === 'new' ? '🎉' : '🗂️'}</b>${st.filter === 'new' ? 'No new reports. All clear.' : 'Nothing here.'}</div>`}</div>
+      <p class="note-soon">Coming next on this page: owner claims and listing requests from the Studio.</p>`;
+  }
+  function groupHTML(id, rs, i) {
+    const p = st.places[id], open = rs.filter((r) => r.status === 'new');
+    return `<section class="card group" style="animation-delay:${Math.min(i, 8) * 40}ms" data-g="${esc(id)}">
+      <div class="g-head"><div><h3>${esc(p ? p.name : rs[0].place_name)}</h3><small>${p ? `${p.level === 'basic' ? 'Small pin' : 'Full listing'}${p.hidden ? ' · hidden from the map' : ''} · ${esc(id)}` : `${esc(id)} · not in the database (added on someone’s phone)`}</small></div><span class="count" title="Reports">${rs.length}</span></div>
+      ${rs.map((r) => `<div class="rep"><div class="what"><i>${REASON[r.reason][0]}</i>${REASON[r.reason][1]}${r.kind ? `: should be <b>${esc(r.kind)}</b>` : ''}<span class="pill ${r.status}">${r.status}</span></div>
+        ${r.note ? `<div class="note">“${esc(r.note)}”</div>` : ''}<div class="meta">${ago(r.created_at)} · ${r.reporter ? 'from an account' : 'from a guest'}</div></div>`).join('')}
+      <div class="acts">${open.length ? `<button class="btn ok" data-a="fixed">✓ Mark fixed</button><button class="btn" data-a="dismissed">Dismiss</button>` : `<button class="btn" data-a="new">Reopen</button>`}
+        ${p ? `<button class="btn" data-a="edit">✎ Fix the place</button>` : ''}
+        <a class="btn" style="display:inline-grid;place-items:center;text-decoration:none" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((p ? p.name : rs[0].place_name) + ', Angeles City')}">Look it up ↗</a></div>
+      ${st.editing === id && p ? editHTML(p, rs) : ''}</section>`;
+  }
+  function editHTML(p, rs) {
+    const want = rs.find((r) => r.reason === 'kind' && r.kind);
+    const h = Array.isArray(p.hours) ? p.hours : ['', ''];
+    return `<div class="edit" data-edit="${esc(p.id)}">
+      <label>Name<input data-k="name" value="${esc(p.name)}" maxlength="80"></label>
+      <div class="row"><label>Main kind${want ? ` <span style="color:var(--hi)">(reported: ${esc(want.kind)})</span>` : ''}<select data-k="kind">${KINDS.map((k) => `<option${(p.kinds || [])[0] === k ? ' selected' : ''}>${k}</option>`).join('')}</select></label>
+        <label>Hours (open – close, 24h; empty = not listed)<span style="display:flex;gap:6px"><input data-k="ho" inputmode="decimal" placeholder="9" value="${h[0] ?? ''}"><input data-k="hc" inputmode="decimal" placeholder="22" value="${h[1] ?? ''}"></span></label></div>
+      <div class="row"><label>Latitude<input data-k="lat" inputmode="decimal" value="${p.lat}"></label><label>Longitude<input data-k="lng" inputmode="decimal" value="${p.lng}"></label></div>
+      <label class="check"><input type="checkbox" data-k="hidden"${p.hidden ? ' checked' : ''}> Hide from the map (closed for good, or not real)</label>
+      <div class="acts" style="margin:0"><button class="btn primary" data-a="save">Save place</button><button class="btn" data-a="cancel">Cancel</button></div>
+      <small style="color:var(--ink3)">Saved changes show on everyone’s map the next time they open Keni.</small></div>`;
+  }
+
+  /* ── actions ── */
+  async function setStatus(id, status) {
+    const ids = st.reports.filter((r) => r.place_id === id && (status === 'new' ? r.status !== 'new' : r.status === 'new')).map((r) => r.id);
+    const { error } = await sb.from('reports').update({ status }).in('id', ids);
+    if (error) return toast('Couldn’t update');
+    st.reports.forEach((r) => { if (ids.includes(r.id)) r.status = status; });
+    toast(status === 'fixed' ? 'Marked fixed ✓' : status === 'dismissed' ? 'Dismissed' : 'Reopened'); render();
+  }
+  async function savePlace(id, box) {
+    const v = (k) => $(`[data-k="${k}"]`, box), p = st.places[id];
+    const ho = v('ho').value.trim(), hc = v('hc').value.trim(), lat = parseFloat(v('lat').value), lng = parseFloat(v('lng').value);
+    if (!v('name').value.trim()) return toast('The place needs a name');
+    if ((ho === '') !== (hc === '') || (ho !== '' && (isNaN(+ho) || isNaN(+hc)))) return toast('Fill in both hours, or leave both empty');
+    if (!(lat > 14 && lat < 16.5 && lng > 119.5 && lng < 121.5)) return toast('That pin is far from Angeles. Check the numbers.');
+    const kind = v('kind').value, kinds = [kind, ...(p.kinds || []).filter((k) => k !== kind)];
+    const patch = { name: v('name').value.trim(), kinds, hours: ho === '' ? null : [+ho, +hc], lat, lng, hidden: v('hidden').checked };
+    const { error } = await sb.from('places').update(patch).eq('id', id);
+    if (error) return toast('Couldn’t save the place');
+    Object.assign(p, patch); st.editing = null;
+    toast('Place saved ✓'); render();
+  }
+  app.addEventListener('click', async (e) => {
+    const f = e.target.closest('[data-f]'); if (f) { st.filter = f.dataset.f; st.editing = null; return render(); }
+    const a = e.target.closest('[data-a]'); if (!a) return;
+    const k = a.dataset.a, g = a.closest('[data-g]'), id = g && g.dataset.g;
+    if (k === 'out') return sb.auth.signOut();
+    if (k === 'reload') { await load(); return toast('Up to date'); }
+    if (k === 'edit') { st.editing = st.editing === id ? null : id; return render(); }
+    if (k === 'cancel') { st.editing = null; return render(); }
+    if (k === 'save') { a.disabled = true; await savePlace(id, a.closest('.edit')); a.disabled = false; return; }
+    if (['fixed', 'dismissed', 'new'].includes(k)) { a.disabled = true; return setStatus(id, k); }
+  });
+})();
+</script>
+</body>
+</html>

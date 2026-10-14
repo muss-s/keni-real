@@ -3328,6 +3328,11 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
     edit: '<path d="M4 20h4L19 9a2.1 2.1 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',
     link: '<path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/>',
     clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+    phone: '<path d="M6.6 3.5h2.6l1.4 4-2 1.3a11 11 0 0 0 6.6 6.6l1.3-2 4 1.4v2.6a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 4.6 5.7a2 2 0 0 1 2-2.2z"/>',
+    fb: '<rect x="3.5" y="3.5" width="17" height="17" rx="5"/><path d="M15 8h-1.6A1.9 1.9 0 0 0 11.5 10v10.5M9 13h5.5"/>',
+    ig: '<rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="3.8"/><circle cx="16.9" cy="7.1" r=".6" fill="currentColor"/>',
+    globe: '<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.4 2.4 3.6 5.2 3.6 8.5S14.4 18.1 12 20.5M12 3.5C9.6 5.9 8.4 8.7 8.4 12s1.2 6.1 3.6 8.5"/>',
+    nav: '<path d="M20 4 4 10.5l6.8 2.7L13.5 20z"/>',
     logout: '<path d="M9 4H5.5A1.5 1.5 0 0 0 4 5.5v13A1.5 1.5 0 0 0 5.5 20H9M15 8l4 4-4 4M19 12H9"/>',
     store: '<path d="M4 9.5L5.5 4h13L20 9.5"/><path d="M4 9.5a2.7 2.7 0 0 0 5.3 0 2.7 2.7 0 0 0 5.4 0 2.7 2.7 0 0 0 5.3 0"/><path d="M5.5 12.5V20h13v-7.5M10 20v-4.5h4V20"/>',
     tag: '<path d="M3.5 12.2V4.5a1 1 0 0 1 1-1h7.7a1 1 0 0 1 .7.3l7.3 7.3a1 1 0 0 1 0 1.4l-7.7 7.7a1 1 0 0 1-1.4 0l-7.3-7.3a1 1 0 0 1-.3-.7z"/><circle cx="8" cy="8" r="1.3"/>',
@@ -4685,38 +4690,27 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
 
   /* ── overview: the practical stuff first ── */
   const dirUrl = (v) => { const p = venuePoint(v); return `https://www.google.com/maps/dir/?api=1&destination=${p[0].toFixed(5)},${p[1].toFixed(5)}`; };
-  // contact details for the listings — invented, like the places themselves, so nothing here dials or opens a real page
-  const contactOf = (v) => {
-    const h = hash(v.id + '|ct'), handle = v.id.replace(/[^a-z0-9]/g, '').slice(0, 24) || 'keni';
-    return { phone: `09${17 + (h % 60)} ${100 + ((h >>> 6) % 900)} ${1000 + ((h >>> 14) % 9000)}`, fb: `fb.com/${handle}`, ig: `@${handle}`, msg: `m.me/${handle}` };
-  };
   function overviewPaneHTML(v, a, cats, extra, perks) {
-    const st = status(v), [ho, hc] = v.hours, real = !!v.real, ct = real ? (v.ct || {}) : contactOf(v);
+    const st = status(v), [ho, hc] = v.hours, ct = v.ct || {};
     const offTxt = v.off && v.off.length ? ` · closed ${v.off.map((d) => DAYS[d]).join(' & ')}` : '';
     // days that keep different hours, grouped: " · Sun & Mon 7pm – 2am"
     const alt = {}; if (v.days) for (const [d, x] of Object.entries(v.days)) { const k = x ? `${fmtH(x[0])} – ${fmtH(x[1])}` : 'closed'; (alt[k] = alt[k] || []).push(DAYS[d].slice(0, 3)); }
     const altTxt = Object.entries(alt).map(([k, ds]) => ` · ${ds.join(' & ')} ${k}`).join('');
     const hours = v.closedToday ? 'Temporarily closed' : v.hoursKnown === false ? 'Hours not listed yet' : ho === 0 && hc === 24 ? 'Open 24 hours, every day' : `${altTxt ? 'Most days' : offTxt ? 'Open' : 'Open daily'} · ${fmtH(ho)} – ${fmtH(hc)}${altTxt}${offTxt}`;
-    const quick = (e, label, text, note, hue) => `<button class="qa-b" data-act="copy-ct" data-text="${esc(text)}" data-note="${esc(note)}" style="--h:${hue}"><i>${e}</i><span>${label}</span></button>`;
-    const row = (e, main, sub, text, note) => `<button class="ct-row" data-act="copy-ct" data-text="${esc(text)}" data-note="${esc(note)}"><i>${e}</i><span><b>${esc(main)}</b><small>${sub}</small></span><em>Copy</em></button>`;
-    // a real place shows only what a public source lists, and those links really open; the sample listings keep their made-up, copy-only details
-    const link = (e, label, href, hue) => `<a class="qa-b" style="--h:${hue}" target="_blank" rel="noopener noreferrer" href="${esc(href)}"><i>${e}</i><span>${label}</span></a>`;
-    const lrow = (e, main, sub, href) => `<a class="ct-row" target="_blank" rel="noopener noreferrer" href="${esc(href)}"><i>${e}</i><span><b>${esc(main)}</b><small>${sub}</small></span><em>Open</em></a>`;
+    // only what a public source lists, and those links really open
+    const link = (ic, label, href, hue) => `<a class="qa-b" style="--h:${hue}" target="_blank" rel="noopener noreferrer" href="${esc(href)}"><i>${icon(ic)}</i><span>${label}</span></a>`;
+    const lrow = (ic, main, sub, href) => `<a class="ct-row" target="_blank" rel="noopener noreferrer" href="${esc(href)}"><i>${icon(ic)}</i><span><b>${esc(main)}</b><small>${sub}</small></span><em>Open</em></a>`;
     const tel = (p) => 'tel:' + p.replace(/[^\d+]/g, '');
+    const short = (u) => String(u).replace(/^(https?:\/\/)?(www\.|m\.)?(facebook\.com|fb\.com|instagram\.com)\//i, '').replace(/\/$/, ''); // facebook.com/x → x
     const lookup = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(v.name + ', ' + (v.addr || AREA[v.area].addr))}`;
-    const dir = `<a class="qa-b" style="--h:28" target="_blank" rel="noopener noreferrer" href="${dirUrl(v)}"><i>🧭</i><span>Directions</span></a>`;
-    const qa = real
-      ? `${ct.phone ? link('📞', 'Call', tel(ct.phone), 150) : ''}${ct.fb ? link('👍', 'Facebook', 'https://' + ct.fb, 222) : ''}${ct.ig ? link('📸', 'Instagram', 'https://' + ct.ig, 330) : ''}${ct.web ? link('🌐', 'Website', 'https://' + ct.web, 200) : ''}${link('🔎', 'Look it up', lookup, 262)}${dir}`
-      : `${quick('📞', 'Call', ct.phone, 'sample number, not a real line', 150)}${quick('💬', 'Message', ct.msg, 'Messenger link', 200)}${quick('👍', 'Facebook', ct.fb, 'Facebook page', 222)}${quick('📸', 'Instagram', ct.ig, 'Instagram handle', 330)}${dir}`;
-    const rows = real
-      ? `${ct.phone ? lrow('📞', ct.phone, 'Phone', tel(ct.phone)) : ''}${ct.fb ? lrow('👍', ct.fb, 'Facebook page', 'https://' + ct.fb) : ''}${ct.ig ? lrow('📸', ct.ig, 'Instagram', 'https://' + ct.ig) : ''}${ct.web ? lrow('🌐', ct.web, 'Website', 'https://' + ct.web) : ''}${ct.phone || ct.fb || ct.ig || ct.web ? '' : '<div class="ct-row static"><i>☎️</i><span><b>No phone or page listed yet</b><small>Tap “Look it up” to search for this place</small></span></div>'}`
-      : `${row('📞', ct.phone, 'Phone', ct.phone, 'sample number, not a real line')}${row('👍', ct.fb, 'Facebook page', ct.fb, 'Facebook page')}${row('📸', ct.ig, 'Instagram', ct.ig, 'Instagram handle')}`;
-    return `<div class="qa${real ? ' qa-real' : ''}" role="group" aria-label="Get in touch">${qa}</div>
+    const qa =`${ct.phone ? link('phone', 'Call', tel(ct.phone), 150) : ''}${ct.fb ? link('fb', 'Facebook', 'https://' + ct.fb, 222) : ''}${ct.ig ? link('ig', 'Instagram', 'https://' + ct.ig, 330) : ''}${ct.web ? link('globe', 'Website', 'https://' + ct.web, 200) : ''}${link('search', 'Look it up', lookup, 262)}${link('nav', 'Directions', dirUrl(v), 28)}`;
+    const rows = `${ct.phone ? lrow('phone', ct.phone, 'Phone', tel(ct.phone)) : ''}${ct.fb ? lrow('fb', short(ct.fb), 'Facebook page', 'https://' + ct.fb) : ''}${ct.ig ? lrow('ig', short(ct.ig), 'Instagram', 'https://' + ct.ig) : ''}${ct.web ? lrow('globe', ct.web, 'Website', 'https://' + ct.web) : ''}${ct.phone || ct.fb || ct.ig || ct.web ? '' : `<div class="ct-row static"><i>${icon('phone')}</i><span><b>No phone or page listed yet</b><small>Tap “Look it up” to search for this place</small></span></div>`}`;
+    return `<div class="qa qa-real" role="group" aria-label="Get in touch">${qa}</div>
       <div class="inset ct"><h4>Contact &amp; hours</h4>
-        <div class="ct-row static"><i>🕒</i><span><b>${hours}</b><small class="${st.unknown ? '' : st.open ? 'ok' : 'no'}">${st.unknown ? 'Check before you go' : st.text}</small></span></div>
+        <div class="ct-row static"><i>${icon('clock')}</i><span><b>${hours}</b><small class="${st.unknown ? '' : st.open ? 'ok' : 'no'}">${st.unknown ? 'Check before you go' : st.text}</small></span></div>
         ${rows}
-        <button class="ct-row" data-tab="map"><i>📍</i><span><b>${esc(v.addr || AREA[v.area].addr)}</b><small>${distKm(v)} km from ${fromTxt()}</small></span><em>Map</em></button>
-        <p class="fine">${real ? `A real place. ${v.src === 'g' ? 'The pin, hours and contact details are from its Google Maps listing (checked Oct 2026) and can change' : `The pin is from OpenStreetMap; ${v.hoursKnown === false ? 'contact details' : 'hours and contact details'} come from public listings and can be out of date`}${v.hoursNote ? ` (${esc(v.hoursNote)})` : ''}. Confirm before you go.` : 'Sample listing — these contact details are made up.'}</p>
+        <button class="ct-row" data-tab="map"><i>${icon('pin')}</i><span><b>${esc(v.addr || AREA[v.area].addr)}</b><small>${distKm(v)} km from ${fromTxt()}</small></span><em>Map</em></button>
+        <p class="fine">A real place. ${v.src === 'g' ? 'The pin, hours and contact details are from its Google Maps listing (checked Oct 2026) and can change' : `The pin is from OpenStreetMap; ${v.hoursKnown === false ? 'contact details' : 'hours and contact details'} come from public listings and can be out of date`}${v.hoursNote ? ` (${esc(v.hoursNote)})` : ''}. Confirm before you go.</p>
       </div>
       ${perks ? `<div class="inset"><h4>Good to know</h4><div class="perks">${perks}<span class="tag">${priceTag(v)}</span></div></div>` : ''}
       <details class="inset why"><summary><h4>Why it matches you</h4></summary>
@@ -4928,7 +4922,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
   const tonightAll = () => { const b = bk(); if (!b.tonight || !b.tonight.by || Date.now() - b.tonight.at > 8 * 36e5) b.tonight = { at: Date.now(), by: {} }; return b.tonight; };
   const tonight = (f) => ({ ...usualOf(f), ...(tonightAll().by[f.id] || {}) });
   const answered = (f) => !!tonightAll().by[f.id];
-  function setTonight(id, ans) { const t = tonightAll(); t.by[id] = { ...(t.by[id] || {}), ...ans }; t.at = Date.now(); bk().more = 8; persist(); }
+  function setTonight(id, ans) { const t = tonightAll(); t.by[id] = { ...(t.by[id] || {}), ...ans, at: Date.now() }; t.at = Date.now(); bk().more = 8; persist(); }
   // the tropa at a glance: the most wanted trip, how many different trips there are, and the lowest budget
   function groupTonight(ms = members()) {
     const cnt = {}; ms.forEach((f) => { const k = tonight(f).trip; if (TRIP[k]) cnt[k] = (cnt[k] || 0) + 1; });
@@ -5475,6 +5469,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
       <span class="eyebrow">${isMe ? 'Your tropa settings' : cur ? 'Edit friend' : 'Add a friend'}</span>
       <h2 class="display">${isMe ? 'Your <em>hard no’s</em>' : cur ? `${esc(first(cur.name))}’s <em>taste</em>` : 'Add a <em>friend</em>'}</h2>
       <p class="sub">${isMe ? 'Anything here is a veto for the group — it never shows up as a pick.' : 'Pass the phone: pick what they’re into, their budget, and anything they’ll never do.'}</p>
+      ${!isMe && !cur && K.tsync ? K.tsync.pickerHTML() : ''}
       ${isMe ? '' : `<label class="fm-l">Name<input id="fm-name" maxlength="24" placeholder="e.g. Ate Joy" value="${esc(d.name)}" autocomplete="off"></label>
       <div class="fm-l">Avatar<div class="emo">${EMOJIS.map((e) => `<button data-fm="emoji" data-id="${e}" aria-pressed="${d.emoji === e}">${e}</button>`).join('')}</div></div>
       <div class="fm-l">Into <small>(pick a few)</small><div class="chips wrap">${chipset('picks', CATS)}</div></div>
@@ -5509,6 +5504,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
 
   /* — invite — */
   function inviteModal() {
+    if (K.tsync) return K.tsync.invite(); // tropas shared by link (Keni · tropa sync)
     const m = K.openModal(`<div class="fm">
       <span class="eyebrow">Invite your tropa</span><h2 class="display">Bring your <em>friends</em></h2>
       <p class="sub">Each friend’s taste travels as a link you paste here.</p>
@@ -5802,7 +5798,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
           ${u ? `<div class="pf-name"><b id="pf-name">${esc(u.name)}</b></div>
             ${u.handle ? `<small class="pf-user">@${esc(u.handle)}</small>` : ''}
             ${u.role === 'business' ? '<small><b>Owner</b></small>' : ''}
-            ${K.account ? (K.account.email() ? `<small>✉️ Signed in as ${esc(K.account.email())}</small>` : '<small>Saved on this phone only · <button class="link-btn" data-pf="login">Make an account</button> · <button class="link-btn" data-pf="signin">Sign in</button></small>') : ''}` : `<div class="pf-name"><b>Guest</b></div><small>Add your name so your tropa knows it’s you</small>`}
+            ${K.account ? (K.account.email() ? `<small>✉️ Signed in as ${esc(K.account.email())} · <button class="link-btn" data-pf="pass">Change password</button>${K.account.admin ? ' · <a class="link-btn" href="admin" target="_blank" rel="noopener">Admin</a>' : ''}</small>` : '<small>Saved on this phone only · <button class="link-btn" data-pf="login">Make an account</button> · <button class="link-btn" data-pf="signin">Sign in</button></small>') : ''}` : `<div class="pf-name"><b>Guest</b></div><small>Add your name so your tropa knows it’s you</small>`}
           ${u && u.bio ? `<p class="pf-bio">${esc(u.bio)}</p>` : ''}${u && VBY[u.fave] ? `<p class="pf-bio">❤️ Favourite spot: <button class="link-btn" data-act="open-detail" data-id="${u.fave}">${esc(VBY[u.fave].name)}</button></p>` : ''}
         </div></div>
       <div class="pf-acts">${u ? `<button class="btn ghost sm" data-pfx="edit">${icon('edit')} Edit profile</button>` : ''}<button class="btn ghost sm" data-pfx="settings">⚙️ Settings</button>${u ? '<button class="btn ghost sm" data-pfx="privacy">🔒 Privacy</button>' : ''}</div>
@@ -5830,6 +5826,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
       const t = e.target.closest('[data-pf]'); if (!t) return;
       const k = t.dataset.pf;
       if (k === 'tune') { K.closeModal(); setTimeout(() => K.startOnboarding(1), 300); }
+      else if (k === 'pass') { K.closeModal(); setTimeout(() => K.account.newPassword(), 320); }
       else if (k === 'login' || k === 'signin') { K.closeModal(); setTimeout(() => openLogin('explorer', k === 'signin' ? 'in' : 'up1'), 320); }
       else if (k === 'biz-login') { K.closeModal(); setTimeout(() => (K.isBiz() ? K.biz.ownerFlow(K.openModal('', 'login-sheet')) : openLogin('business')), 320); }
       else if (k === 'studio') { K.closeModal(); K.setView('biz'); }
@@ -5967,12 +5964,13 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
     S.user = { ...(S.user || {}), id: user.id, email: user.email, account: true, provider: 'email', role: (S.user && S.user.role) || 'explorer', since: (S.user && S.user.since) || Date.now() };
     if (p) { if (p.name) S.user.name = p.name; if (p.photo) S.user.photo = p.photo; if (p.bio) S.user.bio = p.bio; }
     if (!S.user.name) S.user.name = user.email.split('@')[0];
+    { const { data: adm } = await sb.rpc('is_admin'); if (K.account) K.account.admin = !!adm; } // only admins see the Admin button (the database checks again)
     persist(); if (K.finishWelcome) K.finishWelcome(); K.render();
     if (fresh) toast(`Signed in as <b>${esc(S.user.name)}</b> ✦`);
   }
   // opened from a reset email: pick the new password right here
   function newPassword() {
-    const m = K.openModal(`<div class="fm login"><span class="eyebrow">Reset password</span><h2 class="display">Pick a new <em>password</em></h2>
+    const m = K.openModal(`<div class="fm login"><span class="eyebrow">Your password</span><h2 class="display">Pick a new <em>password</em></h2>
       <div class="wm-name acf">${inp('pass', 'password', `New password (at least ${MIN} characters)`, 'new-password', 'maxlength="72"')}${inp('pass2', 'password', 'Confirm new password', 'new-password', 'maxlength="72"')}
       <button class="btn primary" type="button" data-np="save">Save password ${icon('arrow')}</button></div></div>`, 'login-sheet');
     m.addEventListener('click', async (e) => {
@@ -5996,9 +5994,9 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
     const { error } = await sb.from('profiles').update({ name: String(S.user.name || '').slice(0, 28), photo: S.user.photo || null, bio: S.user.bio ? String(S.user.bio).slice(0, 300) : null }).eq('id', session.user.id);
     if (error) toast('Saved on this phone. Couldn’t update your account just now.');
   }
-  async function signOut() { if (session) await sb.auth.signOut(); session = null; }
+  async function signOut() { if (session) await sb.auth.signOut(); session = null; if (K.account) K.account.admin = false; }
 
-  K.account = { formHTML, fill, saveProfile, signOut, isEmail, email: () => (session ? session.user.email : '') };
+  K.account = { formHTML, fill, saveProfile, signOut, isEmail, newPassword, email: () => (session ? session.user.email : '') };
 })();
 </script>
   <script>/* Keni · community — place tags ("people tag the places") and Add a place ("add yours").
@@ -6668,6 +6666,253 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
 
   K.tropa = { bar, sig, profileSection, active, switchTo, create, list: () => S.tropas, people };
   persist();
+})();
+</script>
+<script>/* Keni · tropa sync — tropas shared by link (Supabase: public.tropas, public.tropa_members, the tropa_* functions).
+   Tropa mode itself still only reads S.bk (the crew on this phone). This module keeps that crew in step with the server:
+   every few seconds while Tropa mode is open it sends what changed here, then pulls everyone else's answers.
+   · A tropa becomes shared the first time someone taps "Share invite link" (tropa_create). t.remote = { code, secret, me }.
+   · A link looks like …/#t=CODE. Opening it asks for your name and joins (tropa_join). No account needed.
+   · Signed in: your tropas come back on any phone (tropa_mine), and "Your friends on Keni" lists people you share a tropa with.
+   · Inside a tropa everyone can change anyone's answers for tonight; it's a group of friends.
+   Friends from the server have ids "m:<member id>". */
+(() => {
+  'use strict';
+  const K = window.KeniCore, DB = window.KENI_DB; if (!K || !DB || !K.tropa) return;
+  const { S, ui, persist, $, esc, icon, toast, burst } = K;
+  const first = (n) => String(n || '').split(' ')[0];
+  const EVERY = 4000; // ponytail: polling every 4 s while Tropa mode is open; switch to Supabase Realtime if tropas get big
+  const newSecret = () => [...crypto.getRandomValues(new Uint8Array(20))].map((b) => b.toString(16).padStart(2, '0')).join('');
+  const appUrl = () => (K.codec ? K.codec.appUrl() : location.origin + location.pathname);
+  const linkOf = (code) => `${appUrl()}#t=${code}`;
+  const BK0 = () => ({ friends: [], off: [], nos: [], area: 'any', open: false, locked: null, more: 8 });
+
+  async function rpc(fn, args) {
+    if (K.sb) { const { data, error } = await K.sb.rpc(fn, args); if (error) throw error; return data; }
+    const r = await fetch(`${DB.url}/rest/v1/rpc/${fn}`, { method: 'POST', headers: { apikey: DB.key, 'content-type': 'application/json' }, body: JSON.stringify(args) });
+    if (!r.ok) throw new Error(fn + ' ' + r.status); return r.json();
+  }
+
+  /* ── local ⇄ server shapes ── */
+  const active = () => K.tropa.active();
+  const bkOf = (t) => (t.id === S.tropa ? (S.bk = S.bk || BK0()) : (t.bk = t.bk || BK0()));
+  const byOf = (b) => (b.tonight && b.tonight.by) || {};
+  const fresh = (x) => x && x.at && Date.now() - x.at < 8 * 36e5;
+  const ans = (x) => (fresh(x) ? { trip: x.trip ?? null, budget: x.budget ?? null, vibe: x.vibe ?? null, at: x.at } : null);
+  const meMember = (b) => ({ local: 'me', name: (S.user && S.user.name) || 'Me', emoji: (S.user && S.user.emoji) || '🙂', hue: (S.user && S.user.hue) || 268,
+    photo: (S.user && S.user.photo) || null, picks: S.picks, vibes: S.vibes, nos: b.nos || [], budget: S.budget, area: S.area, tonight: ans(byOf(b).me), out: false });
+  const friendMember = (b, f) => ({ local: f.id, name: f.name, emoji: f.emoji || '🙂', hue: f.hue ?? 260, photo: f.img || null, picks: f.picks || [], vibes: f.vibes || [], nos: f.nos || [],
+    budget: f.budget || 2, area: f.area || null, tonight: ans(byOf(b)[f.id]), out: (b.off || []).includes(f.id) });
+  const stateOf = (b) => ({ area: b.area || 'any', pin: b.pin || null, range: b.range || null, open: !!b.open, locked: b.locked || null, owed: b.owed || {} });
+  const tropaOf = (t, b) => ({ name: t.name, emoji: t.emoji, state: stateOf(b) });
+  // what this phone last agreed with the server, per tropa code: compared to work out what to send
+  const last = {};
+
+  // swap local friend ids for server ids everywhere Tropa mode keeps them
+  function remap(b, map) {
+    if (!Object.keys(map).length) return;
+    const to = (id) => map[id] || id;
+    b.friends.forEach((f) => { f.id = to(f.id); });
+    b.off = (b.off || []).map(to);
+    if (b.tonight && b.tonight.by) b.tonight.by = Object.fromEntries(Object.entries(b.tonight.by).map(([k, v]) => [to(k), v]));
+    if (b.owed) b.owed = Object.fromEntries(Object.entries(b.owed).map(([k, v]) => [to(k), v]));
+  }
+  const idsMap = (ids) => Object.fromEntries((ids || []).filter((x) => x.local && x.local !== 'me').map((x) => [x.local, 'm:' + x.id]));
+
+  /* ── share: make this tropa a shared one ── */
+  async function ensureRemote(t = active()) {
+    if (t.remote) return t.remote;
+    const b = bkOf(t), secret = newSecret();
+    const r = await rpc('tropa_create', { p_name: t.name, p_emoji: t.emoji, p_state: stateOf(b), p_members: [meMember(b), ...b.friends.map((f) => friendMember(b, f))], p_secret: secret });
+    remap(b, idsMap(r.ids));
+    t.remote = { code: r.code, secret, me: r.ids[0].id };
+    persist(); return t.remote;
+  }
+
+  /* ── push what changed here, then pull everyone else ── */
+  async function push(t, srv) {
+    const R = t.remote, b = bkOf(t), L = last[R.code]; if (!L) return; // nothing to compare against until the first pull
+    const patches = [], add = [];
+    const meNow = meMember(b), meWas = L.members[R.me];
+    if (meWas) { const p = diff(meNow, meWas); if (p) patches.push({ id: R.me, ...p }); }
+    for (const f of b.friends) {
+      const now = friendMember(b, f);
+      if (!String(f.id).startsWith('m:')) { add.push(now); continue; }
+      const id = f.id.slice(2), was = L.members[id]; if (!was) continue;
+      const p = diff(now, was); if (p) patches.push({ id, ...p }); // only fields that changed on this phone are sent
+    }
+    const here = new Set(b.friends.map((f) => f.id));
+    const remove = Object.keys(L.members).filter((id) => id !== R.me && !here.has('m:' + id));
+    const tNow = tropaOf(t, b), tChanged = JSON.stringify(tNow) !== JSON.stringify(L.tropa);
+    if (!patches.length && !add.length && !remove.length && !tChanged) return;
+    const r = await rpc('tropa_save', { p_code: R.code, p_secret: R.secret, p_tropa: tChanged ? tNow : null, p_members: [...patches, ...add], p_remove: remove });
+    remap(b, idsMap(r.ids));
+  }
+  const KEYS = ['name', 'emoji', 'hue', 'photo', 'picks', 'vibes', 'nos', 'budget', 'area', 'tonight', 'out'];
+  function diff(now, was) {
+    const p = {};
+    for (const k of KEYS) if (JSON.stringify(now[k] ?? null) !== JSON.stringify(was[k] ?? null)) p[k] = now[k] ?? null;
+    return Object.keys(p).length ? p : null;
+  }
+
+  function apply(t, g) {
+    const b = bkOf(t), R = t.remote, before = JSON.stringify(b);
+    if (!g.me && R.me && !g.members.some((m) => m.id === R.me)) { toast(`You were removed from <b>${esc(t.name)}</b>`); delete t.remote; persist(); return true; }
+    if (g.me) R.me = g.me;
+    const others = g.members.filter((m) => m.id !== R.me), pending = b.friends.filter((f) => !String(f.id).startsWith('m:'));
+    b.friends = [...others.map((m) => ({ id: 'm:' + m.id, name: m.name, emoji: m.emoji, hue: m.hue, img: m.photo || null, picks: m.picks || [], vibes: m.vibes || [], nos: m.nos || [],
+      budget: m.budget || 2, area: m.area || null, account: m.account })), ...pending];
+    const by = {}; let at = 0;
+    for (const m of g.members) { const a = ans(m.tonight); if (!a) continue; by[m.id === R.me ? 'me' : 'm:' + m.id] = { trip: a.trip, budget: a.budget, vibe: a.vibe, at: a.at }; at = Math.max(at, a.at); }
+    const mine = byOf(b).me; if (fresh(mine) && (!by.me || mine.at > by.me.at)) by.me = mine; // a tap here that hasn't been sent yet wins
+    b.tonight = { at: at || Date.now(), by };
+    b.off = others.filter((m) => m.out).map((m) => 'm:' + m.id);
+    const s = g.state || {};
+    const newLock = s.locked && (!b.locked || b.locked.id !== s.locked.id);
+    Object.assign(b, { area: s.area || 'any', pin: s.pin || null, range: s.range || undefined, open: !!s.open, locked: s.locked || null, owed: s.owed || {} });
+    if (newLock && t.id === S.tropa) ui.bkStage = 'locked'; // someone locked in a pick: everyone sees it
+    if (g.name) t.name = g.name; if (g.emoji) t.emoji = g.emoji;
+    // remember what the server has, to compare against next time
+    const members = {}; for (const m of g.members) members[m.id] = { name: m.name, emoji: m.emoji, hue: m.hue, photo: m.photo, picks: m.picks, vibes: m.vibes, nos: m.nos, budget: m.budget, area: m.area, tonight: ans(m.tonight), out: m.out };
+    last[R.code] = { members, tropa: tropaOf(t, b) };
+    const changed = JSON.stringify(b) !== before;
+    if (changed) persist();
+    return changed;
+  }
+
+  let busy = false;
+  async function tick(force) {
+    const t = active(); if (!t || !t.remote || busy) return;
+    if (!force && (document.hidden || ui.view !== 'plan')) return;
+    busy = true;
+    try {
+      const g0 = last[t.remote.code] ? null : await rpc('tropa_get', { p_code: t.remote.code, p_secret: t.remote.secret });
+      if (g0) apply(t, g0); // first time: learn what the server has before sending anything
+      await push(t);
+      const g = await rpc('tropa_get', { p_code: t.remote.code, p_secret: t.remote.secret });
+      if (!g) { toast('That tropa doesn’t exist any more'); delete t.remote; persist(); return; }
+      if (apply(t, g) && t.id === S.tropa) K.render();
+    } catch (e) { console.warn('Keni tropa sync:', e); }
+    finally { busy = false; }
+  }
+  setInterval(tick, EVERY);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
+  // a tap in Tropa mode is sent right away instead of waiting for the next round
+  document.addEventListener('click', (e) => { if (e.target.closest('#planview [data-p], .modal [data-fm="save"], .modal [data-fm="remove"], [data-tr]')) setTimeout(() => tick(true), 250); });
+  document.addEventListener('change', (e) => { if (e.target.matches('[data-tr-name]')) setTimeout(() => tick(true), 250); });
+
+  /* ── the invite sheet ── */
+  async function invite() {
+    const t = active();
+    const m = K.openModal(`<div class="fm"><span class="eyebrow">Invite your tropa</span><h2 class="display">Bring your <em>friends</em></h2>
+      <p class="sub">Send this link in your group chat. Friends tap it, add their name, and they’re in <b>${esc(t.emoji)} ${esc(t.name)}</b>. No app or account needed.</p>
+      <div class="ts-link" id="ts-link"><span class="ts-wait">Making your link…</span></div>
+      <div class="fm-acts"><span></span><button class="btn ghost" data-m="close">Done</button></div></div>`, 'fm-sheet');
+    let R; try { R = await ensureRemote(t); } catch (e) { console.warn(e); $('#ts-link', m).innerHTML = '<p class="fine">Couldn’t make a link. Check your connection and try again.</p>'; return; }
+    const url = linkOf(R.code);
+    $('#ts-link', m).innerHTML = `<div class="copyrow"><input readonly value="${esc(url)}" aria-label="Invite link"><button class="btn primary sm" data-ts="share">${navigator.share ? 'Share' : 'Copy'}</button></div>
+      <small class="fine">Tropa code <b>${esc(R.code)}</b></small>`;
+    m.addEventListener('click', async (e) => {
+      if (!e.target.closest('[data-ts="share"]')) return;
+      const text = `Join ${t.name} on Keni and let's decide where to go 🧲`;
+      if (navigator.share) { try { await navigator.share({ title: 'Keni', text, url }); } catch { /* closed the share sheet */ } return; }
+      try { await navigator.clipboard.writeText(`${text} ${url}`); toast('Invite link copied — paste it in your group chat'); } catch { toast('Couldn’t copy — select the link and copy it'); }
+    });
+    tick(true);
+  }
+
+  /* ── "Your friends on Keni" in Add friend ── */
+  const pickerHTML = () => (K.account && K.account.email() ? '<div class="fm-l ts-friends" id="ts-friends"><small class="fine">Looking for your friends on Keni…</small></div>' : '');
+  async function fillPicker() {
+    const box = $('#ts-friends'); if (!box) return;
+    try {
+      const inIt = new Set((S.bk && S.bk.friends || []).map((f) => f.name));
+      const list = (await rpc('tropa_friends', {})) || [];
+      if (!list.length) { box.remove(); return; }
+      box.innerHTML = `Your friends on Keni<div class="chips wrap">${list.map((p) => `<button class="chip" data-ts-add="${p.id}"${inIt.has(p.name) ? ' disabled' : ''}>${p.photo ? `<img class="ts-av" src="${esc(p.photo)}" alt="">` : '🙂'} ${esc(p.name)}</button>`).join('')}</div>
+        <small class="fine">Tap someone to add them. The tropa shows up in their Keni.</small><div class="or"><span>or add someone by hand</span></div>`;
+    } catch { box.remove(); }
+  }
+  new MutationObserver(() => { const b = $('#ts-friends'); if (b && !b.dataset.filled) { b.dataset.filled = 1; fillPicker(); } }).observe(document.getElementById('modal-root') || document.body, { childList: true, subtree: true });
+  document.addEventListener('click', async (e) => {
+    const c = e.target.closest('[data-ts-add]'); if (!c) return;
+    c.disabled = true;
+    try {
+      const t = active(), R = await ensureRemote(t);
+      await rpc('tropa_add_friend', { p_code: R.code, p_secret: R.secret, p_user: c.dataset.tsAdd });
+      K.closeModal(); toast(`<b>${esc(c.textContent.trim())}</b> is in the tropa ✦`);
+      await tick(true);
+    } catch (err) { console.warn(err); c.disabled = false; toast('Couldn’t add them just now. Try again.'); }
+  });
+
+  /* ── opening an invite link ── */
+  const MAXT = 6;
+  async function joinFlow(code) {
+    const have = K.tropa.list().find((t) => t.remote && t.remote.code === code);
+    if (have) { K.tropa.switchTo(have.id, true); return tick(true); }
+    let g; try { g = await rpc('tropa_get', { p_code: code, p_secret: null }); } catch { g = null; }
+    if (!g) return toast('That invite link doesn’t work any more');
+    const faces = g.members.slice(0, 6).map((p) => K.fav ? K.fav({ ...p, img: p.photo }, 'sm') : '').join('');
+    const m = K.openModal(`<div class="fm"><span class="eyebrow">You’re invited</span><h2 class="display">Join <em>${esc(g.emoji)} ${esc(g.name)}</em></h2>
+      <p class="sub">${esc(g.members.slice(0, 3).map((p) => first(p.name)).join(', '))}${g.members.length > 3 ? ` and ${g.members.length - 3} more` : ''} ${g.members.length === 1 ? 'is' : 'are'} deciding where to go.</p>
+      <div class="ts-faces">${faces}</div>
+      <label class="fm-l">Your name<input id="ts-name" maxlength="28" placeholder="e.g. Juan" value="${esc((S.user && S.user.name) || '')}" autocomplete="given-name"></label>
+      <div class="fm-acts"><button class="btn ghost" data-m="close">Not now</button><span></span><button class="btn primary" data-ts="join">Join ${icon('arrow')}</button></div></div>`, 'fm-sheet');
+    setTimeout(() => { const i = $('#ts-name', m); if (i && !i.value) i.focus(); }, 350);
+    const go = async () => {
+      const name = ($('#ts-name', m).value || '').trim().replace(/[<>]/g, '').slice(0, 28);
+      if (!name) { toast('Add your name first'); return $('#ts-name', m).focus(); }
+      if (K.tropa.list().length >= MAXT) return toast(`You can have up to ${MAXT} tropas — delete one first`);
+      const btn = $('[data-ts="join"]', m); btn.disabled = true;
+      if (!S.user) S.user = { name, provider: '', role: 'explorer', since: Date.now() }; else if (!S.user.name) S.user.name = name;
+      const secret = newSecret(), b = BK0();
+      try {
+        const r = await rpc('tropa_join', { p_code: code, p_member: { ...meMember(b), name }, p_secret: secret });
+        const t = { id: 't' + Date.now().toString(36), name: g.name, emoji: g.emoji, bk: b, remote: { code: r.code, secret, me: r.me } };
+        S.tropas.push(t); persist(); if (K.finishWelcome) K.finishWelcome();
+        K.closeModal(); K.tropa.switchTo(t.id, true);
+        burst(innerWidth / 2, innerHeight * 0.35, { glyph: [g.emoji, '✨', '🎉'], n: 18, spread: 170 });
+        toast(`You’re in <b>${esc(g.name)}</b> ✦ Answer tonight’s questions`);
+        await tick(true);
+      } catch (e) { console.warn(e); btn.disabled = false; toast(/full/.test(e.message || '') ? 'That tropa is full' : 'Couldn’t join just now. Try again.'); }
+    };
+    m.addEventListener('click', (e) => { if (e.target.closest('[data-ts="join"]')) go(); });
+    m.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.id === 'ts-name') { e.preventDefault(); go(); } });
+  }
+  { // the link's code is read once, then taken off the address bar
+    const mt = /^#t=([A-Za-z0-9]{5,12})/.exec(location.hash);
+    if (mt) { try { sessionStorage.setItem('keni.join', mt[1].toUpperCase()); } catch { /* storage blocked */ } history.replaceState(null, '', location.pathname + location.search); }
+  }
+  const pendingJoin = () => { let c = null; try { c = sessionStorage.getItem('keni.join'); sessionStorage.removeItem('keni.join'); } catch { /* storage blocked */ } if (c) joinFlow(c); };
+  const prevShow = K.hooks.afterShow;
+  K.hooks.afterShow = () => { if (prevShow) prevShow(); pendingJoin(); };
+  if (!K.$('#shell').hidden) setTimeout(pendingJoin, 300);
+  else setTimeout(() => { // a link opened before the welcome page was done: the invite waits on top of it
+    let c = null; try { c = sessionStorage.getItem('keni.join'); } catch { /* storage blocked */ }
+    if (c) { if (K.finishWelcome) K.finishWelcome(); pendingJoin(); }
+  }, 600);
+
+  /* ── signed in: your shared tropas come back on this phone ── */
+  async function restore() {
+    if (!K.account || !K.account.email()) return;
+    try {
+      const mine = (await rpc('tropa_mine', {})) || [];
+      let n = 0;
+      for (const r of mine) {
+        if (K.tropa.list().some((t) => t.remote && t.remote.code === r.code)) continue;
+        if (K.tropa.list().length >= MAXT) break;
+        const blank = K.tropa.list().find((t) => !t.remote && !((t.id === S.tropa ? S.bk : t.bk) || {}).friends?.length);
+        const t = blank || { id: 't' + Date.now().toString(36) + n, bk: BK0() };
+        Object.assign(t, { name: r.name, emoji: r.emoji, remote: { code: r.code, secret: null, me: r.me } });
+        if (!blank) S.tropas.push(t); n++;
+      }
+      if (n) { persist(); K.render(); toast(`${n} tropa${n === 1 ? '' : 's'} from your account ✦`); tick(true); }
+    } catch (e) { console.warn('Keni tropa restore:', e); }
+  }
+  if (K.sb) K.sb.auth.onAuthStateChange((ev) => { if (ev === 'SIGNED_IN' || ev === 'INITIAL_SESSION') setTimeout(restore, 800); });
+
+  K.tsync = { invite, pickerHTML, tick, ensureRemote };
+  setTimeout(() => tick(true), 500);
 })();
 </script>
   <script>/* Keni · wheel — "Spin the wheel". Can't decide? Put a handful of places on a wheel and let it pick.
@@ -9547,6 +9792,44 @@ body[data-page="map"] .topbar #look-btn { display: grid; place-items: center; po
 .acf-h { margin: 6px 0 0; font-size: 1.5rem; text-align: left; color: #fff; }
 .acf-note { margin: -2px 0 2px; font-size: .85rem; color: var(--ink-3); text-align: left; }
 .acf .btn.ghost { height: 46px; justify-content: center; }
+/* venue sheet: quick actions and Contact & hours (put back 2026-10-14: these lived in the deleted reservations styles) */
+.qa { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.qa-b { display: grid; justify-items: center; gap: 6px; padding: 12px 4px 10px; border-radius: 20px; color: var(--ink); text-decoration: none; font-size: .74rem; font-weight: 560; background: linear-gradient(160deg, hsl(var(--h) 80% 60% / .26), hsl(var(--h) 80% 40% / .1)); border: 1px solid hsl(var(--h) 90% 75% / .35); transition: transform .25s var(--spring), box-shadow .25s; }
+.qa-b:hover { transform: translateY(-3px); box-shadow: 0 14px 26px -14px hsl(var(--h) 90% 60% / .9); }
+.qa-b:active { transform: scale(.95); }
+.qa.qa-real { display: flex; } .qa.qa-real .qa-b { flex: 1 1 0; min-width: 0; }
+a.ct-row { text-decoration: none; } a.ct-row:hover { background: rgba(255, 255, 255, .06); }
+.qa-b i { font-style: normal; font-size: 1.45rem; line-height: 1; }
+.qa-b span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.ct { display: grid; gap: 4px; }
+.ct h4 { margin-bottom: 6px; }
+.ct-row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 9px 8px; border-radius: 14px; text-align: left; color: inherit; transition: background .2s; }
+button.ct-row:hover { background: rgba(255, 255, 255, .07); }
+.ct-row i { flex: none; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 12px; font-style: normal; font-size: 1.05rem; background: rgba(255, 255, 255, .07); }
+.ct-row span { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.ct-row b { font-weight: 560; overflow-wrap: anywhere; }
+.ct-row small { color: var(--ink-3); font-size: .78rem; }
+.ct-row small.ok { color: #7dffc0; } .ct-row small.no { color: #ffb0bf; }
+.ct-row em { flex: none; font-style: normal; font-size: .72rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
+.ct .fine { margin-top: 6px; }
+.why > summary { cursor: pointer; list-style: none; display: flex; align-items: center; }
+.why > summary::-webkit-details-marker { display: none; }
+.why > summary h4 { margin: 0; }
+.why > summary::after { content: "▾"; margin-left: auto; color: var(--ink-3); transition: transform .25s; }
+.why[open] > summary::after { transform: rotate(180deg); }
+.why[open] > summary { margin-bottom: 14px; }
+.why .m-row { margin-top: 16px; }
+.map-meta .btn.primary { text-decoration: none; }
+.qa-b i { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 14px; background: hsl(var(--h) 80% 60% / .18); color: hsl(var(--h) 90% 82%); }
+.qa-b i .ic { width: 21px; height: 21px; }
+.ct-row i { color: #e6dcff; }
+.ct-row i .ic { width: 18px; height: 18px; }
+/* tropa invite link + join screen (Keni · tropa sync) */
+.ts-link { display: grid; gap: 8px; margin: 12px 0 4px; }
+.ts-wait { color: var(--ink-3); font-size: .9rem; animation: wmBeat 1.2s ease-in-out infinite; }
+.ts-faces { display: flex; gap: 6px; margin: 10px 0 14px; }
+.ts-av { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; vertical-align: middle; }
+.ts-friends .chips { margin-top: 6px; }
 .acf-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; font-size: .85rem; }
 .acf-links b { color: #e6dcff; }
 .wm-name input { min-width: 0; height: 46px; padding: 0 1rem; border-radius: 999px; border: 1px solid rgba(196, 176, 255, .4); background: rgba(255, 255, 255, .07); color: #fff; font: inherit; font-size: 16px; }
@@ -9797,14 +10080,22 @@ body.pins-pop #bigmap .kpin:not(.was) { animation: kPop .42s cubic-bezier(.3, 1.
 <script>/* Keni · reports — "Report a problem" at the bottom of every place's page (added 2026-10-14).
    A basic place (a name and pin from OpenStreetMap that nobody has checked) changes straight away: a fixed kind is used everywhere,
    and a place reported closed or not real is hidden. A full listing does NOT change by itself: the report shows in the owner's Studio
-   and goes to the Keni team, so one person can't wreck a checked listing. Demo: reports stay on this device (S.reports); with a backend
-   they are shared, and a basic place changes for everyone once a few people agree. */
+   and goes to the Keni team, so one person can't wreck a checked listing. Every report is sent to public.reports and handled in the
+   admin dashboard (admin.html); this phone also keeps its own copy (S.reports) so it remembers what you reported. */
 (() => {
   const K = window.KeniCore; if (!K) return;
   const { S, ui, persist, VBY, CAT, CATS, $, esc, toast, burst } = K;
   const R = () => (S.reports && typeof S.reports === 'object' ? S.reports : (S.reports = {}));
   const REASONS = [['kind', '🏷️', 'Wrong kind'], ['closed', '🚫', 'Closed for good'], ['where', '📍', 'Wrong location'], ['fake', '❓', 'Not a real place'], ['other', '💬', 'Something else']];
   const RN = Object.fromEntries(REASONS.map((r) => [r[0], r]));
+  // reports go to the Keni team (public.reports, read in the admin dashboard). This phone is told apart by a random id.
+  const device = () => { if (!S.device) { S.device = [...crypto.getRandomValues(new Uint8Array(16))].map((b) => b.toString(16).padStart(2, '0')).join(''); persist(); } return S.device; };
+  const send = (fn, args) => {
+    const DB = window.KENI_DB; if (!DB) return;
+    const go = K.sb ? K.sb.rpc(fn, args).then(({ error }) => { if (error) throw error; })
+      : fetch(`${DB.url}/rest/v1/rpc/${fn}`, { method: 'POST', headers: { apikey: DB.key, 'content-type': 'application/json' }, body: JSON.stringify(args) }).then((r) => { if (!r.ok) throw new Error(r.status); });
+    go.catch((e) => { console.warn('Keni report:', e); toast('Saved on this phone. Couldn’t send it to the Keni team just now.'); });
+  };
   // a kind fixed by a report is put back every time the app starts
   for (const [id, r] of Object.entries(R())) { const v = VBY[id]; if (!v || !RN[r.reason]) { delete R()[id]; continue; } if (v.basic && r.reason === 'kind' && CAT[r.kind]) v.cats = [r.kind]; }
 
@@ -9830,6 +10121,7 @@ body.pins-pop #bigmap .kpin:not(.was) { animation: kPop .42s cubic-bezier(.3, 1.
     if (v.basic && rep.reason === 'kind') v.cats = [rep.kind];
     if (v.basic && (rep.reason === 'closed' || rep.reason === 'fake') && !S.hidden.includes(v.id)) { S.hidden.push(v.id); r.hid = true; }
     R()[v.id] = r; persist(); open = null; step = 'reason';
+    send('report_send', { p_place: v.id, p_name: v.name, p_reason: rep.reason, p_kind: rep.kind || null, p_note: rep.note || null, p_device: device() });
     if (el) { const b = el.getBoundingClientRect(); burst(b.left + b.width / 2, b.top, { glyph: ['⚑', '✨'], n: 8, spread: 80 }); }
     toast(v.basic && ['kind', 'closed', 'fake'].includes(rep.reason) ? 'Thanks! Fixed on your map. It helps the next person ✓' : 'Thanks! Sent. It helps the next person ✓');
     if (v.basic && rep.reason === 'kind') K.openDetail(v.id, ui.tab); else redraw(v); // a new kind changes the whole page
@@ -9840,6 +10132,7 @@ body.pins-pop #bigmap .kpin:not(.was) { animation: kPop .42s cubic-bezier(.3, 1.
     if (v.basic && r.reason === 'kind' && CAT[r.from]) v.cats = [r.from];
     if (r.hid) S.hidden = S.hidden.filter((x) => x !== v.id);
     delete R()[v.id]; persist(); toast('Report taken back');
+    send('report_undo', { p_place: v.id, p_device: device() });
     if (v.basic && r.reason === 'kind') K.openDetail(v.id, ui.tab); else redraw(v);
     K.render();
   }
