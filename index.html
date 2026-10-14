@@ -1073,6 +1073,12 @@ body[data-page="map"] #fab-add .kin { scale: .72; }
 .search input { flex: 1; min-width: 0; background: none; border: 0; outline: 0; color: #fff; font: inherit; font-size: .95rem; }
 .search input::placeholder { color: var(--ink-3); }
 .search input::-webkit-search-cancel-button { display: none; }
+.search-f { position: relative; flex: none; display: grid; place-items: center; width: 32px; height: 32px; margin-right: -8px; border-radius: 50%; color: var(--ink-3); transition: color .2s, background .2s, transform .25s var(--spring, cubic-bezier(.2, .9, .3, 1.2)); }
+.search-f[hidden] { display: none; }
+.search-f .ic { width: 18px; height: 18px; }
+.search-f:hover, .search-f[aria-expanded="true"] { color: #fff; background: rgba(196, 176, 255, .22); }
+.search-f:active { transform: scale(.88); }
+.search-f em { position: absolute; top: -2px; right: -3px; min-width: 16px; height: 16px; padding: 0 4px; display: grid; place-items: center; border-radius: 999px; font-style: normal; font-size: .6rem; font-weight: 700; color: #1b1033; background: linear-gradient(135deg, #ffd0ea, #ff8fc8); animation: popIn .4s var(--spring, cubic-bezier(.2, .9, .3, 1.2)); }
 .search kbd { font: inherit; font-size: .72rem; padding: 2px 8px; border-radius: 7px; border: 1px solid var(--line); color: var(--ink-3); }
 .avatar { display: flex; align-items: center; padding: 4px; border-radius: 999px; background: rgba(255, 255, 255, .07); border: 1px solid var(--line); transition: transform .3s var(--spring); }
 .avatar:hover { transform: scale(1.06); }
@@ -1883,6 +1889,16 @@ html.osm-tiles .leaflet-tile-pane { filter: invert(1) hue-rotate(196deg) saturat
 }
 
 /* ═════════════════════════ BARKADA · STAGES ═════════════════════════ */
+.mtch2 { min-height: 52vh; display: grid; place-content: center; justify-items: center; gap: 22px; }
+.m2-logo { position: relative; width: 120px; height: 120px; display: grid; place-items: center; }
+.m2-logo img { position: relative; width: 64px; height: auto; filter: drop-shadow(0 10px 30px rgba(196, 176, 255, .7)); animation: m2Hop 1.1s cubic-bezier(.3, 1.4, .5, 1) infinite; }
+.m2-ring { position: absolute; inset: 0; border-radius: 50%; border: 2px solid rgba(196, 176, 255, .55); animation: m2Ring 1.2s ease-out infinite; animation-delay: var(--d, 0s); }
+.m2-t { font-weight: 600; color: var(--ink-2, #cfc6ea); }
+.m2-dots i { font-style: normal; animation: m2Dot 1s infinite; } .m2-dots i:nth-child(2) { animation-delay: .15s; } .m2-dots i:nth-child(3) { animation-delay: .3s; }
+@keyframes m2Hop { 0%, 100% { transform: translateY(0) scale(1); } 40% { transform: translateY(-14px) scale(1.05); } 60% { transform: translateY(0) scale(.96, 1.04); } }
+@keyframes m2Ring { from { transform: scale(.55); opacity: .9; } to { transform: scale(1.35); opacity: 0; } }
+@keyframes m2Dot { 0%, 100% { opacity: .2; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .m2-logo img, .m2-ring, .m2-dots i { animation: none; } }
 @property --acc { syntax: '<number>'; inherits: true; initial-value: 268; }
 @property --ang { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
 
@@ -2774,11 +2790,11 @@ html.osm-tiles .leaflet-tile-pane { filter: invert(1) hue-rotate(196deg) saturat
       <label class="search">
         <span id="ic-search"></span>
         <input id="q" type="search" placeholder="Search places, landmarks, vibes…" autocomplete="off" spellcheck="false" enterkeyhint="search" aria-controls="ksr">
+        <button type="button" class="search-f" id="search-f" data-act="fmore" aria-label="Filters" aria-expanded="false" hidden></button>
         <kbd>/</kbd>
       </label>
       <button class="btn ghost area-btn" id="area-btn" aria-haspopup="menu" aria-expanded="false" aria-label="Change your area"><span id="ic-pin"></span><span class="lbl">Balibago</span><span id="ic-chev"></span></button>
       <button class="btn ghost surprise-btn" id="surprise"><span id="ic-dice"></span><span class="lbl">Surprise me</span></button>
-      <button class="btn tropa-btn" id="tropa-btn" aria-label="Tropa mode: plan with your friends"><span id="ic-tropa"></span><span class="lbl">Tropa mode</span></button>
       <button class="avatar" id="profile" aria-label="Your taste"></button>
     </header>
 
@@ -3214,6 +3230,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
       id: r.id, name: r.name, area: areaOk(r.area), cats, subs: kinds.filter((c) => K.SUB[c]), vibes: r.vibes || [], price: r.price ?? null, blurb: r.blurb || '',
       rating: null, real: true, perks: r.perks || [], hoursKnown: Array.isArray(r.hours), hours: Array.isArray(r.hours) ? r.hours : (K.HOURS[kinds[0]] || K.HOURS[cats[0]] || [10, 22]),
       off: r.off_days || [], days: r.days || null, hoursNote: r.hours_note || '', lat: r.lat, lng: r.lng, ct: r.contacts || {}, src: r.source === 'osm' ? 'osm' : 'g', img: r.photo || undefined,
+      crave: (r.cravings || []).map((c) => String(c).toLowerCase()), // the foods it's tagged with (Cravings); empty = Keni guesses from the name
     };
     if (r.level === 'basic') {
       const an = (K.AREA[v.area] || {}).name || 'Angeles';
@@ -3392,13 +3409,46 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
      What you feel like right now. One tap on the map filters it; Keni remembers the day and the time of each tap (S.trips, on this device)
      and learns your pattern from them: no set-up screens, and taste that follows the clock instead of one fixed list. */
   const TRIPS = [
-    ['gutom', '🍽️', 'Gutom', ['foodtrip']],
+    ['gutom', '🍽️', 'Foodtrip', ['foodtrip']],
     ['kape', '☕', 'Kape', ['cafe', 'sweets']],
     ['inom', '🍻', 'Inom', ['inuman', 'ktv']],
     ['tambay', '🛋️', 'Tambay', ['tambayan', 'outdoors']],
     ['gala', '🛍️', 'Gala', ['gala', 'sports']],
   ];
   const TRIP = Object.fromEntries(TRIPS.map((t) => [t[0], t]));
+  /* Cravings: a food you want right now. It narrows the map to places that have it and picks the plan it belongs to.
+     A place's foods come from its `cravings` column in the database; until it's tagged, Keni guesses from its name, kinds and menu. */
+  const CRAVES = [
+    { id: 'chicken', e: '🍗', l: 'Chicken', plan: 'gutom', re: /chicken|manok|inasal|wings/, subs: ['chicken'] },
+    { id: 'sushi', e: '🍣', l: 'Sushi', plan: 'gutom', re: /sushi|maki|japanese|izakaya/ },
+    { id: 'tusok', e: '🍢', l: 'Tusok-tusok', plan: 'gutom', re: /fish ?balls?|kwek|tusok|isaw|kikiam|street ?food/, subs: ['streetfood'] },
+    { id: 'ramen', e: '🍜', l: 'Ramen', plan: 'gutom', re: /ramen|noodle/, subs: ['ramen'] },
+    { id: 'samgyup', e: '🥓', l: 'Samgyup', plan: 'gutom', re: /samgyup|korean|k-?bbq|unli ?grill/ },
+    { id: 'burger', e: '🍔', l: 'Burger', plan: 'gutom', re: /burger/ },
+    { id: 'pizza', e: '🍕', l: 'Pizza', plan: 'gutom', re: /pizza/, subs: ['pizza'] },
+    { id: 'pares', e: '🍲', l: 'Pares & lomi', plan: 'gutom', re: /pares|lomi|mami|bulalo|lugaw|goto/ },
+    { id: 'sisig', e: '🍳', l: 'Sisig', plan: 'gutom', re: /sisig/, subs: ['sisig'] },
+    { id: 'milktea', e: '🧋', l: 'Milk tea', plan: 'kape', re: /milk ?tea|boba|pearl/, subs: ['milktea'] },
+    { id: 'sweets', e: '🍰', l: 'Sweets', plan: 'kape', re: /cake|dessert|halo-?halo|ice cream|donut|doughnut/, subs: ['dessert', 'halo'] },
+  ];
+  const CRAVE = Object.fromEntries(CRAVES.map((c) => [c.id, c]));
+  const craveMemo = new WeakMap();
+  function cravesOf(v) {
+    if (!v) return [];
+    if (Array.isArray(v.crave) && v.crave.length) return v.crave.filter((c) => CRAVE[c]);
+    let out = craveMemo.get(v); if (out) return out;
+    const menu = (MENUS || {})[v.id], items = menu && menu.sections ? menu.sections.flatMap((x) => (x.items || []).map((i) => i.name)) : [];
+    const text = [v.name, v.blurb, ...(v.subs || []), ...items].join(' ').toLowerCase();
+    out = CRAVES.filter((c) => (c.subs || []).some((x) => (v.subs || []).includes(x)) || c.re.test(text)).map((c) => c.id);
+    craveMemo.set(v, out); return out;
+  }
+  // the cravings that at least one place on the map has, so a chip never leads to an empty map (recounted when the places change)
+  let craveAvail = null, craveKey = '';
+  function cravesHere() {
+    const all = [...VENUES, ...((window.KENI || {}).BASIC || [])], key = all.length + '|' + S.hidden.length;
+    if (craveKey !== key) { const has = new Set(); all.forEach((v) => { if (!S.hidden.includes(v.id)) cravesOf(v).forEach((c) => has.add(c)); }); craveAvail = CRAVES.filter((c) => has.has(c.id)); craveKey = key; }
+    return craveAvail;
+  }
   const dayPart = (h) => (h < 5 ? 3 : h < 11 ? 0 : h < 17 ? 1 : h < 22 ? 2 : 3); // morning · afternoon · evening · late night
   const PART_NAMES = ['in the mornings', 'in the afternoons', 'in the evenings', 'late at night'];
   const trips = () => (Array.isArray(S.trips) ? S.trips : (S.trips = []));
@@ -3442,7 +3492,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
   // for the profile: what Keni has picked up so far
   function tripLine() {
     const all = trips().filter((t) => TRIP[t.k]);
-    if (!all.length) return '<p class="fine">Tap “Anong trip mo?” on the map and Keni starts learning what you’re up for.</p>';
+    if (!all.length) return '<p class="fine">Tap Plans on the map and Keni starts learning what you’re up for.</p>';
     const n = {}; all.forEach((t) => { n[t.k] = (n[t.k] || 0) + 1; });
     const chipsHTML = Object.keys(n).sort((a, b) => n[b] - n[a]).map((k) => `<span class="tag">${TRIP[k][1]} ${TRIP[k][2]} · ${n[k]}</span>`).join('');
     const u = usualTrip();
@@ -3953,7 +4003,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
 
   // the same filters as the map's list, for any one place (the basic places use it for their dots and the Explore list)
   const passes = (v) => { const q = ui.q.trim().toLowerCase(); return !S.hidden.includes(v.id)
-    && (!ui.trip || !TRIP[ui.trip] || v.cats.some((c) => TRIP[ui.trip][3].includes(c))) && (!ui.vibe || !VIBE[ui.vibe] || vibesOf(v).includes(ui.vibe))
+    && (ui.crave ? cravesOf(v).includes(ui.crave) : (!ui.trip || !TRIP[ui.trip] || v.cats.some((c) => TRIP[ui.trip][3].includes(c)))) && (!ui.vibe || !VIBE[ui.vibe] || vibesOf(v).includes(ui.vibe))
     && (ui.cat === 'all' || v.cats.includes(ui.cat)) && (ui.area === 'all' || v.area === ui.area) && (!ui.open || status(v).open)
     && (!ui.price || (v.price != null && v.price <= ui.price)) && (!ui.am.length || ui.am.every((k) => hasAmen(v, k)))
     && (!ui.sf || !core.hooks.sfHas || core.hooks.sfHas(v, ui.sf)) && (!q || (core.hooks.qMatch ? core.hooks.qMatch(v, q) : hay(v).includes(q))); };
@@ -3962,7 +4012,8 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
     let list = VENUES.filter((v) => !S.hidden.includes(v.id));
     if (ui.view === 'saved') list = [...list.filter((v) => S.saved.includes(v.id)), ...((window.KENI || {}).BASIC || []).filter((v) => S.saved.includes(v.id))]; // saved basic places too
     const ic = intentCats(); if (ic) list = list.filter((v) => v.cats.some((c) => ic.includes(c)));
-    if (ui.trip && TRIP[ui.trip] && ui.view === 'map') list = list.filter((v) => v.cats.some((c) => TRIP[ui.trip][3].includes(c)));
+    if (ui.crave && CRAVE[ui.crave] && ui.view === 'map') list = list.filter((v) => cravesOf(v).includes(ui.crave)); // a craving is more exact than its plan
+    else if (ui.trip && TRIP[ui.trip] && ui.view === 'map') list = list.filter((v) => v.cats.some((c) => TRIP[ui.trip][3].includes(c)));
     if (ui.vibe && VIBE[ui.vibe] && ui.view === 'map') list = list.filter((v) => vibesOf(v).includes(ui.vibe));
     if (ui.cat !== 'all') list = list.filter((v) => v.cats.includes(ui.cat));
     if (ui.area !== 'all') list = list.filter((v) => v.area === ui.area);
@@ -4012,7 +4063,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
 
   function renderTop() {
     $('#area-btn .lbl').textContent = AREA[S.area].name;
-    $('#tropa-btn').classList.toggle('on', ui.view === 'plan');
+    if ($('#tropa-btn')) $('#tropa-btn').classList.toggle('on', ui.view === 'plan');
     $('#profile').innerHTML = core.hooks.avatar ? core.hooks.avatar() : (S.picks.slice(0, 3).map((id) => `<span>${CAT[id].emoji}</span>`).join('') || '<span>✨</span>');
   }
 
@@ -4042,11 +4093,18 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
     $('#intro').innerHTML = `<span class="eyebrow">${t[0]}</span><h1 class="display">${t[1]}</h1><p class="sub">${t[2]}</p>`;
   }
 
+  // the two question rows on the map ("Anong trip mo?", "Anong vibe?") fold up when you tap their label; both start folded, and the choice is remembered on this phone
+  let fold = { trip: true, vibe: true, crave: true };
+  try { Object.assign(fold, JSON.parse(localStorage.getItem('keni.fold')) || {}); } catch (e) {}
+  const setFold = (k, v) => { fold[k] = v; try { localStorage.setItem('keni.fold', JSON.stringify(fold)); } catch (e) {} };
+  core.folds = { open(k) { if (fold[k]) { setFold(k, false); ui.foldJust = k; render(); } } }; // the first-run tour opens a row it points at
+  const foldQ = (k, text) => `<button class="trip-q fold-q" data-fold="${k}" aria-expanded="${!fold[k]}">${text}${icon('chev')}</button>`;
   function renderFilters() {
     const f = $('#filters');
-    if (ui.view === 'saved' || ui.view === 'plan' || ui.view === 'biz' || isBare()) { f.hidden = true; return; }
+    const sfb = $('#search-f'); // Filters lives in the search bar: a sliders icon, with the number of filters that are on
+    if (ui.view === 'saved' || ui.view === 'plan' || ui.view === 'biz' || isBare()) { f.hidden = true; if (sfb) sfb.hidden = true; return; }
     f.hidden = false;
-    const keep = $('.chips', f) ? $('.chips', f).scrollLeft : 0, keepV = $('.vibe-row', f) ? $('.vibe-row', f).scrollLeft : 0;
+    const keep = $('.chips', f) ? $('.chips', f).scrollLeft : 0, keepV = $('.vibe-row', f) ? $('.vibe-row', f).scrollLeft : 0, keepC = $('.crave-row', f) ? $('.crave-row', f).scrollLeft : 0;
     const wide = ui.view === 'explore' || ui.view === 'map';
     const nFilt = (ui.open ? 1 : 0) + (ui.price ? 1 : 0) + ui.am.length + (ui.area !== 'all' ? 1 : 0) + (ui.sort !== 'match' ? 1 : 0);
     const ic = intentCats();
@@ -4058,16 +4116,22 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
     const usual = onMap ? usualTrip() : null, just = ui.tripJust; ui.tripJust = '';
     // the second row on the map asks "Anong vibe?". It only offers a vibe that a place still in view really has, so a tap never empties the map
     const justV = ui.vibeJust; ui.vibeJust = '';
+    const fj = ui.foldJust; ui.foldJust = ''; // the row that was just opened, so its chips slide in
     const vibeRow = () => {
-      const vs = VIBES.filter((x) => x.id === ui.vibe || VENUES.some((v) => !S.hidden.includes(v.id) && inTrip(v, ui.trip) && (ui.cat === 'all' || v.cats.includes(ui.cat)) && vibesOf(v).includes(x.id)));
-      return vs.length ? `<div class="chips vibe-row" role="group" aria-label="Vibe"><span class="trip-q">Anong vibe?</span>${vs.map((x, i) => `<button class="chip vibe-chip${x.id === justV ? ' just' : ''}" data-vibe="${x.id}" aria-pressed="${ui.vibe === x.id}" style="--i:${i};--h:${x.hue}"><span>${x.emoji}</span>${esc(x.label)}${ui.vibe === x.id ? ' <b>✕</b>' : ''}</button>`).join('')}</div>` : '';
+      const vs = VIBES.filter((x) => x.id === ui.vibe || VENUES.some((v) => !S.hidden.includes(v.id) && (ui.crave ? cravesOf(v).includes(ui.crave) : inTrip(v, ui.trip)) && (ui.cat === 'all' || v.cats.includes(ui.cat)) && vibesOf(v).includes(x.id)));
+      return vs.length ? `<div class="chips vibe-row" role="group" aria-label="Vibe">${foldQ('vibe', 'Vibes')}${vs.map((x, i) => [x, i]).filter(([x]) => !fold.vibe || x.id === ui.vibe).map(([x, i]) => `<button class="chip vibe-chip${x.id === justV ? ' just' : ''}${fj === 'vibe' ? ' fold-in' : ''}" data-vibe="${x.id}" aria-pressed="${ui.vibe === x.id}" style="--i:${i};--h:${x.hue}"><span>${x.emoji}</span>${esc(x.label)}${ui.vibe === x.id ? ' <b>✕</b>' : ''}</button>`).join('')}</div>` : '';
     };
-    const tripRow = () => `${ui.cat !== 'all' && CAT[ui.cat] ? `<button class="chip sf-chip" data-cat="all" aria-pressed="true" aria-label="Stop filtering by ${esc(CAT[ui.cat].label)}">${CAT[ui.cat].emoji} ${esc(CAT[ui.cat].label)} <b>✕</b></button>` : ''}<span class="trip-q">Anong trip mo?</span>${tripOrder().map((k) => TRIP[k]).filter((t) => VENUES.some((v) => v.cats.some((c) => t[3].includes(c))))
-      .map(([k, e, l], i) => `<button class="chip trip-chip${k === usual ? ' usual' : ''}${k === just ? ' just' : ''}" data-trip="${k}" aria-pressed="${ui.trip === k}" style="--i:${i}"><span>${e}</span>${l}${ui.trip === k ? ' <b>✕</b>' : k === usual ? '<i>usual</i>' : ''}</button>`).join('')}`;
+    // the third row on the map: Cravings. Picking one also picks its plan, so one tap says both
+    const craveRow = () => {
+      const cs = cravesHere();
+      return cs.length ? `<div class="chips vibe-row crave-row" role="group" aria-label="Cravings">${foldQ('crave', 'Cravings')}${cs.map((c, i) => [c, i]).filter(([c]) => !fold.crave || c.id === ui.crave).map(([c, i]) => `<button class="chip crave-chip${c.id === ui.craveJust ? ' just' : ''}${fj === 'crave' ? ' fold-in' : ''}" data-crave="${c.id}" aria-pressed="${ui.crave === c.id}" style="--i:${i}"><span>${c.e}</span>${esc(c.l)}${ui.crave === c.id ? ' <b>✕</b>' : ''}</button>`).join('')}</div>` : '';
+    };
+    const tripRow = () => `${ui.cat !== 'all' && CAT[ui.cat] ? `<button class="chip sf-chip" data-cat="all" aria-pressed="true" aria-label="Stop filtering by ${esc(CAT[ui.cat].label)}">${CAT[ui.cat].emoji} ${esc(CAT[ui.cat].label)} <b>✕</b></button>` : ''}${foldQ('trip', 'Plans')}${tripOrder().map((k) => TRIP[k]).filter((t) => VENUES.some((v) => v.cats.some((c) => t[3].includes(c))))
+      .map((t, i) => [t, i]).filter(([t]) => !fold.trip || t[0] === ui.trip)
+      .map(([[k, e, l], i]) => `<button class="chip trip-chip${k === usual ? ' usual' : ''}${k === just ? ' just' : ''}${fj === 'trip' ? ' fold-in' : ''}" data-trip="${k}" aria-pressed="${ui.trip === k}" style="--i:${i}"><span>${e}</span>${l}${ui.trip === k ? ' <b>✕</b>' : k === usual ? '<i>usual</i>' : ''}</button>`).join('')}`;
     f.innerHTML = `<div class="chips">${sfChip}${onMap ? tripRow() : `<button class="chip" data-cat="all" aria-pressed="${ui.cat === 'all' && !ui.sf}">${wide ? 'Everything' : 'All picks'}</button>
       ${kindChips}`}</div>
-      <button class="chip fmore-btn" data-act="fmore" aria-expanded="${ui.more}">${icon('sliders')} Filters${nFilt ? ` · ${nFilt}` : ''}</button>
-      ${onMap ? vibeRow() : ''}
+      ${onMap ? vibeRow() + craveRow() : ''}
       <div class="fmore" ${ui.more ? '' : 'hidden'}>
       ${ui.view === 'map' ? `<div class="seg mapmode" role="group" aria-label="What the map shows">${[['places', 'Places'], ['pasabit', 'Pasabits'], ['both', 'Both']].map(([k, l]) => `<button data-ps-mode="${k}" aria-pressed="${(ui.mapShow || 'both') === k}">${l}</button>`).join('')}</div>` : ''}
       ${onMap ? `<div class="chips kinds" role="group" aria-label="Kind of place"><button class="chip" data-cat="all" aria-pressed="${ui.cat === 'all'}">Every kind</button>${kindChips}</div>` : ''}
@@ -4079,7 +4143,9 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
       <div class="chips amen" role="group" aria-label="Amenities">${AMEN.map(([k, e, l]) => `<button class="chip" data-amen="${k}" aria-pressed="${ui.am.includes(k)}">${e} ${l}</button>`).join('')}</div>
       ${wide ? `<div class="chips areas"><button class="chip" data-area-f="all" aria-pressed="${ui.area === 'all'}">${icon('pin')} All areas</button>${AREAS.filter((a) => VENUES.some((v) => v.area === a.id)).map((a) => `<button class="chip" data-area-f="${a.id}" aria-pressed="${ui.area === a.id}">${esc(a.name)}</button>`).join('')}</div>` : ''}
       </div>`;
-    $('.chips', f).scrollLeft = keep; if ($('.vibe-row', f)) $('.vibe-row', f).scrollLeft = keepV;
+    if (sfb) { sfb.hidden = false; sfb.innerHTML = icon('sliders') + (nFilt ? `<em>${nFilt}</em>` : ''); sfb.setAttribute('aria-expanded', ui.more); sfb.setAttribute('aria-label', nFilt ? `Filters, ${nFilt} on` : 'Filters'); }
+    $('.chips', f).scrollLeft = keep; if ($('.vibe-row', f)) $('.vibe-row', f).scrollLeft = keepV; if ($('.crave-row', f)) $('.crave-row', f).scrollLeft = keepC;
+    const pj = ui.craveJust && $('.crave-row [aria-pressed="true"]', f); if (pj) { const row = pj.parentElement; row.scrollLeft += pj.getBoundingClientRect().left - row.getBoundingClientRect().left - row.clientWidth / 2 + pj.offsetWidth / 2; } ui.craveJust = ''; // keep the craving you just picked in view
   }
 
   function renderFeatured(v) {
@@ -4203,7 +4269,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
         <button data-view="explore">${icon('compass')}<span>Explore</span></button>
         <button data-view="map">${icon('map')}<span>Map</span></button>
         <button data-view="saved">${icon('heart')}<span>Saved</span><em class="badge" hidden>0</em></button></div>
-        ${(window.KENI_OFF || {}).chats ? '' : `<button class="dock-side left" data-ms="open" aria-label="Messages and friends"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-12.3 7.4L3 21l2.1-5.7A8.4 8.4 0 1 1 21 11.5z"/></svg><span>Chats</span><em class="badge" hidden>0</em></button>`}
+        ${(window.KENI_OFF || {}).chats ? `<button class="dock-side left" data-tz-open aria-label="My tropas">${icon('users')}<span>Tropa</span></button>` : `<button class="dock-side left" data-ms="open" aria-label="Messages and friends"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-12.3 7.4L3 21l2.1-5.7A8.4 8.4 0 1 1 21 11.5z"/></svg><span>Chats</span><em class="badge" hidden>0</em></button>`}
         ${role === 'biz' ? `<button class="dock-side" data-view="biz" aria-label="Studio">${icon('store')}<span>Studio</span></button>` : ''}`;
     }
     $$('[data-view]', dock).forEach((b) => b.classList.toggle('on', b.dataset.view === ui.view));
@@ -4251,11 +4317,20 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
     if (cat) { ui.cat = cat.dataset.cat; ui.sf = null; return render(); }
     const am = e.target.closest('[data-amen]');
     if (am) { const k = am.dataset.amen, i = ui.am.indexOf(k); if (i < 0) ui.am.push(k); else ui.am.splice(i, 1); return render(); }
+    const fd = e.target.closest('[data-fold]');
+    if (fd) { const k = fd.dataset.fold; setFold(k, !fold[k]); ui.foldJust = fold[k] ? '' : k; return render(); }
     const trip = e.target.closest('[data-trip]');
     if (trip) { // "Anong trip mo?": tap to see it on the map, tap again to clear. Each choice teaches Keni a little.
-      const k = trip.dataset.trip;
+      const k = trip.dataset.trip; ui.crave = ''; // a new plan (or none) clears the craving it came with
       if (ui.trip === k) ui.trip = '';
       else { const first = !trips().length && !(S.privacy && S.privacy.learn === false); ui.trip = k; ui.tripJust = k; ui.cat = 'all'; ui.sf = null; if (ui.vibe && !VENUES.some((v) => inTrip(v, k) && vibesOf(v).includes(ui.vibe))) ui.vibe = ''; logTrip(k); reanalyze(); if (first) toast('Got it. Keni learns what you’re up for, by day and time ✦'); }
+      return render();
+    }
+    const cr = e.target.closest('[data-crave]');
+    if (cr) { // Cravings: tap to see only places that have it (and its plan), tap again to clear
+      const k = cr.dataset.crave;
+      if (ui.crave === k) { ui.crave = ''; if (CRAVE[k] && ui.trip === CRAVE[k].plan) ui.trip = ''; }
+      else if (CRAVE[k]) { ui.crave = k; ui.craveJust = k; ui.trip = CRAVE[k].plan; ui.cat = 'all'; ui.sf = null; if (ui.vibe && !VENUES.some((v) => cravesOf(v).includes(k) && vibesOf(v).includes(ui.vibe))) ui.vibe = ''; }
       return render();
     }
     const vibe = e.target.closest('[data-vibe]');
@@ -4303,7 +4378,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
   $('#profile').addEventListener('click', () => (core.openProfile ? core.openProfile() : startOnboarding(1)));
   $('#logo').addEventListener('click', (e) => { e.preventDefault(); ui.q = ''; $('#q').value = ''; setView('map'); });
   // the Tropa button opens your tropas (manage them, then plan from there); it falls back to Tropa mode itself
-  $('#tropa-btn').addEventListener('click', () => { if (core.tropaScreen) return core.tropaScreen.open(); closeModal(); ui.q = ''; $('#q').value = ''; setView('plan'); });
+  if ($('#tropa-btn')) $('#tropa-btn').addEventListener('click', () => { if (core.tropaScreen) return core.tropaScreen.open(); closeModal(); ui.q = ''; $('#q').value = ''; setView('plan'); });
   $('#surprise').addEventListener('click', () => surprise(false));
 
   /* area picker — a fixed popover (kept out of the topbar so its glass can blur the page, not the bar) */
@@ -4477,13 +4552,12 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
   function renderMap(list) {
     if (!$('.mapbox', mapview)) { // the location prompt may already be in here, so add the map in front of it
       mapview.insertAdjacentHTML('afterbegin', `<div class="mapbox glass"><div id="bigmap"></div>
-        <div class="map-hud"><span class="pill count" id="map-count"></span><button class="chip" data-act="map-home">${icon('target')} Near me</button><button class="chip" data-act="map-fit">${icon('layers')} Show all</button></div>
+        <div class="map-hud"><button class="chip" data-act="map-home">${icon('target')} Near me</button></div>
         <div class="map-none" id="map-none" hidden><div class="big">🗺️</div><b>No places match</b><span>Try loosening the filters.</span></div>
         <div class="map-rail" id="map-rail"></div></div>`);
     }
     const ok = ensureBigMap();
     if (!ok && !$('.map-off', mapview)) $('#bigmap', mapview).innerHTML = '<div class="map-off">Couldn’t load the map tiles — check your connection and reload. The list below still works.</div>';
-    $('#map-count').innerHTML = `${icon('pin')} ${list.length} place${list.length === 1 ? '' : 's'}`;
     $('#map-none').hidden = !!list.length;
     if (bSel && !list.some((v) => v.id === bSel)) bSel = null;
     const rail = $('#map-rail'), keep = rail.scrollLeft;
@@ -4832,7 +4906,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
     openModal, closeModal, openDetail, toggleSave, startOnboarding, setView, render: () => render(), resetCards, isBiz, share,
     hasMap, baseLayer, pinIcon, dotIcon, homeIcon, areaPt, locate, setLoc, nearestArea, distKm, fromTxt,
     mapParts: () => ({ map: bmap, layer: bLayer }), selectOnMap,
-    mapLooks: () => Object.keys(MB_LOOKS).map((k) => ({ k, name: MB_LOOKS[k][0], thumb: lookThumb(k), on: k === mapLook() })), setMapLook, mapOnOSM: () => osmMode, geoFind, geoName, tripLine, usualTrip, TRIPS,
+    mapLooks: () => Object.keys(MB_LOOKS).map((k) => ({ k, name: MB_LOOKS[k][0], thumb: lookThumb(k), on: k === mapLook() })), setMapLook, mapOnOSM: () => osmMode, geoFind, geoName, tripLine, usualTrip, TRIPS, CRAVES, CRAVE, cravesOf, cravesHere,
   });
   window.KeniCore = core;
   // if you shared your location before, quietly refresh it each time the app opens (the browser remembers your answer)
@@ -4842,7 +4916,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
   /* ═════════════════════ BOOT ═════════════════════ */
   $('#ic-search').innerHTML = icon('search');
   $('#ic-dice').innerHTML = icon('dice');
-  $('#ic-tropa').innerHTML = icon('users');
+  if ($('#ic-tropa')) $('#ic-tropa').innerHTML = icon('users');
   $('#ic-pin').innerHTML = icon('pin');
   $('#ic-chev').innerHTML = icon('chev');
   tint();
@@ -4912,12 +4986,14 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
      every time instead of leaning on taste. Until someone answers, their usual stands in — yours from your "Anong trip mo?" habit,
      a friend's from their picks — so most of the time it is one tap. Answers go stale after 8 hours. */
   const TRIPS = K.TRIPS || [], TRIP = Object.fromEntries(TRIPS.map((t) => [t[0], t]));
+  const CRAVE = K.CRAVE || {}, cravesOf = K.cravesOf || (() => []);
+  const cravesIn = (t) => (Array.isArray(t.crave) ? t.crave.filter((c) => CRAVE[c]) : []); // what this person is craving tonight (any number, or none)
   const BUDS = [[1, 'Under ₱200'], [2, 'Up to ₱500'], [3, 'Up to ₱1,000'], [0, 'Kahit magkano']];
   const budLabel = (n) => (BUDS.find((x) => x[0] === n) || BUDS[3])[1];
   const FAR = [[1, '🚶 Walking'], [3, '🛵 Short ride'], [0, '🗺️ Anywhere']];
   function usualOf(f) {
     const best = TRIPS.map((t) => [t[0], t[3].filter((c) => (f.picks || []).includes(c)).length]).sort((a, c) => c[1] - a[1])[0];
-    return { trip: (f.me && K.usualTrip && K.usualTrip()) || (best && best[1] ? best[0] : null), budget: f.budget >= 1 && f.budget <= 3 ? f.budget : 0, vibe: (f.vibes || []).find((x) => VIBE[x]) || null };
+    return { trip: (f.me && K.usualTrip && K.usualTrip()) || (best && best[1] ? best[0] : null), budget: f.budget >= 1 && f.budget <= 3 ? f.budget : 0, vibe: (f.vibes || []).find((x) => VIBE[x]) || null, crave: [] };
   }
   const tonightAll = () => { const b = bk(); if (!b.tonight || !b.tonight.by || Date.now() - b.tonight.at > 8 * 36e5) b.tonight = { at: Date.now(), by: {} }; return b.tonight; };
   const tonight = (f) => ({ ...usualOf(f), ...(tonightAll().by[f.id] || {}) });
@@ -4930,7 +5006,9 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
     // the vibe most of the tropa wants tonight: the pick has to be a place where that vibe is confirmed
     const vc = {}; ms.forEach((f) => { const x = tonight(f).vibe; if (VIBE[x]) vc[x] = (vc[x] || 0) + 1; });
     const tv = Object.entries(vc).sort((a, c) => c[1] - a[1])[0];
-    return { top: top ? { t: TRIP[top[0]], n: top[1] } : null, kinds: Object.keys(cnt).length, min: buds.length ? Math.min(...buds) : 0, vibe: tv ? { id: tv[0], n: tv[1] } : null };
+    const cc = {}; ms.forEach((f) => cravesIn(tonight(f)).forEach((x) => { cc[x] = (cc[x] || 0) + 1; }));
+    const craves = Object.entries(cc).sort((a, c) => c[1] - a[1]).map(([id, n]) => ({ id, n }));
+    return { craves, top: top ? { t: TRIP[top[0]], n: top[1] } : null, kinds: Object.keys(cnt).length, min: buds.length ? Math.min(...buds) : 0, vibe: tv ? { id: tv[0], n: tv[1] } : null };
   }
   const tonightLine = () => { const g = groupTonight(); return `${!g.top ? 'Any trip' : g.top.n === 1 && g.kinds > 1 ? g.kinds + ' trips' : g.top.t[2]}`; };
 
@@ -4944,7 +5022,8 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
     const r = scoreFor(v, { picks: f.picks, vibes: f.vibes, budget: f.budget, area: meet, boost: f.boost });
     const t = tonight(f), tr = TRIP[t.trip], fits = !!tr && tr[3].some((c) => v.cats.includes(c)), over = !!t.budget && v.price > t.budget;
     const vfit = VIBE[t.vibe] ? K.vibesOf(v).includes(t.vibe) : null; // their vibe tonight: a confirmed match lifts the place for them; unknown is neither
-    return { f, pct: clamp(Math.round((!tr ? 64 : fits ? 86 : 42) - (over ? 30 : 0) + (vfit ? 8 : 0) + (r.pct - 60) * 0.2), 20, 98), veto: vetoOf(v, f), fits, over, vfit };
+    const cr = cravesIn(t), cfit = cr.length ? cr.some((c) => cravesOf(v).includes(c)) : null; // their cravings: having one of them lifts the place, having none of them lowers it a little
+    return { f, pct: clamp(Math.round((!tr ? 64 : fits ? 86 : 42) - (over ? 30 : 0) + (vfit ? 8 : 0) + (cfit ? 12 : cfit === false ? -8 : 0) + (r.pct - 60) * 0.2), 20, 98), veto: vetoOf(v, f), fits, over, vfit, cfit };
   }
   /* taking turns, so the majority doesn't win every time: when a pick is locked, whoever didn't get what they wanted is owed one.
      Next time, places that give them their trip are put first (the longer they've waited, the more it counts). Getting your way clears it.
@@ -5014,6 +5093,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
     persist();
   }
   K.codec = { myCode, myLink, friendFromCode, addFriend, appUrl };
+  K.addFriendSheet = () => friendModal(); // the My tropas screen opens Add friend too
   K.pvGlyph = pvGlyph; K.PROVIDERS = PROVIDERS; K.fav = fav;
   const importPending = () => {
     let raw = null; try { raw = sessionStorage.getItem('keni.pendingFriend'); sessionStorage.removeItem('keni.pendingFriend'); } catch { /* storage blocked */ }
@@ -5032,7 +5112,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
   // Three questions, then a pick: who's going → what everyone wants tonight (trip + budget) → where and how far → (short match animation) → the pick → locked (celebration).
   // The crew, their hard no's and the locked pick persist (S.bk); the stage itself is per-visit (ui.bkStage).
   const STAGES = [
-    { id: 'crew', emoji: '🧑‍🤝‍🧑', ic: 'ic-crew', label: 'Crew' },
+    { id: 'crew', emoji: '🧑‍🤝‍🧑', ic: 'ic-crew', label: 'Tropa' },
     { id: 'tonight', emoji: '💭', ic: '', label: 'Trip' },
     { id: 'rules', emoji: '📍', ic: 'ic-rules', label: 'Where' },
     { id: 'pick', emoji: '🏆', ic: 'ic-pick', label: 'Pick' },
@@ -5171,7 +5251,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
         <p class="bk-vibe" data-k="vibe">✨ ${vibe}</p>
         <div class="bk-cta"><span class="cta-note">${ms.length} going</span>
           <button class="btn primary big" data-p="bk-go" data-s="tonight">Next ${icon('arrow')}</button></div>
-        <details class="bk-fold glass" data-k="manage"${solo ? ' open' : ''}><summary>Manage crew &amp; tropas</summary>
+        <details class="bk-fold glass" data-k="manage"${solo ? ' open' : ''}><summary>People in this tropa</summary>
           ${K.tropa ? K.tropa.bar() : ''}
           <div class="bk-acts"><button class="btn ghost sm" data-p="bk-add">${icon('plus')} Add friend</button><button class="btn ghost sm" data-p="bk-invite">${icon('link')} Invite</button>${K.tsync ? '<button class="btn ghost sm" data-ts="code">Join with a code</button>' : ''}</div>
           <ul class="crew-list">${all.map(card).join('')}${solo ? `<li class="cc-empty" data-k="empty"><div><b>It’s just you so far</b><small>Add a friend here, or send them an invite link.</small></div>
@@ -5186,14 +5266,16 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
     const ms = members(), mine = ms.find((f) => f.me), others = ms.filter((f) => !f.me), g = groupTonight(ms), n = ms.length;
     const ask = (f) => {
       const t = tonight(f);
+      const cs = K.cravesHere ? K.cravesHere() : [], mine = cravesIn(t);
       return `<div class="tn-q"><b>Trip</b><div class="chips wrap">${TRIPS.map((x) => `<button class="chip" data-p="bk-trip" data-id="${f.id}" data-v="${x[0]}" aria-pressed="${t.trip === x[0]}">${x[1]} ${esc(x[2])}</button>`).join('')}</div></div>
+        ${cs.length ? `<div class="tn-q"><b>Tell me what you’re craving? <small>optional, pick any</small></b><div class="chips wrap">${cs.map((c) => `<button class="chip cr-chip" data-p="bk-crave" data-id="${f.id}" data-v="${c.id}" aria-pressed="${mine.includes(c.id)}">${c.e} ${esc(c.l)}</button>`).join('')}</div></div>` : ''}
         <div class="tn-q"><b>Budget each</b><div class="chips wrap">${BUDS.map(([v, l]) => `<button class="chip" data-p="bk-bud" data-id="${f.id}" data-v="${v}" aria-pressed="${t.budget === v}">${l}</button>`).join('')}</div></div>
         <div class="tn-q"><b>Vibe <small>optional</small></b><div class="chips wrap">${VIBES.map((x) => `<button class="chip vb-chip" data-p="bk-vibe" data-id="${f.id}" data-v="${x.id}" aria-pressed="${t.vibe === x.id}" style="--h:${x.hue}">${x.emoji} ${esc(x.label)}</button>`).join('')}</div></div>`;
     };
     const row = (f, i) => {
       const t = tonight(f), tr = TRIP[t.trip], ed = ui.bkTn === f.id;
       return `<li class="tn-f" data-k="tn-${f.id}" style="--h:${f.hue};--i:${i}"><div class="tn-row">${fav(f)}<span class="tn-n"><b>${esc(first(f.name))}</b><small>${answered(f) ? 'Answered' : 'Their usual'}${owedOf(f) ? ' · gave in last time' : ''}</small></span>
-        <span class="tn-pill">${tr ? tr[1] + ' ' + esc(tr[2]) : 'Any trip'} · ${t.budget ? esc(budLabel(t.budget)) : 'any budget'}${VIBE[t.vibe] ? ` · ${VIBE[t.vibe].emoji} ${esc(VIBE[t.vibe].label)}` : ''}</span>
+        <span class="tn-pill">${tr ? tr[1] + ' ' + esc(tr[2]) : 'Any trip'} · ${t.budget ? esc(budLabel(t.budget)) : 'any budget'}${VIBE[t.vibe] ? ` · ${VIBE[t.vibe].emoji} ${esc(VIBE[t.vibe].label)}` : ''}${cravesIn(t).length ? ' · ' + cravesIn(t).map((c) => CRAVE[c].e).join('') : ''}</span>
         <button class="link-btn" data-p="bk-tn" data-id="${f.id}" aria-expanded="${ed}">${ed ? 'Done' : 'Change'}</button></div>
         ${ed ? `<div class="tn-edit" data-k="ed">${ask(f)}</div>` : ''}</li>`;
     };
@@ -5205,7 +5287,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
       ${mine ? `<section class="tn-card glass" data-k="me">${ask(mine)}</section>` : ''}
       ${others.length ? `<section class="tn-card glass" data-k="crew"><div class="tn-q"><b>Your tropa</b></div><ul class="tn-list">${others.map(row).join('')}</ul>
         <p class="fine">${K.tropa && K.tropa.active() && K.tropa.active().remote ? 'Friends who joined with your link answer on their own phone. You can still tap to answer for anyone.' : 'Answer for friends you added by hand, or send them the invite link so they answer on their own phone.'}</p></section>` : ''}
-      <p class="bk-vibe" data-k="sum">✨ ${sum}${g.vibe ? ` Vibe: <b>${VIBE[g.vibe.id].emoji} ${esc(VIBE[g.vibe.id].label)}</b>, so the pick will be a place where that vibe is confirmed.` : ''}</p>
+      <p class="bk-vibe" data-k="sum">✨ ${sum}${g.vibe ? ` Vibe: <b>${VIBE[g.vibe.id].emoji} ${esc(VIBE[g.vibe.id].label)}</b>, so the pick will be a place where that vibe is confirmed.` : ''}${g.craves.length ? ` Craving: ${g.craves.slice(0, 3).map((c) => `<b>${CRAVE[c.id].e} ${esc(CRAVE[c.id].l)}${c.n > 1 ? ` (${c.n})` : ''}</b>`).join(', ')}, so places that have it come first.` : ''}</p>
       ${n > 1 && ms.some(owedOf) ? `<p class="fair-note" data-k="fair">🔁 ${fairLine(ms.filter(owedOf))}</p>` : ''}
       <div class="bk-cta"><button class="btn ghost" data-s="crew" data-p="bk-go">${icon('back')} Crew</button>
         <button class="btn primary big" data-s="rules" data-p="bk-go">Next ${icon('arrow')}</button></div>
@@ -5277,75 +5359,18 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
     requestAnimationFrame(() => mmap && mmap.invalidateSize(false));
   }
 
-  /* — stage 3 · match (animated scan) — */
+  /* — stage 3 · match: a short Keni logo animation while the pick is worked out (the work itself is instant) — */
   function matchHTML() {
-    const rows = scanAll(), ms = members(), n = ms.length;
-    const blips = rows.slice(0, 90).map((r, i) => { // the radar shows a sample; the counter still counts every place
-      const u = (hash(r.v.id + 'a') % 1000) / 1000, w = (hash(r.v.id + 'b') % 1000) / 1000, rad = 0.1 + 0.86 * Math.sqrt(u), th = w * Math.PI * 2;
-      return `<i class="blip" data-b="${i}" style="--x:${(50 + Math.cos(th) * rad * 50).toFixed(1)}%;--y:${(50 + Math.sin(th) * rad * 50).toFixed(1)}%"></i>`;
-    }).join('');
-    const av = ms.map((f, i) => `<div class="orb-i" style="--a:${slotA(i, n)}deg;--i:${i};--h:${f.hue}"><div class="orb-in"><div class="orb-av">${fav(f, 'lg')}<span class="orb-n">${esc(short(f))}</span></div></div></div>
-      <div class="lane" style="--a:${slotA(i, n)}deg;--i:${i};--h:${f.hue}"><i></i></div>`).join('');
-    const nNos = ms.reduce((a, f) => a + (f.nos || []).length, 0);
-    const PH = [['Reading tonight’s answers', `${n} answer${n === 1 ? '' : 's'}`], ['Checking budgets', 'who each place is affordable for'], ['Applying hard no’s', `${nNos} veto${nNos === 1 ? '' : 'es'} in play`], ['Making it fair', 'whoever gave in last time goes first']];
-    return `<div class="mtch">
-      <div class="radar-wrap" style="--n:${n}">
-        <div class="rd-disc"><i class="rd-ring" style="--in:18%"></i><i class="rd-ring" style="--in:36%"></i><i class="rd-ring" style="--in:54%"></i><i class="rd-sweep"></i>${blips}</div>
-        ${av}
-        <div class="rd-core"><b data-live="scan">0</b><small>of ${rows.length} scanned</small></div>
-      </div>
-      <aside class="mt-side glass">
-        <div><span class="eyebrow">Almost there</span><h3 class="display">Matching your <em>tropa</em></h3></div>
-        <ol class="mt-ph">${PH.map(([t, s]) => `<li><b>${t}</b><small>${s}</small></li>`).join('')}</ol>
-        <div class="mt-stats"><div class="ok"><b data-live="in">0</b><small>in the running</small></div><div class="veto"><b data-live="veto">0</b><small>voted</small></div><div><b data-live="out">0</b><small>out of range</small></div></div>
-        <div class="mt-tick" aria-hidden="true"></div>
-        <div class="mt-prog"><i></i></div>
-        <button class="link-btn" data-p="bk-skip">Skip the animation</button>
-      </aside></div>`;
+    const logo = ($('#logo .mark img') || {}).src || '';
+    return `<div class="mtch2" role="status" aria-live="polite"><div class="m2-logo"><i class="m2-ring"></i><i class="m2-ring" style="--d:.6s"></i>${logo ? `<img src="${logo}" alt="">` : ''}</div>
+      <p class="m2-t">Finding your spot<span class="m2-dots"><i>.</i><i>.</i><i>.</i></span></p></div>`;
   }
   let mt = null;
-  function stopMatch() { if (mt) { cancelAnimationFrame(mt.raf); clearTimeout(mt.to); } mt = null; }
+  function stopMatch() { if (mt) clearTimeout(mt.to); mt = null; }
   function startMatch(body) {
     stopMatch();
-    const rows = scanAll(), N = rows.length;
-    // visit places in a scrambled-but-stable order so the radar sweeps instead of reading out a sorted list
-    const seq = rows.map((_, i) => i).sort((a, c) => hash(rows[a].v.id + 's') - hash(rows[c].v.id + 's'));
-    const q = (s) => body.querySelector(s), live = (k, v) => { const e = q(`[data-live="${k}"]`); if (e) e.textContent = v; };
-    const tick = q('.mt-tick'), bar = q('.mt-prog i'), phases = $$('.mt-ph li', body);
-    const DUR = reduce.matches ? 300 : 2000, t0 = performance.now();
-    let done = 0, nIn = 0, nVeto = 0, nOut = 0, ph = -1, lastLine = 0;
-    mt = { raf: 0, to: 0, skip: false };
-    const setPhase = (p) => { if (p === ph) return; ph = p; phases.forEach((li, i) => { li.classList.toggle('done', i < p); li.classList.toggle('cur', i === p); }); };
-    const line = (r) => {
-      if (!tick || r.out) return;
-      const bad = r.g.vetoes[0], el = document.createElement('div');
-      el.className = 'tk-l ' + (bad ? 'no' : 'ok');
-      el.innerHTML = `<em>${CAT[r.v.cats[0]].emoji}</em><b>${esc(r.v.name)}</b><span>${bad ? `⛔ ${esc(first(bad.f.name))}: ${esc(bad.veto)}` : K.mood(r.g.score)}</span>`;
-      tick.prepend(el);
-      while (tick.children.length > 5) tick.lastChild.remove();
-    };
-    const finish = () => {
-      const win = groupRows().find((r) => !r.vetoes.length), wi = win ? rows.findIndex((r) => r.v.id === win.v.id) : -1;
-      const dot = wi >= 0 && q(`[data-b="${wi}"]`); if (dot) dot.classList.add('win');
-      body.classList.add('found');
-      const sm = q('.rd-core small'); if (sm) sm.textContent = win ? 'top pick found ✨' : 'no perfect match';
-      ui.bkMatched = N;
-      mt.to = setTimeout(() => { if (body.dataset.stage === 'match') goStage('reveal'); }, reduce.matches ? 0 : 800);
-    };
-    const frame = (now) => {
-      if (!mt || body.dataset.stage !== 'match' || !body.isConnected) return stopMatch();
-      const k = mt.skip ? 1 : Math.min(1, (now - t0) / DUR), upto = Math.round(k * N);
-      for (; done < upto; done++) {
-        const r = rows[seq[done]], dot = q(`[data-b="${seq[done]}"]`);
-        if (r.out) { nOut++; if (dot) dot.classList.add('out'); } else if (r.g.vetoes.length) { nVeto++; if (dot) dot.classList.add('no'); } else { nIn++; if (dot) dot.classList.add('ok'); }
-        if (done === upto - 1 && now - lastLine > 100) { line(r); lastLine = now; }
-      }
-      live('scan', done); live('in', nIn); live('veto', nVeto); live('out', nOut);
-      if (bar) bar.style.width = k * 100 + '%';
-      setPhase(k >= 1 ? 4 : k < 0.25 ? 0 : k < 0.5 ? 1 : k < 0.75 ? 2 : 3);
-      if (k < 1) mt.raf = requestAnimationFrame(frame); else finish();
-    };
-    mt.raf = requestAnimationFrame(frame);
+    ui.bkMatched = scanAll().length || 1;
+    mt = { to: setTimeout(() => { if (body.dataset.stage === 'match') goStage('reveal'); }, reduce.matches ? 200 : 1400) };
   }
 
   /* — stage 4 · pick (ranked reveal) — */
@@ -5372,7 +5397,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
         ${K.biz && K.biz.dealLine ? K.biz.dealLine(v, top.n) : ''}
         ${knowLine(top, ok)}
         <ul class="vds">${verdicts}</ul>
-        <div class="tags"><span class="tag">${c0.emoji} ${esc(c0.label)}</span><span class="tag">${priceLabel(v.price)}</span><span class="tag">${icon('pin')} ${esc(AREA[v.area].name)}</span><span class="tag ${st.unknown ? '' : st.open ? 'open' : 'closed'}">${st.text}</span></div>
+        <div class="tags">${(() => { const has = groupTonight().craves.filter((c) => cravesOf(v).includes(c.id)); return has.length ? `<span class="tag cr-has">${has.map((c) => CRAVE[c.id].e + ' ' + esc(CRAVE[c.id].l)).join(' · ')}</span>` : ''; })()}<span class="tag">${c0.emoji} ${esc(c0.label)}</span><span class="tag">${priceLabel(v.price)}</span><span class="tag">${icon('pin')} ${esc(AREA[v.area].name)}</span><span class="tag ${st.unknown ? '' : st.open ? 'open' : 'closed'}">${st.text}</span></div>
         <div class="acts"><button class="btn primary big pulse" data-p="bk-lock" data-id="${v.id}">Lock it in 🎉</button>
           ${ok.length > 1 ? '<button class="btn ghost" data-p="bk-reroll">Show me another ↻</button>' : ''}
           <button class="btn ghost" data-act="open-detail" data-id="${v.id}">Details</button></div>
@@ -5572,6 +5597,12 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
       case 'bk-open-now': b.open = !b.open; persist(); return refresh();
       case 'bk-trip': { const f = everyone().find((x) => x.id === id); if (!f) return; setTonight(id, { trip: tonight(f).trip === t.dataset.v ? null : t.dataset.v }); return refresh(); }
       case 'bk-bud': setTonight(id, { budget: +t.dataset.v }); return refresh();
+      case 'bk-crave': { // any number of cravings; picking the first one also answers their trip if they hadn't
+        const f = everyone().find((x) => x.id === id), c = CRAVE[t.dataset.v]; if (!f || !c) return;
+        const now = cravesIn(tonight(f)), on = now.includes(c.id), next = on ? now.filter((x) => x !== c.id) : [...now, c.id];
+        const ans = { crave: next }; if (!on && !(tonightAll().by[id] || {}).trip) ans.trip = c.plan;
+        setTonight(id, ans); return refresh();
+      }
       case 'bk-tn': ui.bkTn = ui.bkTn === id ? null : id; return refresh();
       case 'bk-vibe': { const f = everyone().find((x) => x.id === id); if (!f) return; setTonight(id, { vibe: tonight(f).vibe === t.dataset.v ? null : t.dataset.v }); return refresh(); }
       case 'bk-vc': { // after the visit: one tap saves the vibe for everyone's next pick (the same save as the vibe check), and marks the place as visited
@@ -5598,7 +5629,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
         if (s === 'match') ui.bkMatched = 0;
         return goStage(s);
       }
-      case 'bk-skip': if (mt) mt.skip = true; return;
+      case 'bk-skip': return;
       case 'bk-reroll': { const n = groupRows().filter((r) => !r.vetoes.length).length; ui.bkPick = ((ui.bkPick || 0) + 1) % Math.min(5, Math.max(n, 1)); return refresh(); }
       case 'bk-pick': { const i = groupRows().filter((r) => !r.vetoes.length).findIndex((r) => r.v.id === id); if (i >= 0) ui.bkPick = i; return refresh(); }
       case 'bk-clear': b.friends = []; b.off = []; b.locked = null; persist(); return refresh();
@@ -6617,7 +6648,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
   const K = window.KeniCore; if (!K) return;
   const { S, ui, persist, esc, icon, toast, burst, centerOf } = K;
   const first = (n) => String(n).split(' ')[0];
-  const EMOJI = ['🧑‍🤝‍🧑', '🔥', '🌴', '🎮', '🍜', '🎤', '🌙', '☕'], NAMES = ['Squad', 'Weekend crew', 'Barkada', 'Night owls', 'Foodies'], MAX = 6;
+  const EMOJI = ['🧑‍🤝‍🧑', '🔥', '🌴', '🎮', '🍜', '🎤', '🌙', '☕'], NAMES = ['Squad', 'Weekend tropa', 'Barkada', 'Night owls', 'Foodies'], MAX = 6;
 
   /* ───────────── state ───────────── */
   if (!Array.isArray(S.tropas) || !S.tropas.length) { S.tropas = [{ id: 't1', name: 'My tropa', emoji: EMOJI[0], bk: S.bk || null }]; S.tropa = 't1'; }
@@ -6646,13 +6677,20 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
     toast(`<b>${esc(t.name)}</b> is ready — add your people ✦`);
     burst(innerWidth / 2, innerHeight * 0.3, { glyph: [t.emoji, '✨'], n: 12, spread: 130 });
   }
+  // a shared tropa is left (your place on the server goes, then this phone's copy); a tropa only on this phone is deleted
   function remove(id) {
+    const t = find(id); if (!t) return;
+    if (t.remote && K.tsync) { ui.trDel = null; K.render(); return K.tsync.leave(t).then((ok) => { if (ok) drop(id, true); }); }
     if (S.tropas.length < 2) return;
+    drop(id);
+  }
+  function drop(id, left) {
     const t = find(id), wasActive = id === S.tropa;
     if (wasActive) sync();
     S.tropas = S.tropas.filter((x) => x.id !== id); ui.trDel = null;
+    if (!S.tropas.length) S.tropas = [{ id: 't' + Date.now().toString(36), name: 'My tropa', emoji: EMOJI[0], bk: null }]; // never zero tropas
     if (wasActive) switchTo(S.tropas[0].id); else { persist(); K.render(); }
-    toast(`Deleted <b>${esc(t.name)}</b>`);
+    toast(left ? `You left <b>${esc(t.name)}</b>` : `Deleted <b>${esc(t.name)}</b>`);
   }
 
   /* ───────────── UI: switcher bar (Tropa mode → Crew step) ───────────── */
@@ -6661,10 +6699,10 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
     return `<div class="tropa-bar" data-k="tropa">
       <div class="tp-chips" role="tablist" aria-label="Your tropas">${S.tropas.map((t) => `<button class="tp-chip" role="tab" data-tr="go" data-id="${t.id}" aria-selected="${t.id === S.tropa}"><em>${t.emoji}</em><span>${esc(t.name)}</span><small>${people(t)}</small></button>`).join('')}${S.tropas.length < MAX ? `<button class="tp-chip add" data-tr="new">${icon('plus')}<span>New tropa</span></button>` : ''}</div>
       <div class="tp-edit"><button class="tp-emoji" data-tr="emoji" aria-label="Change this tropa’s emoji" title="Change emoji">${a.emoji}</button><input class="tp-name" data-tr-name maxlength="20" value="${esc(a.name)}" aria-label="Tropa name" autocomplete="off" spellcheck="false">${K.swheel ? '<button class="tp-sw" data-tr="swheel" title="Everyone adds spots, one spin decides">🎡 Shared wheel</button>' : ''}
-        ${one ? '' : `<button class="link-btn danger" data-tr="del" data-id="${a.id}">${ui.trDel === a.id ? 'Tap again to delete' : 'Delete'}</button>`}</div>
+        ${a.remote ? `<button class="link-btn danger" data-tr="del" data-id="${a.id}">${ui.trDel === a.id ? 'Tap again to leave' : 'Leave tropa'}</button>` : one ? '' : `<button class="link-btn danger" data-tr="del" data-id="${a.id}">${ui.trDel === a.id ? 'Tap again to delete' : 'Delete'}</button>`}</div>
     </div>`;
   }
-  const sig = () => JSON.stringify([S.tropa, S.tropas.map((t) => [t.id, t.name, t.emoji, people(t)]), ui.trDel]);
+  const sig = () => JSON.stringify([S.tropa, S.tropas.map((t) => [t.id, t.name, t.emoji, people(t), !!t.remote]), ui.trDel]);
 
   /* ───────────── UI: profile section ───────────── */
   function profileSection() {
@@ -6724,7 +6762,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
   const bkOf = (t) => (t.id === S.tropa ? (S.bk = S.bk || BK0()) : (t.bk = t.bk || BK0()));
   const byOf = (b) => (b.tonight && b.tonight.by) || {};
   const fresh = (x) => x && x.at && Date.now() - x.at < 8 * 36e5;
-  const ans = (x) => (fresh(x) ? { trip: x.trip ?? null, budget: x.budget ?? null, vibe: x.vibe ?? null, at: x.at } : null);
+  const ans = (x) => (fresh(x) ? { trip: x.trip ?? null, budget: x.budget ?? null, vibe: x.vibe ?? null, crave: Array.isArray(x.crave) ? x.crave.slice(0, 11) : [], at: x.at } : null);
   const meMember = (b) => ({ local: 'me', name: (S.user && S.user.name) || 'Me', emoji: (S.user && S.user.emoji) || '🙂', hue: (S.user && S.user.hue) || 268,
     photo: (S.user && S.user.photo) || null, picks: S.picks || [], vibes: S.vibes || [], nos: b.nos || [], budget: S.budget || 2, area: S.area || null, tonight: ans(byOf(b).me), out: false });
   const friendMember = (b, f) => ({ local: f.id, name: f.name, emoji: f.emoji || '🙂', hue: f.hue ?? 260, photo: f.img || null, picks: f.picks || [], vibes: f.vibes || [], nos: f.nos || [],
@@ -6794,7 +6832,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
     b.friends = [...others.map((m) => ({ id: 'm:' + m.id, name: m.name, emoji: m.emoji, hue: m.hue, img: m.photo || null, picks: m.picks || [], vibes: m.vibes || [], nos: m.nos || [],
       budget: m.budget || 2, area: m.area || null, account: m.account })), ...pending];
     const by = {}; let at = 0;
-    for (const m of g.members) { const a = ans(m.tonight); if (!a) continue; by[m.id === R.me ? 'me' : 'm:' + m.id] = { trip: a.trip, budget: a.budget, vibe: a.vibe, at: a.at }; at = Math.max(at, a.at); }
+    for (const m of g.members) { const a = ans(m.tonight); if (!a) continue; by[m.id === R.me ? 'me' : 'm:' + m.id] = { trip: a.trip, budget: a.budget, vibe: a.vibe, crave: a.crave, at: a.at }; at = Math.max(at, a.at); }
     const mine = byOf(b).me; if (fresh(mine) && (!by.me || mine.at > by.me.at)) by.me = mine; // a tap here that hasn't been sent yet wins
     b.tonight = { at: at || Date.now(), by };
     b.off = others.filter((m) => m.out).map((m) => 'm:' + m.id);
@@ -6832,8 +6870,8 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
   document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
   // a tap in Tropa mode is sent right away instead of waiting for the next round
   document.addEventListener('click', (e) => {
-    if (!e.target.closest('#planview [data-p], .modal [data-fm="save"], .modal [data-fm="remove"], [data-tr]')) return;
-    const t = active(); if (t && t.remote && e.target.closest('.modal [data-fm="remove"], #planview [data-p="bk-clear"]')) t.remote.removing = true; // a real Remove tap
+    if (!e.target.closest('#planview [data-p], .modal [data-fm="save"], .modal [data-fm="remove"], .modal [data-tz], [data-tr]')) return;
+    const t = active(); if (t && t.remote && e.target.closest('.modal [data-fm="remove"], #planview [data-p="bk-clear"], .modal [data-tz="rm"]')) t.remote.removing = true; // a real Remove tap
     setTimeout(() => tick(true), 250);
   });
   document.addEventListener('change', (e) => { if (e.target.matches('[data-tr-name]')) setTimeout(() => tick(true), 250); });
@@ -6965,7 +7003,15 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
   }
   if (K.sb) K.sb.auth.onAuthStateChange((ev) => { if (ev === 'SIGNED_IN' || ev === 'INITIAL_SESSION') setTimeout(restore, 800); });
 
-  K.tsync = { invite, pickerHTML, tick, ensureRemote, codeSheet };
+  // leave a shared tropa: your place on the server is removed (the last one out deletes it). True when it worked.
+  async function leave(t) {
+    const R = t.remote; if (!R) return true;
+    try { await rpc('tropa_leave', { p_code: R.code, p_secret: R.secret }); }
+    catch (e) { if (!/not a member/i.test(e.message || '')) { console.warn(e); toast('Couldn’t leave just now. Check your connection and try again.'); return false; } } // not a member any more: just drop it here
+    delete last[t.id]; delete t.remote; persist(); return true;
+  }
+
+  K.tsync = { invite, pickerHTML, tick, ensureRemote, codeSheet, leave };
   setTimeout(() => tick(true), 500);
 })();
 </script>
@@ -8812,32 +8858,36 @@ button.ms-rs:hover { filter: brightness(1.2); }
 .tz-acts { display: flex; gap: 10px; flex-wrap: wrap; } .tz-acts .btn.primary { flex: 1 1 200px; justify-content: center; }
 .tz .tropa-bar { margin: 0; }
 </style>
-<script>/* Keni · tropa screen: see every tropa, rename it, add or remove people, then plan with it (demo: saved on this device) */
+<script>/* Keni · My tropas — one screen to manage your tropas: switch, rename, people in it, invite link or code, add a friend,
+   join with a code, leave (or delete one that's only on this phone), then plan. Opened from the "My tropas" button in Tropa mode
+   and from your profile. Sharing, joining and leaving are done by Keni · tropa sync (K.tsync). */
 (() => {
   const K = window.KeniCore; if (!K || !K.tropa) return;
   const { S, persist, $, esc, icon, toast } = K;
-  const bk = () => (S.bk = S.bk || { friends: [], off: [], nos: [], area: 'any', open: false, seeded: false, locked: null, more: 8 });
+  const bk = () => (S.bk = S.bk || { friends: [], off: [], nos: [], area: 'any', open: false, locked: null, more: 8 });
   const first = (n) => String(n).split(' ')[0];
   let M = null;
-  // everyone you could add: people from Chats, plus anyone already in one of your other tropas
+  // people you could add by hand: anyone already in one of your other tropas
   function pool() {
-    const seen = new Set(bk().friends.map((f) => f.id)), out = [];
-    const add = (p) => { if (p && p.id && !seen.has(p.id)) { seen.add(p.id); out.push(p); } };
-    (K.msg ? K.msg.people() : []).forEach(add);
-    S.tropas.forEach((t) => ((t.bk || {}).friends || []).forEach(add));
+    const seen = new Set(bk().friends.map((f) => f.id)), names = new Set(bk().friends.map((f) => f.name)), out = [];
+    const add = (p) => { if (p && p.id && !seen.has(p.id) && !names.has(p.name)) { seen.add(p.id); names.add(p.name); out.push(p); } };
+    S.tropas.forEach((t) => (((t.id === S.tropa ? S.bk : t.bk) || {}).friends || []).forEach(add));
     return out;
   }
   function html() {
-    const a = K.tropa.active(), fr = bk().friends;
-    const row = (f) => `<li class="tz-row">${K.fav(f, '')}<span class="tz-n"><b>${esc(f.name)}</b><small>${f.handle ? '@' + esc(f.handle) : 'Friend'}</small></span><button class="icon-btn sm" data-tz="rm" data-id="${esc(f.id)}" aria-label="Remove ${esc(first(f.name))}">${icon('x')}</button></li>`;
+    const a = K.tropa.active(), fr = bk().friends, R = a.remote, sync = !!K.tsync;
+    const row = (f) => `<li class="tz-row">${K.fav(f, '')}<span class="tz-n"><b>${esc(f.name)}</b><small>${f.account ? 'On Keni' : String(f.id).startsWith('m:') ? 'Joined with the link' : 'Added by you'}</small></span><button class="icon-btn sm" data-tz="rm" data-id="${esc(f.id)}" aria-label="Remove ${esc(first(f.name))}">${icon('x')}</button></li>`;
     const add = pool().map((p) => `<button class="chip" data-tz="add" data-id="${esc(p.id)}">${icon('plus')} ${esc(first(p.name))}</button>`).join('');
-    return `<div class="fm tz"><span class="eyebrow">Your groups</span><h2 class="display">Your <em>tropas</em></h2>
-      <p class="sub">Tap a tropa to switch to it. Rename it, change who’s in it, then plan with them.</p>
+    return `<div class="fm tz"><span class="eyebrow">My tropas</span><h2 class="display">Your <em>tropas</em></h2>
+      <p class="sub">Tap a tropa to switch to it. Rename it, see who’s in it, invite people, then plan together.</p>
       ${K.tropa.bar()}
       <h4>In ${esc(a.name)} <small>(${fr.length + 1})</small></h4>
       <ul class="tz-list"><li class="tz-row"><span class="fav" style="--h:270" aria-hidden="true">🙂</span><span class="tz-n"><b>You</b><small>Always in</small></span></li>${fr.map(row).join('')}</ul>
-      ${add ? `<h4>Add people</h4><div class="chips wrap">${add}</div>` : '<p class="fine">Everyone you know on Keni is already in this tropa.</p>'}
-      <div class="tz-acts"><button class="btn primary" data-tz="plan">${icon('users')} Plan in Tropa mode</button>${K.msg ? '<button class="btn ghost" data-tz="chat">💬 Group chat</button>' : ''}</div>
+      ${sync ? `<section class="tz-inv glass"><div><b>${R ? 'Invite to this tropa' : 'Share this tropa'}</b><small>${R ? `Code <span class="ts-code">${esc(R.code)}</span>. Friends tap the link or type the code.` : 'Make a link your friends can tap to join from their own phone.'}</small></div>
+        <button class="btn primary sm" data-tz="invite">${icon('link')} ${R ? 'Share invite' : 'Make invite link'}</button></section>` : ''}
+      <div class="tz-acts2"><button class="btn ghost sm" data-tz="addfriend">${icon('plus')} Add friend</button>${sync ? '<button class="btn ghost sm" data-tz="code">Join with a code</button>' : ''}</div>
+      ${add ? `<h4>From your other tropas</h4><div class="chips wrap">${add}</div>` : ''}
+      <div class="tz-acts"><button class="btn primary" data-tz="plan">${icon('users')} Plan with ${esc(a.name)}</button>${K.msg ? '<button class="btn ghost" data-tz="chat">💬 Group chat</button>' : ''}</div>
       </div>`;
   }
   const alive = () => M && document.body.contains(M) && !M.classList.contains('out');
@@ -8854,11 +8904,15 @@ button.ms-rs:hover { filter: brightness(1.2); }
       if (a === 'rm') { const f = b.friends.find((x) => x.id === id); b.friends = b.friends.filter((x) => x.id !== id); b.off = (b.off || []).filter((x) => x !== id); b.locked = null; persist(); K.render(); paint(); if (f) toast(`Removed <b>${esc(first(f.name))}</b> from ${esc(K.tropa.active().name)}`); }
       else if (a === 'add') { const p = pool().find((x) => x.id === id); if (!p) return; b.friends.push({ ...p }); b.locked = null; persist(); K.render(); paint(); toast(`<b>${esc(first(p.name))}</b> is in ${esc(K.tropa.active().name)} ✦`); }
       else if (a === 'plan') { K.closeModal(); K.setView('plan'); window.scrollTo(0, 0); }
+      else if (a === 'invite') { K.closeModal(); setTimeout(() => K.tsync.invite(), 320); }
+      else if (a === 'code') { K.closeModal(); setTimeout(() => K.tsync.codeSheet(), 320); }
+      else if (a === 'addfriend') { K.closeModal(); setTimeout(() => K.addFriendSheet && K.addFriendSheet(), 320); }
       else if (a === 'chat') { const tid = S.tropa; K.closeModal(); setTimeout(() => K.msg.open('chats', 'g:' + tid), 330); }
     });
     M.addEventListener('change', (e) => { if (e.target.matches('[data-tr-name]')) setTimeout(paint, 40); });
   }
   K.tropaScreen = { open };
+  document.addEventListener('click', (e) => { if (e.target.closest('[data-tz-open]')) open(); }); // the "My tropas" button in Tropa mode
   // the home map now changes size with the screen (full screen on the map page): keep its tiles in step
   const mv = document.querySelector('#mapview');
   const fit = () => requestAnimationFrame(() => { const m = K.mapParts && K.mapParts().map; if (m) m.invalidateSize({ animate: false }); });
@@ -9056,7 +9110,7 @@ html.keni-nochips body[data-page="map"] #filters > .chips { display: none; }
       <h4>Map</h4>
       <div class="px-set"><span><b>When the map opens, show</b><small>You can still switch from Filters</small></span></div>
       <div class="seg" role="group" aria-label="What the map shows">${[['places', 'Places'], ['pasabit', 'Pasabits'], ['both', 'Both']].map(([k, l]) => `<button data-st="map" data-v="${k}" aria-pressed="${p.mapShow === k}">${l}</button>`).join('')}</div>
-      ${sw('chips', p.chips, '“Anong trip mo?” on the map', 'The row of Kape, Inom and so on')}
+      ${sw('chips', p.chips, 'Plans on the map', 'The row of Kape, Inom and so on')}
       <h4>Privacy</h4>
       <button class="px-set px-go" data-st="privacy"><span><b>🔒 Privacy</b><small>Who sees your profile and photos, your location, and what Keni learns</small></span><i>›</i></button>
       <h4>Your data</h4>
@@ -9106,7 +9160,7 @@ html.keni-nochips body[data-page="map"] #filters > .chips { display: none; }
       <h4>Location</h4>
       <div class="px-set"><span><b>${loc}</b><small>${S.loc ? 'Used only to sort places by distance. It stays on this device.' : 'Keni sorts places from the area you picked.'}</small></span>${S.loc ? '<button class="btn ghost sm" data-pv="noloc">Stop</button>' : ''}</div>
       <h4>What Keni learns</h4>
-      ${psw('learn', p.learn, 'Learn from “Anong trip mo?”', 'Off: your taps still filter the map, but are not remembered')}
+      ${psw('learn', p.learn, 'Learn from Plans', 'Off: your taps still filter the map, but are not remembered')}
       <div class="px-set"><span><b>${n ? `${n} tap${n === 1 ? '' : 's'} remembered` : 'Nothing remembered yet'}</b><small>The day and time of each tap, kept on this device</small></span>${n || Object.keys(S.boost || {}).length ? `<button class="btn ghost sm" data-pv="forget">${ui.forgetAsk ? 'Tap again' : 'Forget'}</button>` : ''}</div>
       <p class="fine">Location and learning take effect right away. The who-can-see choices are saved on this phone for now.</p></div>`;
   }
@@ -9202,18 +9256,18 @@ html.keni-nochips body[data-page="map"] #filters > .chips { display: none; }
   /* Each step: what to light up (el), which taps are let through (allow), how we know you did it (did),
      and, when doing it opens something, a second half (look) that waits until you have closed it again. */
   const STEPS = [
-    { t: 'Anong trip mo?', x: 'What do you feel like right now? Tap one.', el: () => $$('#filters [data-trip]'), allow: '[data-trip]', did: () => !!ui.trip,
+    { t: 'Plans', x: 'What do you feel like right now? Tap one.', el: () => { if (K.folds) K.folds.open('trip'); return $('#filters [data-trip]'); }, allow: '[data-trip]', did: () => !!ui.trip,
       win: 'The map now shows only that. Keni learns your pattern from taps like this one.', after: () => { ui.trip = ''; K.render(); } },
     { t: 'Every pin is a real place', x: 'Tap the pin that’s lit up.', el: pin, allow: '.kpin-wrap', did: () => !!$('#modal-root .sheet-in'),
       look: { t: 'This is its page', x: 'Photos, hours, menu and reviews. Have a look, then close it.' }, win: 'That’s how you check a place out.' },
     { t: 'Hold the map', x: touch ? 'Press and hold any empty spot on the map.' : 'Right-click any empty spot on the map.', el: () => [], hold: true, did: () => !!$('.kring'),
       look: { t: 'Right at that spot', x: 'Start a Pasabit or set where your tropa meets. Nothing happens until you choose one. Tap ✕ to close it for now.', open: () => !!$('.kring'), allow: '.kring-x' },
       win: 'Hold the map whenever you want to do something at an exact spot.', after: () => K.ring && K.ring.close() },
-    { t: 'Your tropas', x: 'Tap here to see your groups of friends.', el: () => [$('#tropa-btn')], allow: '#tropa-btn', did: () => !!$('#modal-root .tz'),
+    { t: 'Your tropas', x: 'Tap here to see your groups of friends.', el: () => [$('#dock [data-tz-open]')], allow: '[data-tz-open]', did: () => !!$('#modal-root .tz'),
       look: { t: 'Your groups live here', x: 'Add people, then let Keni find a place everyone likes. Close it when you’ve had a look.' }, win: 'Planning with friends starts there.' },
     { t: 'Can’t decide?', x: 'Tap the wheel.', el: () => [$('#wheel-btn')], allow: '#wheel-btn', did: () => !!$('#modal-root .wh-stage'),
       look: { t: 'Give it a spin', x: 'Tap Spin and let the wheel pick for you. Close it after.' }, win: 'The wheel settles any “kahit saan”.' },
-    { t: 'Getting around', x: 'Chats for your friends, Explore for every place, Saved for your hearts, and your profile up top.', el: () => [...$$('#dock [data-view]'), $('#dock [data-ms="open"]')].filter(Boolean), info: true },
+    { t: 'Getting around', x: (window.KENI_OFF || {}).chats ? 'Tropa for your tropas, Explore for every place, Saved for your hearts, and your profile up top.' : 'Chats for your friends, Explore for every place, Saved for your hearts, and your profile up top.', el: () => [...$('#dock [data-view]'), $('#dock [data-ms="open"]'), $('#dock [data-tz-open]')].filter(Boolean), info: true },
   ];
 
   let root = null, i = 0, steps = [], phase = 'do', marks = [], tick = 0, trips0 = 0, winT = 0;
@@ -9885,6 +9939,12 @@ button.ct-row:hover { background: rgba(255, 255, 255, .07); }
 .ts-av { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; vertical-align: middle; }
 .ts-friends .chips { margin-top: 6px; }
 .ts-code { letter-spacing: .12em; color: #fff; }
+/* My tropas */
+.tool-top { display: flex; flex-wrap: wrap; gap: 8px; }
+.tz-inv { display: flex; align-items: center; gap: 12px; margin: 14px 0 10px; padding: 14px; border-radius: 18px; }
+.tz-inv > div { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.tz-inv small { color: var(--ink-3); font-size: .8rem; }
+.tz-acts2 { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; }
 .ts-code-in { text-transform: uppercase; letter-spacing: .2em; font-weight: 700; }
 .acf-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; font-size: .85rem; }
 .acf-links b { color: #e6dcff; }
@@ -9924,6 +9984,18 @@ button.ct-row:hover { background: rgba(255, 255, 255, .07); }
 .trip-chip.usual { border-color: rgba(196, 176, 255, .7); box-shadow: 0 0 0 3px rgba(196, 176, 255, .14); }
 body[data-page="map"] #filters .trip-q { display: inline-flex; align-items: center; height: 30px; padding: 0 11px; border-radius: 999px; background: rgba(16, 11, 32, .8); border: 1px solid var(--line); backdrop-filter: blur(12px); text-shadow: none; } /* a dark pill, so map labels don't show through the question */
 .trip-chip b { font-weight: 500; opacity: .7; }
+.fold-q { display: inline-flex; align-items: center; gap: 4px; font: inherit; font-size: .74rem; font-weight: 600; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.fold-q .ic { width: 14px; height: 14px; transform: rotate(-90deg); transition: transform .35s var(--spring, cubic-bezier(.2, .9, .3, 1.2)); } /* points right while folded: the chips open out sideways */
+.fold-q[aria-expanded="true"] .ic { transform: rotate(90deg); } /* points left once open, to fold them back */
+.fold-q:active { transform: scale(.94); }
+body[data-page="map"] #filters .crave-chip[aria-pressed="true"] { color: #1b1033; background: linear-gradient(135deg, #ffe2b8, #ffb07a); border-color: transparent; box-shadow: 0 8px 26px -8px rgba(255, 176, 122, .9); }
+.crave-chip b { font-weight: 500; opacity: .7; }
+.cr-chip[aria-pressed="true"] { color: #1b1033; background: linear-gradient(135deg, #ffe2b8, #ffb07a); border-color: transparent; }
+.tag.cr-has { color: #1b1033; background: linear-gradient(135deg, #ffe2b8, #ffb07a); border-color: transparent; font-weight: 600; }
+.crave-chip.just { animation: apwPop .3s; }
+html:not(.keni-nochips) body[data-page="map"]:has(#filters .crave-row) .map-hud { top: calc(var(--top) + 172px); } /* Near me moves down one more row */
+.fold-in { animation: tripIn .4s cubic-bezier(.2, .9, .3, 1.2) backwards; animation-delay: calc(var(--i, 0) * 35ms); }
+@media (prefers-reduced-motion: reduce) { .fold-in, .fold-q .ic { animation: none; transition: none; } }
 .trip-chip.just { animation: apwPop .3s; }
 body.pins-in .trip-q, body.pins-in .trip-chip { animation: tripIn .45s cubic-bezier(.2, .9, .3, 1.2) backwards; animation-delay: calc(var(--i, 0) * 60ms + .25s); }
 @keyframes tripIn { from { opacity: 0; translate: 14px 0; scale: .9; } }
@@ -10067,17 +10139,20 @@ body.pins-pop #bigmap .kpin:not(.was) { animation: kPop .42s cubic-bezier(.3, 1.
   const MINZ = 15;
 
   // ── the map ──
-  let map = null, layer = null, ren = null;
+  let map = null, layer = null, ren = null, lastCrave = '';
   const HINT = / <span class="kb-hint">[\s\S]*$/; // the count's own text is always taken fresh, so the hint never puts back an old count
   function draw() {
     if (!map || !layer) return;
     layer.clearLayers();
     const show = ui.view === 'map' && (ui.mapShow || 'both') !== 'pasabit', z = map.getZoom();
     let n = 0;
-    if (show && z >= MINZ) {
+    const all = !!ui.crave; // a craving is narrow enough to show every place that has it, at any zoom
+    const hits = [];
+    if (show && (z >= MINZ || all)) {
       const bb = map.getBounds().pad(0.2);
       for (const v of B) {
-        if (!bb.contains([v.lat, v.lng]) || !K.passes(v)) continue;
+        if ((!all && !bb.contains([v.lat, v.lng])) || !K.passes(v)) continue;
+        hits.push([v.lat, v.lng]);
         const c = CAT[v.cats[0]];
         const m = window.L.circleMarker([v.lat, v.lng], { renderer: ren, radius: 6, weight: 1.5, color: 'rgba(255, 255, 255, .8)', fillColor: `hsl(${c.hue} 85% 66%)`, fillOpacity: 0.9 })
           .bindTooltip(`${c.emoji} ${esc(v.name)}`, { direction: 'top', className: 'ktip' });
@@ -10085,6 +10160,13 @@ body.pins-pop #bigmap .kpin:not(.was) { animation: kPop .42s cubic-bezier(.3, 1.
         layer.addLayer(m); n++;
       }
     }
+    if (n) { const none = $('#map-none'); if (none) none.hidden = true; } // basic places count too: never say "No places match" over dots
+    // a new craving: zoom the map out (or in) to every place that has it
+    if (show && ui.crave && ui.crave !== lastCrave) {
+      lastCrave = ui.crave;
+      K.VENUES.forEach((v) => { if (K.passes(v) && v.lat != null) hits.push([v.lat, v.lng]); });
+      if (hits.length) setTimeout(() => map.flyToBounds(hits, { padding: [60, 60], maxZoom: 16, duration: 0.8 }), 0);
+    } else if (!ui.crave) lastCrave = '';
     const cnt = $('#map-count');
     if (cnt && show) cnt.innerHTML = cnt.innerHTML.replace(HINT, '') + (z >= MINZ ? (n ? ` <span class="kb-hint">+ ${n} basic</span>` : '') : ' <span class="kb-hint">· zoom for more</span>');
   }
