@@ -3717,12 +3717,10 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
     S.subs = t.subs.filter((x) => S.picks.includes(SUB[x].kind));
   }
 
-  /* last step — your name, and your email if you want an account (Keni emails a sign-in link: see Keni · accounts) */
-  const nameField = () => `<div class="wm-name"><input id="wm-name" maxlength="28" placeholder="Your name" aria-label="Your name" autocomplete="given-name">
-    <input id="wm-email" type="email" inputmode="email" maxlength="80" placeholder="Email, to keep your account" aria-label="Email" autocomplete="email">
-    <button class="btn primary" type="button" data-act="su-name">Continue ${icon('arrow')}</button></div>`;
+  /* last step — make an account or sign in (the form itself comes from Keni · accounts, which loads after this script) */
+  const nameField = () => `<div class="ac-slot" data-mode="start">${core.account ? core.account.formHTML('start') : ''}</div>`;
   function signupHTML() {
-    return `<div class="step">${head(4, 'What should we <em>call you?</em>', 'Your name shows to your tropa.')}
+    return `<div class="step">${head(4, 'Make your <em>account</em>', 'Your name shows to your tropa.')}
       <div class="pane"><div class="su glass">${nameField()}
         <button class="link-btn" type="button" data-act="skip-su">Skip for now</button>
       </div></div></div>`;
@@ -3881,17 +3879,6 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
     else if (a === 'pick-area') { ob.areaList = true; ob.locErr = ''; gotoStep(6); }
     else if (a === 'to-budget') gotoStep(3);
     else if (a === 'to-area') gotoStep(6);
-    else if (a === 'su-name') {
-      const inp = $('#wm-name'), name = inp ? inp.value.trim().replace(/[<>]/g, '').slice(0, 28) : '';
-      const em = $('#wm-email'), email = em ? em.value.trim() : '', acc = core.account;
-      if (!name) { toast('Add your name first, or skip for now'); if (inp) inp.focus(); return; }
-      if (email && acc && !acc.isEmail(email)) { toast('That email doesn’t look right'); return em.focus(); }
-      S.user = { name, provider: '', role: 'explorer', since: Date.now() };
-      persist(); gotoStep(5);
-      if (!email || !acc) return toast(`Hi, <b>${esc(name.split(' ')[0])}</b> ✦`);
-      act.disabled = true;
-      acc.sendLink(email, name).then((err) => { act.disabled = false; toast(err || `Check <b>${esc(email)}</b> and tap the link to finish signing in ✉️`); });
-    }
     else if (a === 'skip-su') gotoStep(5);
     else if (a === 'own-su') core.openLogin && core.openLogin('business'); // owners sign in and claim their listing straight from the welcome page
     else if (a === 'cancel') {
@@ -3902,7 +3889,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
     else if (a === 'noop') e.preventDefault();
   });
 
-  onboard.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.target.id === 'wm-name' || e.target.id === 'wm-email')) { e.preventDefault(); const b = $('[data-act="su-name"]', onboard); if (b) b.click(); } });
+  onboard.addEventListener('keni:signed', () => { if (!onboard.hidden && (ob.step === 0 || ob.step === 4)) gotoStep(5); }); // made an account or signed in (Keni · accounts)
   onboard.addEventListener('submit', (e) => {
     if (e.target.id !== 'su') return;
     e.preventDefault();
@@ -5773,46 +5760,33 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
   };
 
   /* ═════════════════════ SIGN IN (name only, until there are real accounts) ═════════════════════ */
-  function loginHTML(acct) {
-    return `<div class="fm login"><span class="eyebrow">Welcome</span>
-      <h2 class="display">What should we <em>call you?</em></h2>
-      <p class="sub">${acct === 'business' ? 'Run a café, bar or shop? Add your name, then claim your place or request a listing.' : 'Your name shows to your tropa. Your taste and tropas are saved on this phone.'}</p>
+  function loginHTML(acct, mode = 'start') {
+    const signed = K.account && K.account.email();
+    return `<div class="fm login"><span class="eyebrow">Your account</span>
+      <p class="sub">${acct === 'business' ? 'Run a café, bar or shop? Sign in, then claim your place or request a listing.' : 'Your name shows to your tropa. Your taste and tropas are saved on this phone for now.'}</p>
       <div class="seg acct" role="tablist"><button role="tab" data-lg="acct" data-v="explorer" aria-pressed="${acct !== 'business'}">${icon('user')} I’m exploring</button><button role="tab" data-lg="acct" data-v="business" aria-pressed="${acct === 'business'}">${icon('store')} I own a place</button></div>
-      <label class="fm-l">Your name<input id="lg-name" maxlength="28" placeholder="e.g. Juan" autocomplete="given-name" value="${esc(S.user ? S.user.name : '')}"></label>
-      ${K.account && !K.account.email() ? `<label class="fm-l">Email <small>${acct === 'business' ? '(needed, so your requests reach the Keni team)' : '(optional: keeps your account, no password)'}</small><input id="lg-email" type="email" inputmode="email" maxlength="80" placeholder="you@email.com" autocomplete="email"></label>` : ''}
-      <button class="btn primary wide" data-lg="go">Continue ${icon('arrow')}</button>
-      ${acct === 'business' ? '' : '<div class="or"><span>or</span></div><button class="btn ghost wide" data-lg="guest">Continue as guest</button>'}</div>`;
+      ${signed ? `<p class="sub">Signed in as <b>${esc(signed)}</b>.</p><button class="btn primary wide" data-lg="owner">Continue ${icon('arrow')}</button>`
+        : K.account ? `<div class="ac-slot" data-mode="${mode}">${K.account.formHTML(mode)}</div>` : '<p class="fine">Signing in needs a connection. Try again when you’re online.</p>'}
+      ${acct === 'business' || signed ? '' : '<div class="or"><span>or</span></div><button class="btn ghost wide" data-lg="guest">Continue as guest</button>'}</div>`;
   }
 
-  function openLogin(acct = 'explorer') {
-    const m = K.openModal(loginHTML(acct), 'login-sheet');
-    const focus = () => setTimeout(() => { const i = $('#lg-name', m); if (i) i.focus(); }, 300);
-    const go = async () => {
-      const name = (($('#lg-name', m) || {}).value || '').trim().replace(/[<>]/g, '').slice(0, 28);
-      const emEl = $('#lg-email', m), email = emEl ? emEl.value.trim() : '', A = K.account;
-      if (!name) { toast('Add your name first'); return focus(); }
-      if (emEl && acct === 'business' && !email) { toast('Add your email, so your requests reach the Keni team'); return emEl.focus(); }
-      if (email && A && !A.isEmail(email)) { toast('That email doesn’t look right'); return emEl.focus(); }
-      if (email && A) {
-        const b = $('[data-lg="go"]', m); b.disabled = true;
-        const err = await A.sendLink(email, name); b.disabled = false;
-        if (err) return toast(err);
-      }
-      S.user = { ...(S.user || {}), name, provider: S.user ? S.user.provider : '', role: acct === 'business' ? 'business' : (S.user && S.user.role) || 'explorer', since: (S.user && S.user.since) || Date.now() };
-      persist(); if (K.finishWelcome) K.finishWelcome(); K.render(); if (A) A.saveProfile();
-      if (email) toast(`Check <b>${esc(email)}</b> and tap the link to finish signing in ✉️`);
-      if (acct === 'business') return K.biz.ownerFlow(m, () => K.setView('biz'));
-      K.closeModal(); if (!email) toast(`Hi, <b>${esc(first(name))}</b> ✦`);
-      burst(innerWidth / 2, innerHeight * 0.4, { n: 26, spread: 200 });
+  function openLogin(acct = 'explorer', mode = 'start') {
+    const m = K.openModal(loginHTML(acct, mode), 'login-sheet');
+    const focus = () => setTimeout(() => { const i = $('.acf input', m); if (i) i.focus(); }, 300);
+    // signed up or signed in: owners go on to claim their place, everyone else is done
+    const done = () => {
+      if (acct === 'business') { S.user = { ...(S.user || {}), role: 'business' }; persist(); K.render(); return K.biz.ownerFlow(m, () => K.setView('biz')); }
+      if (K.finishWelcome) K.finishWelcome();
+      K.closeModal(); burst(innerWidth / 2, innerHeight * 0.4, { n: 26, spread: 200 });
     };
+    m.addEventListener('keni:signed', done);
     m.addEventListener('click', (e) => {
       const t = e.target.closest('[data-lg]'); if (!t) return;
       const k = t.dataset.lg;
-      if (k === 'acct') { acct = t.dataset.v; setSheet(m, loginHTML(acct)); focus(); }
+      if (k === 'acct') { acct = t.dataset.v; const s = $('.ac-slot', m); setSheet(m, loginHTML(acct, s ? s.firstElementChild && s.firstElementChild.dataset.mode : mode)); focus(); }
       else if (k === 'guest') { K.closeModal(); toast('Browsing as a guest'); }
-      else if (k === 'go') go();
+      else if (k === 'owner') done();
     });
-    m.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.target.id === 'lg-name' || e.target.id === 'lg-email')) { e.preventDefault(); go(); } });
     focus();
   }
 
@@ -5828,12 +5802,12 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
           ${u ? `<div class="pf-name"><b id="pf-name">${esc(u.name)}</b></div>
             ${u.handle ? `<small class="pf-user">@${esc(u.handle)}</small>` : ''}
             ${u.role === 'business' ? '<small><b>Owner</b></small>' : ''}
-            ${K.account ? (K.account.email() ? `<small>✉️ Signed in as ${esc(K.account.email())}</small>` : '<small>Saved on this phone only · <button class="link-btn" data-pf="login">Keep it with your email</button></small>') : ''}` : `<div class="pf-name"><b>Guest</b></div><small>Add your name so your tropa knows it’s you</small>`}
+            ${K.account ? (K.account.email() ? `<small>✉️ Signed in as ${esc(K.account.email())}</small>` : '<small>Saved on this phone only · <button class="link-btn" data-pf="login">Make an account</button> · <button class="link-btn" data-pf="signin">Sign in</button></small>') : ''}` : `<div class="pf-name"><b>Guest</b></div><small>Add your name so your tropa knows it’s you</small>`}
           ${u && u.bio ? `<p class="pf-bio">${esc(u.bio)}</p>` : ''}${u && VBY[u.fave] ? `<p class="pf-bio">❤️ Favourite spot: <button class="link-btn" data-act="open-detail" data-id="${u.fave}">${esc(VBY[u.fave].name)}</button></p>` : ''}
         </div></div>
       <div class="pf-acts">${u ? `<button class="btn ghost sm" data-pfx="edit">${icon('edit')} Edit profile</button>` : ''}<button class="btn ghost sm" data-pfx="settings">⚙️ Settings</button>${u ? '<button class="btn ghost sm" data-pfx="privacy">🔒 Privacy</button>' : ''}</div>
       ${u && K.prefs && K.prefs.aboutHTML ? K.prefs.aboutHTML() : ''}
-      ${u ? '' : '<div class="pf-login"><button class="btn primary wide" data-pf="login">Add my name</button><button class="link-btn" data-pf="biz-login">I own a place</button></div>'}
+      ${u ? '' : '<div class="pf-login"><button class="btn primary wide" data-pf="login">Make an account</button><button class="link-btn" data-pf="signin">Sign in</button><button class="link-btn" data-pf="biz-login">I own a place</button></div>'}
       ${K.isBiz() ? `<div class="pf-biz glass"><div><b>Your Studio</b><small>Claims and listing requests</small></div><button class="btn primary sm" data-pf="studio">Open Studio</button></div>` : u ? '<button class="link-btn" data-pf="biz-login">I own a place</button>' : ''}
       <div class="pf-stats"><div><b>${S.saved.length}</b><small>Saved</small></div><div><b>${S.picks.length}</b><small>Interests</small></div><div><b>${(S.tropas || []).length || 1}</b><small>Tropas</small></div></div>
       ${K.scout && !(window.KENI_OFF || {}).scout ? K.scout.card() : ''}
@@ -5856,7 +5830,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
       const t = e.target.closest('[data-pf]'); if (!t) return;
       const k = t.dataset.pf;
       if (k === 'tune') { K.closeModal(); setTimeout(() => K.startOnboarding(1), 300); }
-      else if (k === 'login') { K.closeModal(); setTimeout(() => openLogin('explorer'), 320); }
+      else if (k === 'login' || k === 'signin') { K.closeModal(); setTimeout(() => openLogin('explorer', k === 'signin' ? 'in' : 'up1'), 320); }
       else if (k === 'biz-login') { K.closeModal(); setTimeout(() => (K.isBiz() ? K.biz.ownerFlow(K.openModal('', 'login-sheet')) : openLogin('business')), 320); }
       else if (k === 'studio') { K.closeModal(); K.setView('biz'); }
       else if (k === 'barkada') { K.closeModal(); ui.view = 'plan'; ui.tool = 'barkada'; K.render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
@@ -5885,27 +5859,108 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
 })();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js" crossorigin="anonymous"></script>
-<script>/* Keni · accounts (Supabase Auth). Sign-in is an email link: no password. The account is who you are (public.profiles: name,
-   photo, bio). Your taste, saves and tropas still stay on this phone for now. A guest, or someone who only gave a name, can use
-   everything as before. K.account: sendLink(email, name), saveProfile(), signOut(), email(). */
+<script>/* Keni · accounts (Supabase Auth): email + password. The account is who you are (public.profiles: name, photo, bio);
+   taste, saves and tropas still stay on this phone for now. Guests can skip and use everything as before.
+   One form for every place that signs people in (the welcome page, step 4, the sign-in sheet): any element with class
+   "ac-slot" gets it. When someone finishes, the slot fires a "keni:signed" event so the screen around it can move on.
+   K.account: formHTML(mode), fill(el, mode), saveProfile(), signOut(), email(). */
 (() => {
   const K = window.KeniCore, DB = window.KENI_DB; if (!K || !DB) return;
-  const { S, persist, toast, esc } = K;
+  const { S, persist, toast, esc, icon, $ } = K;
   if (!window.supabase) { K.account = null; return; } // the sign-in library didn't load (offline): Keni works without accounts
   const sb = window.supabase.createClient(DB.url, DB.key, { auth: { persistSession: true, detectSessionInUrl: true, autoRefreshToken: true } });
   K.sb = sb;
   let session = null;
+  const MIN = 8;
   const isEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+  const back = location.origin + location.pathname; // where confirm and reset emails send people back to
 
-  async function sendLink(email, name) {
-    email = String(email || '').trim().toLowerCase();
-    if (!isEmail(email)) return 'That email doesn’t look right';
-    const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname, data: { name: String(name || '').slice(0, 28) } } });
-    if (!error) return '';
-    return /rate|seconds|too many/i.test(error.message) ? 'Too many sign-in emails just now. Try again in a few minutes.' : 'Couldn’t send the email. Check your connection and try again.';
+  /* ── the form: a few short steps instead of one long page ──
+     start → (make an account: name → email → password) or (sign in: email + password, with "forgot password").
+     What was typed in earlier steps is kept on the slot (slot._d) until the account is made. */
+  const inp = (f, type, ph, ac, extra = '') => `<input data-f="${f}" type="${type}" placeholder="${ph}" aria-label="${ph}" autocomplete="${ac}" ${extra}>`;
+  const STEPS = {
+    start: { h: '', body: () => `<button class="btn primary" type="button" data-ac-mode="up1">Make an account ${icon('arrow')}</button>
+      <button class="btn ghost" type="button" data-ac-mode="in">Sign in</button>` },
+    up1: { n: 1, h: 'What should we <em>call you?</em>', note: 'Your tropa sees this name.', body: (d) => inp('name', 'text', 'Your name', 'given-name', `maxlength="28" value="${esc(d.name || '')}"`), btn: 'Next', back: 'start' },
+    up2: { n: 2, h: 'Your <em>email</em>', note: 'You’ll use it to sign in.', body: (d) => inp('email', 'email', 'Email', 'email', `inputmode="email" maxlength="80" value="${esc(d.email || '')}"`), btn: 'Next', back: 'up1' },
+    up3: { n: 3, h: 'Make a <em>password</em>', note: `At least ${MIN} characters.`, body: () => inp('pass', 'password', 'Password', 'new-password', 'maxlength="72"') + inp('pass2', 'password', 'Confirm password', 'new-password', 'maxlength="72"'), btn: 'Make my account', back: 'up2' },
+    in: { h: 'Welcome <em>back</em>', body: (d) => inp('email', 'email', 'Email', 'email', `inputmode="email" maxlength="80" value="${esc(d.email || '')}"`) + inp('pass', 'password', 'Password', 'current-password', 'maxlength="72"'), btn: 'Sign in',
+      links: '<button class="link-btn" type="button" data-ac-mode="reset">Forgot password?</button><button class="link-btn" type="button" data-ac-mode="up1">New here? <b>Make an account</b></button>' },
+    reset: { h: 'Reset your <em>password</em>', note: 'We’ll email you a link to pick a new one.', body: (d) => inp('email', 'email', 'Your account’s email', 'email', `inputmode="email" maxlength="80" value="${esc(d.email || '')}"`), btn: 'Email me a link', back: 'in' },
+  };
+  const formHTML = (mode = 'start', d = {}) => {
+    const s = STEPS[mode] || STEPS.start;
+    return `<div class="wm-name acf" data-mode="${mode}">
+      ${s.n ? `<div class="acf-top"><button class="link-btn" type="button" data-ac-mode="${s.back}">${icon('back')} Back</button><span>Step ${s.n} of 3</span></div><i class="acf-bar" style="--p:${s.n / 3}"></i>` : s.back ? `<div class="acf-top"><button class="link-btn" type="button" data-ac-mode="${s.back}">${icon('back')} Back</button><span></span></div>` : ''}
+      ${s.h ? `<h3 class="acf-h display">${s.h}</h3>` : ''}${s.note ? `<p class="acf-note">${s.note}</p>` : ''}
+      ${s.body(d)}
+      ${s.btn ? `<button class="btn primary" type="button" data-ac="go">${s.btn} ${icon('arrow')}</button>` : ''}
+      ${s.links ? `<div class="acf-links">${s.links}</div>` : ''}</div>`;
+  };
+  const fill = (el, mode) => {
+    el._d = el._d || {}; el.innerHTML = formHTML(mode, el._d);
+    const f = $('input', el); if (f && el.offsetParent) setTimeout(() => f.focus(), 60);
+  };
+
+  const ERR = [
+    [/already registered|already been registered/i, 'There’s already an account with that email. Sign in instead.'],
+    [/invalid login/i, 'Wrong email or password.'],
+    [/not confirmed/i, 'Confirm your email first: tap the link we sent you.'],
+    [/rate|seconds|too many/i, 'Too many tries just now. Wait a few minutes and try again.'],
+    [/password/i, `Pick a stronger password (at least ${MIN} characters).`],
+  ];
+  const nice = (e) => (ERR.find(([re]) => re.test(e.message)) || [0, 'Something went wrong. Check your connection and try again.'])[1];
+
+  // returns true once the person is signed up or signed in; moving between steps returns false
+  async function submit(form, slot) {
+    const mode = form.dataset.mode, d = slot._d, v = (f) => { const i = $(`[data-f="${f}"]`, form); return i ? i.value.trim() : ''; };
+    const bad = (msg, f) => { toast(msg); const i = $(`[data-f="${f}"]`, form); if (i) i.focus(); return false; };
+    const pass = ($('[data-f="pass"]', form) || {}).value || '';
+    if (mode === 'up1') { const name = v('name').replace(/[<>]/g, '').slice(0, 28); if (!name) return bad('Add your name', 'name'); d.name = name; fill(slot, 'up2'); return false; }
+    if (mode !== 'up3') { const email = v('email').toLowerCase(); if (!isEmail(email)) return bad('That email doesn’t look right', 'email'); d.email = email; }
+    if (mode === 'up2') { fill(slot, 'up3'); return false; }
+    if (mode === 'up3' && pass.length < MIN) return bad(`Your password needs at least ${MIN} characters`, 'pass');
+    if (mode === 'up3' && pass !== (($('[data-f="pass2"]', form) || {}).value || '')) return bad('The two passwords don’t match', 'pass2');
+    if (mode === 'in' && !pass) return bad('Type your password', 'pass');
+    const btn = $('[data-ac="go"]', form); btn.disabled = true;
+    try {
+      if (mode === 'reset') {
+        const { error } = await sb.auth.resetPasswordForEmail(d.email, { redirectTo: back });
+        if (error) return bad(nice(error), 'email');
+        toast(`If <b>${esc(d.email)}</b> has an account, a reset link is on its way ✉️`);
+        fill(slot, 'in'); return false;
+      }
+      if (mode === 'in') {
+        const { error } = await sb.auth.signInWithPassword({ email: d.email, password: pass });
+        if (error) return bad(nice(error), 'pass');
+        return true; // attach() fills in the profile
+      }
+      const { data, error } = await sb.auth.signUp({ email: d.email, password: pass, options: { data: { name: d.name }, emailRedirectTo: back } });
+      if (error) { toast(nice(error)); if (/already/i.test(error.message)) fill(slot, 'in'); return false; }
+      if (data.user && Array.isArray(data.user.identities) && !data.user.identities.length) { toast('There’s already an account with that email. Sign in instead.'); fill(slot, 'in'); return false; }
+      S.user = { ...(S.user || {}), name: d.name, email: d.email, provider: 'email', role: (S.user && S.user.role) || 'explorer', since: (S.user && S.user.since) || Date.now() };
+      persist(); K.render();
+      if (!data.session) toast(`Almost done: check <b>${esc(d.email)}</b> and tap the link to confirm your account ✉️`);
+      return true;
+    } finally { btn.disabled = false; }
   }
 
-  // signed in (now, or from an earlier visit): the account's profile becomes this phone's profile
+  document.addEventListener('click', async (e) => {
+    const m = e.target.closest('[data-ac-mode]'); if (m) { const slot = m.closest('.ac-slot'); if (slot) fill(slot, m.dataset.acMode); return; }
+    const g = e.target.closest('[data-ac="go"]'); if (!g) return;
+    const form = g.closest('.acf'), slot = form && form.closest('.ac-slot'); if (!slot) return;
+    slot._d = slot._d || {};
+    if (await submit(form, slot)) slot.dispatchEvent(new CustomEvent('keni:signed', { bubbles: true, detail: { mode: form.dataset.mode } }));
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' || !e.target.closest('.acf [data-f]')) return;
+    e.preventDefault(); const b = $('[data-ac="go"]', e.target.closest('.acf')); if (b) b.click();
+  });
+  // a slot drawn before this module loaded (the welcome page) gets its form now
+  document.querySelectorAll('.ac-slot').forEach((el) => { if (!el.firstElementChild) fill(el, el.dataset.mode || 'start'); });
+
+  /* ── the session ── */
   async function attach(user) {
     const { data: p } = await sb.from('profiles').select('name, photo, bio').eq('id', user.id).maybeSingle();
     const fresh = !S.user || S.user.id !== user.id;
@@ -5915,9 +5970,25 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
     persist(); if (K.finishWelcome) K.finishWelcome(); K.render();
     if (fresh) toast(`Signed in as <b>${esc(S.user.name)}</b> ✦`);
   }
+  // opened from a reset email: pick the new password right here
+  function newPassword() {
+    const m = K.openModal(`<div class="fm login"><span class="eyebrow">Reset password</span><h2 class="display">Pick a new <em>password</em></h2>
+      <div class="wm-name acf">${inp('pass', 'password', `New password (at least ${MIN} characters)`, 'new-password', 'maxlength="72"')}${inp('pass2', 'password', 'Confirm new password', 'new-password', 'maxlength="72"')}
+      <button class="btn primary" type="button" data-np="save">Save password ${icon('arrow')}</button></div></div>`, 'login-sheet');
+    m.addEventListener('click', async (e) => {
+      if (!e.target.closest('[data-np="save"]')) return;
+      const a = $('[data-f="pass"]', m).value, b = $('[data-f="pass2"]', m).value;
+      if (a.length < MIN) return toast(`Your password needs at least ${MIN} characters`);
+      if (a !== b) return toast('The two passwords don’t match');
+      const { error } = await sb.auth.updateUser({ password: a });
+      if (error) return toast(nice(error));
+      K.closeModal(); toast('Password changed ✦');
+    });
+  }
   sb.auth.onAuthStateChange((ev, s) => {
     session = s;
     if (s && (ev === 'SIGNED_IN' || ev === 'INITIAL_SESSION')) setTimeout(() => attach(s.user), 0); // outside the auth callback, as the library asks
+    if (ev === 'PASSWORD_RECOVERY') setTimeout(newPassword, 400);
   });
 
   async function saveProfile() {
@@ -5927,7 +5998,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
   }
   async function signOut() { if (session) await sb.auth.signOut(); session = null; }
 
-  K.account = { sendLink, saveProfile, signOut, isEmail, email: () => (session ? session.user.email : '') };
+  K.account = { formHTML, fill, saveProfile, signOut, isEmail, email: () => (session ? session.user.email : '') };
 })();
 </script>
   <script>/* Keni · community — place tags ("people tag the places") and Add a place ("add yours").
@@ -9463,7 +9534,21 @@ body[data-page="map"] .topbar #look-btn { display: grid; place-items: center; po
 @keyframes wmRipple { 0% { opacity: .75; transform: scale(1); } 70%, 100% { opacity: 0; transform: scale(3.4); } }
 .wm-cta { display: grid; justify-items: center; gap: 14px; width: 100%; margin-top: 10px; animation: wmUp .6s ease-out 1.2s backwards; }
 /* your name, then Continue */
-.wm-name { display: grid; gap: 8px; width: min(100%, 340px); animation: wmPop .5s cubic-bezier(.3, 1.5, .5, 1) 1.35s backwards; }
+.wm-name { display: grid; gap: 8px; width: min(100%, 340px); margin-inline: auto; }
+.welcome .ac-slot { width: 100%; animation: wmPop .5s cubic-bezier(.3, 1.5, .5, 1) 1.35s backwards; } /* on the slot, so switching sign up / sign in doesn't replay it */
+.acf { animation: acIn .25s ease-out; }
+@keyframes acIn { from { opacity: 0; translate: 0 6px; } }
+.acf-top { display: flex; justify-content: space-between; align-items: center; font-size: .8rem; color: var(--ink-3); }
+.acf-top .link-btn { display: inline-flex; align-items: center; gap: 4px; padding: 0; }
+.acf-top .link-btn .ic { width: 15px; height: 15px; }
+.acf-bar { display: block; height: 4px; border-radius: 99px; background: rgba(255, 255, 255, .1); overflow: hidden; }
+.acf-bar::after { content: ''; display: block; height: 100%; width: calc(var(--p) * 100%); border-radius: inherit; background: linear-gradient(90deg, #8b6cff, #ff8fc8); transition: width .4s cubic-bezier(.3, 1.2, .5, 1); animation: acBar .5s cubic-bezier(.3, 1.2, .5, 1); }
+@keyframes acBar { from { width: calc((var(--p) - .333) * 100%); } }
+.acf-h { margin: 6px 0 0; font-size: 1.5rem; text-align: left; color: #fff; }
+.acf-note { margin: -2px 0 2px; font-size: .85rem; color: var(--ink-3); text-align: left; }
+.acf .btn.ghost { height: 46px; justify-content: center; }
+.acf-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; font-size: .85rem; }
+.acf-links b { color: #e6dcff; }
 .wm-name input { min-width: 0; height: 46px; padding: 0 1rem; border-radius: 999px; border: 1px solid rgba(196, 176, 255, .4); background: rgba(255, 255, 255, .07); color: #fff; font: inherit; font-size: 16px; }
 .wm-name input:focus { outline: none; border-color: #c4b0ff; box-shadow: 0 0 0 3px rgba(196, 176, 255, .25); }
 .wm-name .btn { height: 46px; justify-content: center; }
