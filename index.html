@@ -11576,6 +11576,9 @@ body.pins-pop #bigmap .kpin:not(.was) { animation: kPop .42s cubic-bezier(.3, 1.
 .fr-h { margin: 18px 4px 8px; font: 800 1.2rem var(--display); color: var(--ink); }
 .fr-h span { color: #ff8fc8; margin-left: 4px; }
 .fr-note { margin: 6px 6px 14px; color: var(--ink-3); font-size: .9rem; }
+.fr-getkeni { display: flex; align-items: center; gap: 12px; margin: 18px 0 6px; padding: 14px; border-radius: 20px; background: linear-gradient(150deg, rgba(139, 108, 255, .22), rgba(255, 143, 200, .12)); border: 1px solid rgba(196, 176, 255, .22); }
+.fr-getkeni > div { flex: 1; display: grid; gap: 2px; } .fr-getkeni small { color: var(--ink-2); font-size: .82rem; line-height: 1.35; }
+.fr-getkeni .ic { width: 16px; height: 16px; margin-right: 4px; }
 .fr-card { display: flex; gap: 14px; align-items: center; padding: 8px 4px 14px; animation: chRow .45s var(--spring) both; animation-delay: calc(var(--i) * 45ms); transition: opacity .25s, transform .25s; }
 .fr-card.gone { opacity: 0; transform: translateX(-20px); }
 .fr-av { position: relative; flex: none; padding: 0; border: 0; background: none; cursor: pointer; }
@@ -12095,6 +12098,7 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
         if (sugg.length) h += '<p class="fr-h">People you may know</p>' + sugg.map((p) => cardHTML(p, i++,
           '<button class="btn primary" data-ch-add="' + esc(p.id) + '">' + K.lic('add') + 'Add friend</button><button class="btn ghost" data-ch-hide="' + esc(p.id) + '">Remove</button>', '')).join('');
         else if (tab === 'suggest' || !f.incoming.length) h += '<div class="ch-none"><b>' + K.lic('add') + '</b><h3>No suggestions yet</h3><p>As your friends add friends, people you may know show up here. You can also search for an @username.</p></div>';
+        if (tab === 'home') h += '<div class="fr-getkeni"><div><b>Friends not on Keni yet?</b><small>Send them the link. It shows them how to add Keni to their phone.</small></div><button class="btn primary sm" data-get-keni>' + K.lic('link') + 'Invite</button></div>';
         if (tab === 'home' && f.outgoing.length) h += '<p class="fr-h">Sent requests</p>' + f.outgoing.map((p) => personRow(p, '<button class="btn ghost sm" data-ch-cancel="' + esc(p.id) + '">Cancel</button>', i++, true)).join('');
       }
       side.innerHTML = h + '</div>';
@@ -12867,8 +12871,8 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
   function moreHTML() {
     const a = K.account, biz = K.isBiz && K.isBiz();
     // [action, icon, label, hint, hue] — each row gets its own glowing tile in Keni's purple-pink range
-    const row = ([k, ic, l, sub, h], i) => `<${k === 'admin' ? 'a href="admin" target="_blank" rel="noopener"' : `button data-pp="${k}"`} style="--i:${i};--th:${h}"><span class="pp-ti">${ppIc(ic)}</span><span class="pp-tx"><b>${l}</b><small>${sub}</small></span>${ppIc('chev', 'pp-chev')}</${k === 'admin' ? 'a' : 'button'}>`;
-    const you = [['tune', 'tune', 'Tune my taste', 'What you like, so picks fit you', 268], ['privacy', 'lock', 'Privacy', 'Who sees your profile and lists', 300]];
+    const row = ([k, ic, l, sub, h], i) => `<${k === 'admin' ? 'a href="admin" target="_blank" rel="noopener"' : k === 'getkeni' ? 'button data-get-keni' : `button data-pp="${k}"`} style="--i:${i};--th:${h}"><span class="pp-ti">${ppIc(ic)}</span><span class="pp-tx"><b>${l}</b><small>${sub}</small></span>${ppIc('chev', 'pp-chev')}</${k === 'admin' ? 'a' : 'button'}>`;
+    const you = [['getkeni', 'link', 'Invite friends to Keni', 'Send them the link to get the app', 300], ['tune', 'tune', 'Tune my taste', 'What you like, so picks fit you', 268], ['privacy', 'lock', 'Privacy', 'Who sees your profile and lists', 300]];
     const acct = [a && a.email() && ['pass', 'key', 'Change password', 'Keep your account safe', 18], biz ? ['studio', 'store', 'Open Studio', 'Manage your place', 330] : ['biz', 'store', 'I own a place', 'Claim it and post events', 330], a && a.admin && ['admin', 'shield', 'Admin', 'Reports and approvals', 190]].filter(Boolean);
     return `<div class="pp-more"><h4>You</h4><div class="pp-group">${you.map(row).join('')}</div>
       <h4>Account</h4><div class="pp-group">${acct.map((r, i) => row(r, i + 3)).join('')}</div>
@@ -12954,6 +12958,14 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
   K.openProfile = () => (uid() ? (isOpen() && isMe() ? (draw(), load(uid())) : open()) : oldOpen());
   const showCode = () => { open(); codeOpen = true; draw(); setTimeout(() => { const c = $('.pp-code', root); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 120); };
   K.profile = { open, close, isOpen, sync, showCode };
+  async function shareKeni() {
+    const nm = String((S.user && S.user.name) || '').trim().split(/\s+/)[0];
+    const url = location.origin + '/get' + (nm ? '?from=' + encodeURIComponent(nm) : '');
+    const text = 'Get Keni and let’s plan where to go ✦';
+    try { if (navigator.share) { await navigator.share({ title: 'Get Keni', text, url }); return; } await navigator.clipboard.writeText(text + ' ' + url); toast('Link copied. Send it to your friends ✦'); } catch { /* closed the share sheet */ }
+  }
+  document.addEventListener('click', (e) => { if (e.target.closest('[data-get-keni]')) { e.preventDefault(); shareKeni(); } });
+  K.shareKeni = shareKeni;
   const prevAfter = K.hooks.afterRender;
   K.hooks.afterRender = () => { if (prevAfter) prevAfter(); sync(); if (isOpen() && isMe() && !loading) draw(); };
   setTimeout(sync, 2000);

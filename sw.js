@@ -16,7 +16,7 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const req = e.request, url = new URL(req.url);
   if (req.method !== 'GET' || url.origin !== self.location.origin) return; // other sites and anything that sends data: hands off
-  if (url.pathname.startsWith('/admin')) return; // the admin page always comes straight from the network
+  if (url.pathname.startsWith('/admin') || url.pathname.startsWith('/get')) return; // the admin and Get Keni pages always come straight from the network
 
   if (req.mode === 'navigate') { // the page itself: newest first, saved copy if offline
     e.respondWith(fetch(req).then((res) => {
