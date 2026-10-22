@@ -1003,7 +1003,10 @@ body[data-page="map"]:not(.sopen) .topbar > * { pointer-events: auto; }
 body[data-page="map"]:not(.sopen) .ksr { display: none !important; }
 /* with search folded, the two round map tools sit on the same row as the search button, right-aligned */
 body[data-page="map"]:not(.sopen) .topbar #wheel-btn, body[data-page="map"]:not(.sopen) .topbar #surprise { top: 4px !important; right: 0 !important; }
-body[data-page="map"]:not(.sopen) .topbar #look-btn { top: 4px !important; right: 46px !important; }
+body[data-page="map"]:not(.sopen) .topbar #plan-btn { display: grid; place-items: center; position: absolute; top: 4px; right: 46px; width: 38px; height: 38px; padding: 0; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .24); background: linear-gradient(150deg, rgba(168, 140, 255, .55), rgba(255, 143, 200, .35)); backdrop-filter: blur(14px); box-shadow: 0 10px 24px -10px #000; animation: kSideIn .4s cubic-bezier(.3, 1.2, .5, 1) .27s backwards; }
+body[data-page="map"]:not(.sopen) .topbar #plan-btn .lbl { display: none; }
+body[data-page="map"]:not(.sopen) .topbar #plan-btn .ic { width: 17px; height: 17px; }
+body[data-page="map"].sopen .topbar #plan-btn { display: none; }
 body[data-page="map"]:not(.sopen) .topbar::before, body[data-page="map"]:not(.sopen) .topbar::after { display: none; }
 body[data-page="map"]:not(.sopen) .topbar .search { flex: none; width: 46px; height: 46px; padding: 0; justify-content: center; background: rgba(16, 11, 32, .74); border: 1px solid var(--line); backdrop-filter: blur(20px); cursor: pointer; margin-right: auto; }
 body[data-page="map"]:not(.sopen) .topbar .search input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
@@ -3842,7 +3845,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
   }
 
   // steps: 0 welcome · 2 places you'd go to · 3 budget · 6 where you're based · 7 what Keni learned · 4 sign up (new visitors only) · 5 tuning
-  const needSignup = () => !S.user && !S.done;
+  const needSignup = () => !(S.user && S.user.account);
   const flow = () => [2, 3, 6, 7, ...(needSignup() ? [4] : [])];
   const obSteps = () => flow().length;
   const stepNo = (n) => flow().indexOf(n) + 1;
@@ -3894,7 +3897,6 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
   function signupHTML() {
     return `<div class="step">${head(4, 'Make your <em>account</em>', 'Your name shows to your tropa.')}
       <div class="pane"><div class="su glass">${nameField()}
-        <button class="link-btn" type="button" data-act="skip-su">Skip for now</button>
       </div></div></div>`;
   }
 
@@ -3910,10 +3912,9 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
           <circle class="wm-ripple" cx="152" cy="-24" r="10" fill="none" stroke="url(#wmg)" stroke-width="2"/>
           <path class="wm-pin" fill-rule="evenodd" fill="url(#wmg)" d="M152 -5C147 -12 142 -17 142 -24A10 10 0 1 1 162 -24C162 -17 157 -12 152 -5ZM152 -27.6A3.6 3.6 0 1 0 152 -20.4A3.6 3.6 0 1 0 152 -27.6Z"/>
         </svg></div>
-        ${S.user ? `<div class="wm-cta"><button class="btn primary" data-act="build">Open the map ${icon('arrow')}</button></div>`
+        ${(S.user && S.user.account) ? `<div class="wm-cta"><button class="btn primary" data-act="build">Open the map ${icon('arrow')}</button></div>`
           : `<div class="wm-cta">${nameField()}
-          <button class="chip wm-own" type="button" data-act="own-su">${icon('store')} I own a place</button>
-          <button class="link-btn" type="button" data-act="skip-su">Skip for now</button></div>`}
+          <button class="chip wm-own" type="button" data-act="own-su">${icon('store')} I own a place</button></div>`}
       </div></div>`;
   }
 
@@ -4397,7 +4398,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
         <button data-view="explore">${icon('compass')}<span>Explore</span></button>
         <button data-view="map">${icon('map')}<span>Map</span></button>
         <button data-view="saved">${icon('heart')}<span>Saved</span><em class="badge" hidden>0</em></button></div>
-        ${(window.KENI_OFF || {}).chats ? `<button class="dock-side left" data-tz-plan aria-label="Plan with your tropa">${icon('users')}<span>Tropa</span></button>` : `<button class="dock-side left" data-ms="open" aria-label="Messages and friends"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-12.3 7.4L3 21l2.1-5.7A8.4 8.4 0 1 1 21 11.5z"/></svg><span>Chats</span><em class="badge" hidden>0</em></button>`}
+        ${(window.KENI_OFF || {}).chats ? `<button class="dock-side left" data-dock-friends aria-label="Friends">${icon('users')}<span>Friends</span><em class="badge" hidden>0</em></button>` : `<button class="dock-side left" data-ms="open" aria-label="Messages and friends"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-12.3 7.4L3 21l2.1-5.7A8.4 8.4 0 1 1 21 11.5z"/></svg><span>Chats</span><em class="badge" hidden>0</em></button>`}
         ${role === 'biz' ? `<button class="dock-side biz" data-view="biz" aria-label="Studio">${icon('store')}<span>Studio</span></button>` : ''}`;
     }
     if (prof && prof.parentNode !== dock) { prof.classList.add('dock-side'); prof.setAttribute('aria-label', 'Your profile'); dock.appendChild(prof); }
@@ -5093,7 +5094,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
   $('#ic-pin').innerHTML = icon('pin');
   $('#ic-chev').innerHTML = icon('chev');
   tint();
-  if (S.done) showApp(false); else startOnboarding(0); // (no taste set-up any more: a signed-in visitor goes straight to the map)
+  if (S.done && (S.user && S.user.account)) showApp(false); else startOnboarding(0); // (no taste set-up any more: a signed-in visitor goes straight to the map)
 })();
 </script>
   <script>/* Keni · Plan hub — Barkada mode, Plan my night, What are you craving?
@@ -6430,6 +6431,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
     session = s;
     if (s && (ev === 'SIGNED_IN' || ev === 'INITIAL_SESSION')) setTimeout(() => attach(s.user), 0); // outside the auth callback, as the library asks
     if (ev === 'PASSWORD_RECOVERY') setTimeout(newPassword, 400);
+    if (ev === 'INITIAL_SESSION' && !s && S.user && S.user.account) setTimeout(() => { S.user = null; persist(); if (K.startOnboarding) K.startOnboarding(0); }, 0);
   });
 
   async function saveProfile() {
@@ -7540,16 +7542,34 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
   document.addEventListener('change', (e) => { if (e.target.matches('[data-tr-name]')) setTimeout(() => tick(true), 250); });
 
   /* ── the invite sheet ── */
+  // signed in: your friends' faces on top of the link. Tap one and they get a notification with a Join button.
+  async function friendsRow(m, R) {
+    if (!(S.user && S.user.account && K.sb)) return;
+    let fr = []; try { const { data } = await K.sb.rpc('friends_list'); fr = (data && data.friends) || []; } catch { return; }
+    if (!fr.length) return;
+    const box = document.createElement('div'); box.className = 'ts-fr';
+    box.innerHTML = '<b>Invite friends</b><div class="ts-fr-row">' + fr.map((p, i) => `<button data-ts-inv="${esc(p.id)}" style="--i:${i}">${K.fav({ id: p.id, name: p.name || '?', emoji: '🙂', img: p.photo ? esc(p.photo) : null, hue: 270 }, '')}<span class="ts-fr-n">${esc(first(p.name))}</span></button>`).join('') + '</div>';
+    const link = $('#ts-link', m); if (!link) return; link.before(box);
+    box.addEventListener('click', async (e) => {
+      const b = e.target.closest('[data-ts-inv]'); if (!b || b.disabled) return; b.disabled = true;
+      try {
+        const { data, error } = await K.sb.rpc('tropa_invite', { p_code: R.code, p_secret: R.secret || null, p_user: b.dataset.tsInv }); if (error) throw error;
+        b.classList.add('done'); b.querySelector(".ts-fr-n").textContent = data === 'in' ? 'In ✓' : 'Invited ✓';
+        const r = b.getBoundingClientRect(); burst(r.left + r.width / 2, r.top + 20, { glyph: ['💜', '✨'], n: 8, spread: 60 });
+      } catch (err) { b.disabled = false; toast(/slow down/.test((err && err.message) || '') ? 'That’s a lot of invites. Try later.' : 'Couldn’t invite. Check your connection.'); }
+    });
+  }
   async function invite() {
     const t = active();
     const m = K.openModal(`<div class="fm"><span class="eyebrow">Invite your tropa</span><h2 class="display">Bring your <em>friends</em></h2>
-      <p class="sub">Send this link in your group chat. Friends tap it, add their name, and they’re in <b>${esc(t.emoji)} ${esc(t.name)}</b>. No app or account needed.</p>
+      <p class="sub">Send this link in your group chat. Friends tap it, sign in, and they’re in <b>${esc(t.emoji)} ${esc(t.name)}</b>.</p>
       <div class="ts-link" id="ts-link"><span class="ts-wait">Making your link…</span></div>
       <div class="fm-acts"><span></span><button class="btn ghost" data-m="close">Done</button></div></div>`, 'fm-sheet');
     let R; try { R = await ensureRemote(t); } catch (e) { console.warn(e); $('#ts-link', m).innerHTML = '<p class="fine">Couldn’t make a link. Check your connection and try again.</p>'; return; }
     const url = linkOf(R.code);
     $('#ts-link', m).innerHTML = `<div class="copyrow"><input readonly value="${esc(url)}" aria-label="Invite link"><button class="btn primary sm" data-ts="share">${navigator.share ? 'Share' : 'Copy'}</button></div>
       <small class="fine">Or tell them the code <b class="ts-code">${esc(R.code)}</b>: in Keni, Tropa mode → Join with a code.</small>`;
+    friendsRow(m, R);
     m.addEventListener('click', async (e) => {
       if (!e.target.closest('[data-ts="share"]')) return;
       const text = `Join ${t.name} on Keni and let's decide where to go 🧲`;
@@ -7603,6 +7623,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
   /* ── opening an invite link ── */
   const MAXT = 6;
   async function joinFlow(code) {
+    if (!(S.user && S.user.account)) { try { sessionStorage.setItem('keni.join', code); } catch { /* storage blocked */ } toast('Sign in or make an account to join ✦'); return; }
     const have = K.tropa.list().find((t) => t.remote && t.remote.code === code);
     if (have) { K.tropa.switchTo(have.id, true); return tick(true); }
     let g; try { g = await rpc('tropa_get', { p_code: code, p_secret: null }); } catch { g = null; }
@@ -7682,7 +7703,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
     return { shared: true, owner: R.owner === R.me, planner: R.planner === R.me, plannerName: R.planner ? nameOf(R.planner) : '', ownerName: R.owner ? nameOf(R.owner) : 'The owner', claim: R.planner === null };
   }
   function claim() { const t = active(); if (!t || !t.remote) return; bkOf(t).planner = { id: t.remote.me, at: Date.now() }; persist(); tick(true); }
-  K.tsync = { invite, pickerHTML, tick, ensureRemote, codeSheet, leave, role, claim };
+  K.tsync = { invite, join: joinFlow, pickerHTML, tick, ensureRemote, codeSheet, leave, role, claim };
   setTimeout(() => tick(true), 500);
 })();
 </script>
@@ -7868,6 +7889,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
 
   // topbar button next to "Surprise me"
   const sup = document.getElementById('surprise');
+  if (sup && !document.getElementById('plan-btn')) sup.insertAdjacentHTML('afterend', `<button class="btn ghost surprise-btn" id="plan-btn" data-tz-plan aria-label="Plan with your tropa">${K.icon ? K.icon('users') : ''}<span class="lbl">Plan</span></button>`);
   if (sup && !document.getElementById('wheel-btn')) sup.insertAdjacentHTML('afterend', `<button class="btn ghost surprise-btn" id="wheel-btn" data-wheel="open" aria-label="Spin the wheel"><span class="wh-ic">${mini()}</span><span class="lbl">Spin the wheel</span></button>`);
 })();
 </script>
@@ -9099,6 +9121,10 @@ button.ms-rs:hover { filter: brightness(1.2); }
 /* the sheet */
 .pss h2 { overflow-wrap: anywhere; }
 .pss-host { display: flex; align-items: center; gap: 10px; }
+.ps-addwho { display: grid; gap: 8px; margin: 14px 0 6px; max-height: 46vh; overflow-y: auto; }
+.ps-aw { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border-radius: 18px; background: rgba(255, 255, 255, .05); animation: chRow .4s var(--spring) both; animation-delay: calc(var(--i) * 50ms); }
+.ps-aw > span { flex: 1; min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pss-face { display: inline-flex; align-items: center; gap: inherit; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
 .pss-host small { display: block; color: var(--ink-3); }
 .pss-note { padding: 12px 14px; border-radius: 16px; background: rgba(255, 255, 255, .05); border: 1px solid var(--line); color: var(--ink-2); line-height: 1.5; }
 .pss-acts { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -9112,6 +9138,30 @@ button.ms-rs:hover { filter: brightness(1.2); }
 .psc input[type="text"] { width: 100%; height: 48px; padding: 0 14px; border-radius: 14px; border: 1px solid var(--line); background: rgba(255, 255, 255, .06); color: var(--ink); font: inherit; font-size: 1rem; }
 .psc .chip[aria-pressed="true"] { background: linear-gradient(145deg, rgba(168, 140, 255, .55), rgba(255, 143, 200, .4)); border-color: rgba(255, 255, 255, .4); color: #fff; }
 .psc-types .chip { height: 44px; font-size: .95rem; }
+/* Pasabit sheet styles carried over from the prototype (calendar, request rows, chips) */
+.rs-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.rs .chip[aria-pressed="true"] { background: linear-gradient(145deg, rgba(168, 140, 255, .55), rgba(255, 143, 200, .4)); border-color: rgba(255, 255, 255, .4); color: #fff; }
+.rs-day { display: grid; justify-items: center; gap: 0; height: auto; padding: 8px 14px; line-height: 1.25; }
+.cal { display: grid; gap: 8px; padding: 12px; border-radius: 20px; background: rgba(255, 255, 255, .05); border: 1px solid var(--line); }
+.cal-h { display: flex; align-items: center; justify-content: space-between; } .cal-h b { color: var(--ink); font-size: 1rem; } .cal-h .icon-btn { font-size: 1.3rem; }
+.cal-g { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; justify-items: center; }
+.cal-w span { font-size: .7rem; color: var(--ink-3); letter-spacing: .08em; }
+.cal-d { width: 100%; max-width: 42px; aspect-ratio: 1; border-radius: 50%; font-size: .9rem; color: var(--ink); }
+.cal-d:disabled { color: var(--ink-3); opacity: .35; }
+.cal-d.today { box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .45); }
+.cal-d[aria-pressed="true"] { background: linear-gradient(145deg, #a88cff, #ff8fc8); color: #fff; font-weight: 700; }
+.cal-sel { margin: 2px 0 0; text-align: center; font-size: .85rem; color: var(--ink-2); }
+.pss-req { display: flex; align-items: center; gap: 8px; margin-top: 8px; } .pss-req > span:not(.fav) { flex: 1; min-width: 0; } .pss-req .fav { width: 32px; height: 32px; flex: none; }
+.pss-x { margin-left: 5px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 99px; font-size: .62rem; line-height: 1; background: rgba(255, 255, 255, .16); color: #fff; }
+.pss-x.sure { background: #ff6b8a; font-size: .68rem; padding: 0 7px; }
+.rs-day small { font-size: .68rem; color: var(--ink-3); }
+.rs-day[aria-pressed="true"] small { color: rgba(255, 255, 255, .85); }
+.rs-pf { display: flex; align-items: center; gap: 10px; padding: 4px 6px 4px 0; border-radius: 16px; background: rgba(255, 255, 255, .05); border: 1px solid var(--line); margin-bottom: 8px; }
+.rs-pf > button:first-child { flex: 1; min-width: 0; display: grid; gap: 2px; padding: 10px 14px; text-align: left; color: inherit; }
+.rs-pf small { color: var(--ink-3); }
+.bst { font-style: normal; margin-left: 6px; padding: 1px 7px; border-radius: 999px; font-size: .64rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #150e2b; background: #ffd27a; vertical-align: middle; }
+.cal-h b, .cal-w span, .cal-sel { text-transform: none; }
+.psc-timebox { min-width: 0; } .fm-l .psc-time { flex: 1 1 auto; width: 100%; min-width: 0; max-width: 260px; -webkit-appearance: none; appearance: none; display: block; text-align: center; }
 </style>
 <script>/* Keni · Pasabit: plans people post on the map that others can tag along on (on the real backend since 2026-10-22).
    Server: public.pasabits + pasabit_members (ps_list, ps_get, ps_create, ps_join, ps_leave, ps_answer, ps_kick, ps_cancel, ps_went, ps_report).
@@ -9228,11 +9278,11 @@ button.ms-rs:hover { filter: brightness(1.2); }
     return `<div class="fm pss" data-ps-sheet="${p.id}">
       <span class="eyebrow">Pasabit · ${p.vis === 'friends' ? 'friends only' : 'open to everyone'}${p.approve ? ' · host approves' : ''}</span>
       <h2 class="display">${esc(p.emoji)} ${esc(p.title)}</h2>
-      <div class="pss-host">${mineHost ? '<span class="fav" style="--h:268" aria-hidden="true">🙋</span>' : fav(p.hostP)}<span><b>${mineHost ? 'You’re hosting' : 'Hosted by ' + esc(hostName(p))}</b><small>${mineHost ? (p.approve ? 'People ask first, and you accept or decline' : 'Anyone who can see it can tag along') : p.friend ? 'One of your friends' : 'Someone on Keni'}</small></span></div>
+      <div class="pss-host">${mineHost ? '<span class="fav" style="--h:268" aria-hidden="true">🙋</span>' : `<button class="pss-face" data-pp-user="${esc(p.hostP.id || '')}" aria-label="See ${esc(hostName(p))}’s profile">${fav(p.hostP)}</button>`}<span><b>${mineHost ? 'You’re hosting' : 'Hosted by ' + esc(hostName(p))}</b><small>${mineHost ? (p.approve ? 'People ask first, and you accept or decline' : 'Anyone who can see it can tag along') : p.friend ? 'One of your friends' : 'Someone on Keni'}</small></span></div>
       <div class="ct"><div class="ct-row static"><i>🗓️</i><span><b>${whenTxt(p.when)}</b><small>${TYPES[p.type][1]}</small></span></div>${where}</div>
       ${p.note ? `<p class="pss-note">“${esc(p.note)}”</p>` : ''}
       ${mineHost && p.req.length ? `<div class="ms-f pss-reqs"><b>Asking to tag along <small>(${p.req.length})</small></b>${p.req.map((x) => `<div class="pss-req">${fav(x)}<span>${esc(x.name)}</span><button class="btn primary sm" data-ps="accept" data-id="${p.id}" data-x="${esc(x.id)}">Accept</button><button class="btn ghost sm" data-ps="decline" data-id="${p.id}" data-x="${esc(x.id)}">Decline</button></div>`).join('')}</div>` : ''}
-      <div class="ms-f"><b>${count(p)} sabit</b><div class="ms-mem">${mineHost || j ? '<span>🙋 You</span>' : ''}${ppl.map((x) => `<span>${fav(x)}${esc(first(x))}${mineHost ? `<button class="pss-x" data-ps="kick" data-id="${p.id}" data-x="${esc(x.id)}" aria-label="Remove ${esc(first(x))}">✕</button>` : ''}</span>`).join('')}</div>${mineHost && ppl.length ? '<small class="fine">Tap ✕ to remove someone.</small>' : ''}</div>
+      <div class="ms-f"><b>${count(p)} sabit</b><div class="ms-mem">${mineHost || j ? '<span>🙋 You</span>' : ''}${ppl.map((x) => `<span><button class="pss-face" data-pp-user="${esc(x.id || '')}">${fav(x)}${esc(first(x))}</button>${mineHost ? `<button class="pss-x" data-ps="kick" data-id="${p.id}" data-x="${esc(x.id)}" aria-label="Remove ${esc(first(x))}">✕</button>` : ''}</span>`).join('')}</div>${mineHost && ppl.length ? '<small class="fine">Tap ✕ to remove someone.</small>' : ''}</div>
       <div class="pss-acts">${asked ? `<button class="btn ghost" disabled>⏳ Waiting for ${esc(first(p.hostP))} to answer</button><button class="btn ghost" data-ps="unask" data-id="${p.id}">Cancel request</button>` : j
     ? `<button class="btn primary" data-ps="chat" data-id="${p.id}">💬 Open the chat</button><button class="btn ghost" data-ps="went" data-id="${p.id}">✅ We went!</button><button class="btn ghost" data-ps="${mineHost ? 'cancel' : 'leave'}" data-id="${p.id}">${mineHost ? 'Cancel Pasabit' : 'Leave'}</button>`
     : `<button class="btn primary big" data-ps="join" data-id="${p.id}">🙋 ${p.approve ? 'Ask to tag along' : 'Pasabit ako!'}</button>`}</div>
@@ -9282,7 +9332,43 @@ button.ms-rs:hover { filter: brightness(1.2); }
   }, btn);
   const answer = (id, xid, yes, btn) => call('ps_answer', { p_id: id, p_user: xid, p_yes: yes }, () => toast(yes ? 'Accepted 🙌' : 'Declined'), btn);
   const kick = (id, xid) => call('ps_kick', { p_id: id, p_user: xid }, () => toast('Removed'));
-  const went = (id) => { const p = get(id); return call('ps_went', { p_id: id }, () => { if (p && p.vid && K.been) K.been.mark(p.vid, true); K.closeModal(); toast(`Nice! <b>${esc((p || {}).title || 'That Pasabit')}</b> is done${p && p.vid ? ' and the place is marked as visited' : ''}`); }); };
+  const went = (id) => { const p = get(id); return call('ps_went', { p_id: id }, () => { if (p && p.vid && K.been) K.been.mark(p.vid, true); K.closeModal(); toast(`Nice! <b>${esc((p || {}).title || 'That Pasabit')}</b> is done${p && p.vid ? ' and the place is marked as visited' : ''}`); if (p) setTimeout(() => (p.host === 'me' ? askChatDelete(p) : addWho(p)), 900); }); };
+  // the host, once it's over: keep the group chat or delete it for everyone
+  function askChatDelete(p) {
+    if (document.querySelector('.modal')) return addWho(p);
+    const m = K.openModal(`<div class="fm ch-delq"><span class="ch-delic">${esc(p.emoji)}</span><h2 class="display">Delete the <em>group chat?</em></h2>
+      <p class="sub"><b>${esc(p.title)}</b> is over. Deleting removes the chat for everyone in it.</p>
+      <div class="fm-acts"><button class="btn ghost" data-m="close">Keep it</button><span></span><button class="btn danger" data-ps-chdel>Delete chat</button></div></div>`, 'fm-sheet');
+    let asked = false;
+    const next = () => { if (asked) return; asked = true; setTimeout(() => addWho(p), 450); };
+    m.addEventListener('click', async (e) => {
+      const b = e.target.closest('[data-ps-chdel]'); if (!b) return; b.disabled = true;
+      try { const { error } = await K.sb.rpc('ps_chat_delete', { p_id: p.id }); if (error) throw error; K.closeModal(); toast('Group chat deleted'); if (K.tchat && K.tchat.pull) K.tchat.pull(); }
+      catch { b.disabled = false; toast('Couldn’t delete the chat. Try again.'); }
+    });
+    const mr = document.getElementById('modal-root');
+    if (mr) { const ob = new MutationObserver(() => { if (!mr.querySelector('[data-ps-chdel]')) { ob.disconnect(); next(); } }); setTimeout(() => ob.observe(mr, { childList: true, subtree: true }), 50); }
+  }
+  // after a Pasabit: "Add the people you went with?" — only people you aren't friends with yet and who take requests
+  async function addWho(p) {
+    const ids = people(p).map((x) => x.id).filter(Boolean); if (!ids.length || !K.sb) return;
+    let list = []; try { const { data } = await K.sb.rpc('friend_statuses', { p_ids: ids }); list = (data || []).filter((x) => x.status === 'none' && x.requests !== false); } catch { return; }
+    if (!list.length || document.querySelector('.modal')) return;
+    const m = K.openModal(`<div class="fm"><span class="eyebrow">${esc(p.emoji)} ${esc(p.title)}</span><h2 class="display">Add the people <em>you went with?</em></h2>
+      <p class="sub">So you can message them and invite them next time.</p>
+      <div class="ps-addwho">${list.map((x, i) => `<div class="ps-aw" style="--i:${i}"><button class="pss-face" data-pp-user="${esc(x.id)}">${fav(x)}</button><span>${esc(first(x))}</span><button class="btn primary sm" data-ps-aw="${esc(x.id)}"><svg class="ic " viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8.5" r="3.3"/><path d="M3.5 19.5c.5-3.3 2.7-5 5.5-5s5 1.7 5.5 5"/><path d="M18 8v6M15 11h6"/></svg>Add</button></div>`).join('')}</div>
+      <div class="fm-acts">${list.length > 1 ? '<button class="btn ghost" data-ps-aw="all">Add all</button>' : '<span></span>'}<span></span><button class="btn primary" data-m="close">Done</button></div></div>`, 'fm-sheet');
+    const add = async (b) => {
+      if (!b || b.disabled) return; b.disabled = true;
+      try { const { error } = await K.sb.rpc('friend_request', { p_user: b.dataset.psAw }); if (error) throw error; b.textContent = 'Sent ✓'; b.classList.replace('primary', 'ghost'); const r = b.getBoundingClientRect(); burst(r.left + r.width / 2, r.top + r.height / 2, { glyph: ['💜', '👋', '✨'], n: 10, spread: 80 }); }
+      catch { b.disabled = false; toast('Couldn’t send that. Try again.'); }
+    };
+    m.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-ps-aw]'); if (!b) return;
+      if (b.dataset.psAw === 'all') { b.disabled = true; m.querySelectorAll('[data-ps-aw]:not([data-ps-aw="all"])').forEach(add); return; }
+      add(b);
+    });
+  }
   /* ───────────── starting one: four short steps ───────────── */
   let C = null, cmap = null, cmark = null;
   const killMap = () => { if (cmap) { cmap.remove(); cmap = null; cmark = null; cput = null; } };
@@ -9494,7 +9580,7 @@ button.ms-rs:hover { filter: brightness(1.2); }
     const mine = store().filter((p) => joined(p) && live(p)).sort((a, b) => a.when - b.when);
     return `<section><h4>My Pasabits <small>(${mine.length})</small></h4>${mine.map((p) => `<div class="rs-pf"><button data-ps-open="${p.id}"><b>${p.emoji} ${esc(p.title)}</b><small>${p.host === 'me' ? 'Hosting' : 'Tagging along'} · ${whenTxt(p.when)} · ${esc(p.place)}</small></button></div>`).join('') || '<p class="fine">None yet — start one from the map, or tag along on someone else’s.</p>'}</section>`;
   };
-  K.pasabit = { get, list, people, chatIds, subline, profileSection, open: openSheet, card, start: startCreate, postOwner, ownerEvents, load };
+  K.pasabit = { get, list, people, chatIds, subline, profileSection, open: openSheet, card, start: startCreate, postOwner, ownerEvents, load, addWho, askChatDelete };
   // links: #ps=<id> opens that Pasabit
   const fromHash = () => { const m = /^#ps=([0-9a-f-]{36})$/i.exec(location.hash); if (!m) return; try { history.replaceState(history.state, '', location.pathname + location.search); } catch { /* fine */ } openSheet(m[1]); };
   addEventListener('hashchange', fromHash);
@@ -9905,7 +9991,7 @@ html.keni-nochips body[data-page="map"] #filters > .chips { display: none; }
   const { S, ui, persist, $, $$, esc } = K;
   const vis = (e) => !!(e && e.getClientRects().length && e.getBoundingClientRect().width && getComputedStyle(e).visibility !== 'hidden'); // (offsetParent is null for fixed controls like the dock, so it can't be used here)
   const rectOf = (els) => { // one box around everything named
-    const rs = els.filter(vis).map((e) => e.getBoundingClientRect()); if (!rs.length) return null;
+    const rs = [].concat(els || []).filter(vis).map((e) => e.getBoundingClientRect()); if (!rs.length) return null;
     const l = Math.min(...rs.map((r) => r.left)), t = Math.min(...rs.map((r) => r.top)), r = Math.max(...rs.map((x) => x.right)), b = Math.max(...rs.map((x) => x.bottom));
     return { left: Math.max(4, l), top: t, width: Math.min(innerWidth - 4, r) - Math.max(4, l), height: b - t };
   };
@@ -9928,11 +10014,11 @@ html.keni-nochips body[data-page="map"] #filters > .chips { display: none; }
     { t: 'Hold the map', x: touch ? 'Press and hold any empty spot on the map.' : 'Right-click any empty spot on the map.', el: () => [], hold: true, did: () => !!$('.kring'),
       look: { t: 'Right at that spot', x: 'Start a Pasabit or set where your tropa meets. Nothing happens until you choose one. Tap ✕ to close it for now.', open: () => !!$('.kring'), allow: '.kring-x' },
       win: 'Hold the map whenever you want to do something at an exact spot.', after: () => K.ring && K.ring.close() },
-    { t: 'Plan with your tropa', x: 'Tap here to plan a night out.', el: () => [$('#dock [data-tz-plan]')], allow: '[data-tz-plan]', did: () => K.ui.view === 'plan',
+    { t: 'Plan with your tropa', x: 'Tap here to plan a night out.', el: () => [$('#plan-btn')], allow: '[data-tz-plan]', did: () => K.ui.view === 'plan',
       look: { t: 'Keni finds the place', x: 'Say what trip you want, invite friends, and Keni picks a place everyone likes. Tap Back to the map when you’ve had a look.', open: () => K.ui.view === 'plan', allow: '[data-p="hub"]' }, win: 'Planning with friends starts there.' },
     { t: 'Can’t decide?', x: 'Tap the wheel.', el: () => [$('#wheel-btn')], allow: '#wheel-btn', did: () => !!$('#modal-root .wh-stage'),
       look: { t: 'Give it a spin', x: 'Tap Spin and let the wheel pick for you. Close it after.' }, win: 'The wheel settles any “kahit saan”.' },
-    { t: 'Getting around', x: (window.KENI_OFF || {}).chats ? 'Tropa for your tropas, Explore for every place, Saved for your hearts, and your profile up top.' : 'Chats for your friends, Explore for every place, Saved for your hearts, and your profile up top.', el: () => [...$('#dock [data-view]'), $('#dock [data-ms="open"]'), $('#dock [data-tz-plan]')].filter(Boolean), info: true },
+    { t: 'Getting around', x: (window.KENI_OFF || {}).chats ? 'Friends for your friends, Explore for every place, Saved for your hearts, Chats for your messages, and your profile.' : 'Chats for your friends, Explore for every place, Saved for your hearts, and your profile up top.', el: () => [...$('#dock [data-view]'), $('#dock [data-ms="open"]'), $('#dock [data-tz-plan]')].filter(Boolean), info: true },
   ];
 
   let root = null, i = 0, steps = [], phase = 'do', marks = [], tick = 0, trips0 = 0, winT = 0;
@@ -10257,10 +10343,10 @@ body.sf-new .sf-chip { animation: sfPop .5s cubic-bezier(.2, .9, .3, 1.5) both; 
 @keyframes kSoon { 0% { scale: .94; opacity: .9; } 80%, 100% { scale: 1.22; opacity: 0; } }
 /* map look picker */
 #look-btn { display: none; }
-body[data-page="map"] .topbar #look-btn { display: grid; place-items: center; position: absolute; right: 0; top: 180px; width: 38px; height: 38px; padding: 0; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .24); background: rgba(16, 11, 32, .8); backdrop-filter: blur(14px); box-shadow: 0 10px 24px -10px #000; animation: kSideIn .4s cubic-bezier(.3, 1.2, .5, 1) .31s backwards; }
+body[data-page="map"] #look-btn { display: grid; place-items: center; position: fixed; z-index: 3; right: 14px; top: auto; bottom: calc(env(safe-area-inset-bottom) + 102px); width: 38px; height: 38px; padding: 0; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .24); background: rgba(16, 11, 32, .8); backdrop-filter: blur(14px); box-shadow: 0 10px 24px -10px #000; animation: kSideIn .4s cubic-bezier(.3, 1.2, .5, 1) .31s backwards; }
 #look-btn .ic { width: 16px; height: 16px; transition: rotate .45s cubic-bezier(.3, 1.4, .5, 1), scale .3s; }
 #look-btn[aria-expanded="true"] .ic { rotate: 180deg; scale: 1.15; }
-.klook { position: absolute; right: 46px; top: 150px; z-index: 60; display: flex; gap: 8px; padding: 8px; border-radius: 22px; background: linear-gradient(150deg, rgba(46, 34, 92, .94), rgba(16, 11, 34, .96)); border: 1px solid var(--line); box-shadow: 0 22px 44px -16px #000; transform-origin: 100% 50%; animation: klookIn .32s cubic-bezier(.2, .9, .3, 1.25) both; }
+.klook { position: fixed; right: 14px; top: auto; bottom: calc(env(safe-area-inset-bottom) + 150px); z-index: 60; transform-origin: 100% 100%; display: flex; gap: 8px; padding: 8px; border-radius: 22px; background: linear-gradient(150deg, rgba(46, 34, 92, .94), rgba(16, 11, 34, .96)); border: 1px solid var(--line); box-shadow: 0 22px 44px -16px #000; transform-origin: 100% 50%; animation: klookIn .32s cubic-bezier(.2, .9, .3, 1.25) both; }
 .klook.out { animation: klookOut .16s ease-in both; pointer-events: none; }
 @keyframes klookIn { from { opacity: 0; scale: .7; translate: 14px 0; } }
 @keyframes klookOut { to { opacity: 0; scale: .85; translate: 10px 0; } }
@@ -10270,13 +10356,13 @@ body[data-page="map"] .topbar #look-btn { display: grid; place-items: center; po
 .klook i { width: 58px; height: 58px; border-radius: 14px; background: var(--bg) center / cover, #241a45; border: 2px solid transparent; box-shadow: 0 6px 14px -6px #000; transition: border-color .25s, scale .3s cubic-bezier(.3, 1.4, .5, 1); }
 .klook .lk-night:not(.keni) i { filter: sepia(.35) hue-rotate(205deg) saturate(1.5) brightness(1.12); }
 .klook button[aria-pressed="true"] { color: #fff; } .klook button[aria-pressed="true"] i { border-color: #c4b0ff; scale: 1.06; }
-@media (prefers-reduced-motion: reduce) { .klook, .klook button, .kps.soon::before, body[data-page="map"] .topbar #look-btn { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .klook, .klook button, .kps.soon::before, body[data-page="map"] #look-btn { animation: none; } }
 </style>
 <script>/* Keni · map look — a small button on the map switches how the map itself looks (Keni Night, Light, Satellite). */
 (() => {
   const K = window.KeniCore; if (!K || !K.mapLooks) return;
   const { $, esc, icon, toast } = K, bar = $('.topbar'); if (!bar) return;
-  bar.insertAdjacentHTML('beforeend', `<button class="btn ghost" id="look-btn" aria-label="Change how the map looks" aria-haspopup="true" aria-expanded="false">${icon('layers')}</button>`);
+  document.body.insertAdjacentHTML('beforeend', `<button class="btn ghost" id="look-btn" aria-label="Change how the map looks" aria-haspopup="true" aria-expanded="false">${icon('layers')}</button>`);
   const btn = $('#look-btn'); let pop = null;
   function close() {
     if (!pop) return; const p = pop; pop = null; btn.setAttribute('aria-expanded', 'false');
@@ -10286,11 +10372,11 @@ body[data-page="map"] .topbar #look-btn { display: grid; place-items: center; po
     if (K.mapOnOSM()) return toast('Map looks are off while the backup map is showing');
     pop = document.createElement('div'); pop.className = 'klook'; pop.setAttribute('role', 'group'); pop.setAttribute('aria-label', 'Map look');
     pop.innerHTML = K.mapLooks().map((o, i) => `<button type="button" class="lk-${o.k}${document.documentElement.classList.contains('map-keni') ? ' keni' : ''}" data-look="${o.k}" aria-pressed="${o.on}" style="--i:${i}"><i style="--bg:url('${o.thumb}')"></i>${esc(o.name)}</button>`).join('');
-    bar.appendChild(pop); btn.setAttribute('aria-expanded', 'true');
+    document.body.appendChild(pop); btn.setAttribute('aria-expanded', 'true');
   }
   btn.addEventListener('click', () => (pop ? close() : open()));
-  bar.addEventListener('click', (e) => {
-    const b = e.target.closest && e.target.closest('[data-look]'); if (!b || !pop) return;
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest && e.target.closest('.klook [data-look]'); if (!b || !pop) return;
     if (b.getAttribute('aria-pressed') === 'true') return close();
     pop.querySelectorAll('[data-look]').forEach((x) => x.setAttribute('aria-pressed', x === b));
     if (K.setMapLook(b.dataset.look)) toast(`Map look: <b>${esc(b.textContent.trim())}</b>`);
@@ -10601,6 +10687,13 @@ button.ct-row:hover { background: rgba(255, 255, 255, .07); }
 .ct-row i .ic { width: 18px; height: 18px; }
 /* tropa invite link + join screen (Keni · tropa sync) */
 .ts-link { display: grid; gap: 8px; margin: 12px 0 4px; }
+.ts-fr { display: grid; gap: 8px; margin: 14px 0 2px; } .ts-fr > b { font-size: .8rem; color: var(--ink-2); }
+.ts-fr-row { display: flex; gap: 12px; overflow-x: auto; padding: 4px 2px 6px; scrollbar-width: none; }
+.ts-fr-row button { flex: none; display: grid; justify-items: center; gap: 4px; width: 58px; padding: 0; border: 0; background: none; color: var(--ink-2); font: 500 .74rem var(--ui); cursor: pointer; animation: chRow .4s var(--spring) both; animation-delay: calc(var(--i) * 40ms); transition: transform .25s var(--spring); }
+.ts-fr-row button:active { transform: scale(.9); }
+.ts-fr-row .fav { width: 50px; height: 50px; transition: box-shadow .3s; }
+.ts-fr-row .ts-fr-n { max-width: 58px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ts-fr-row .done .fav { box-shadow: 0 0 0 3px #c4b0ff; } .ts-fr-row .done .ts-fr-n { color: #c4b0ff; font-weight: 650; }
 .ts-wait { color: var(--ink-3); font-size: .9rem; animation: wmBeat 1.2s ease-in-out infinite; }
 .ts-faces { display: flex; gap: 6px; margin: 10px 0 14px; }
 .ts-av { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; vertical-align: middle; }
@@ -11470,10 +11563,43 @@ body.pins-pop #bigmap .kpin:not(.was) { animation: kPop .42s cubic-bezier(.3, 1.
 .ch-ib .tc-badge { position: absolute; top: -3px; right: -3px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 99px; background: var(--pink); color: #1a0d1f; font: 700 .68rem/18px var(--ui); font-style: normal; text-align: center; animation: tcBadge .5s var(--spring) both; }
 .ch-ib .tc-badge[hidden] { display: none; }
 .ch-top h2 { margin: 0; flex: 1; font: 700 1.7rem var(--display); }
+.fr-top h2 { flex: 1; font: 800 1.75rem/1 var(--display); letter-spacing: -.02em; }
+.fr-top [data-ch-fsearch][aria-pressed="true"] { background: rgba(196, 176, 255, .22); }
+.fr-chips { display: flex; gap: 8px; padding: 2px 16px 10px; overflow-x: auto; scrollbar-width: none; }
+.fr-chips::-webkit-scrollbar { display: none; }
+.fr-chips button { flex: none; display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 16px; border-radius: 99px; border: 1px solid var(--line); background: rgba(255, 255, 255, .07); color: var(--ink); font: 650 .9rem var(--ui); cursor: pointer; transition: background .25s, transform .25s var(--spring); }
+.fr-chips button:active { transform: scale(.94); }
+.fr-chips button[aria-pressed="true"] { background: linear-gradient(135deg, #c4b0ff, #ff8fc8); color: #170f2c; border-color: transparent; }
+.fr-chips button small { opacity: .65; font-weight: 600; }
+.fr-chips .ic { width: 16px; height: 16px; }
+.fr-body { padding-top: 4px; }
+.fr-h { margin: 18px 4px 8px; font: 800 1.2rem var(--display); color: var(--ink); }
+.fr-h span { color: #ff8fc8; margin-left: 4px; }
+.fr-note { margin: 6px 6px 14px; color: var(--ink-3); font-size: .9rem; }
+.fr-card { display: flex; gap: 14px; align-items: center; padding: 8px 4px 14px; animation: chRow .45s var(--spring) both; animation-delay: calc(var(--i) * 45ms); transition: opacity .25s, transform .25s; }
+.fr-card.gone { opacity: 0; transform: translateX(-20px); }
+.fr-av { position: relative; flex: none; padding: 0; border: 0; background: none; cursor: pointer; }
+.fr-av .fav { width: 84px; height: 84px; font-size: 2.2rem; }
+.fr-av em { position: absolute; right: 0; bottom: 2px; padding: 2px 6px; border-radius: 99px; background: #1b1530; color: #8df0b4; font: 700 .7rem var(--ui); font-style: normal; box-shadow: 0 0 0 2px var(--bg); }
+.fr-info { flex: 1; min-width: 0; display: grid; gap: 4px; }
+.fr-name b { font: 700 1.05rem var(--ui); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+.fr-mut { display: flex; align-items: center; gap: 6px; color: var(--ink-3); font-size: .85rem; min-width: 0; overflow: hidden; white-space: nowrap; }
+.fr-faces { display: inline-flex; flex: none; }
+.fr-faces .fav { width: 22px; height: 22px; font-size: .62rem; margin-left: -7px; box-shadow: 0 0 0 2px var(--bg); }
+.fr-faces .fav:first-child { margin-left: 0; }
+.fr-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+.fr-btns .btn { justify-content: center; min-height: 40px; padding: 0 8px; font-size: .9rem; white-space: nowrap; }
+.fr-btns .btn .ic { width: 16px; height: 16px; margin-right: 4px; }
+.ch-tag { color: var(--ink-3); font-size: .78rem; padding: 0 6px; }
+.ch-wait { animation: tcBadge 1.2s ease-in-out infinite alternate; }
 .ch-search { position: relative; margin: 2px 14px 8px; display: block; }
 .ch-search input { width: 100%; box-sizing: border-box; height: 44px; padding: 0 16px 0 40px; border-radius: 22px; border: 1px solid var(--line); background: rgba(255, 255, 255, .06); color: var(--ink); font: 1rem var(--ui); }
 .ch-search input:focus { outline: none; border-color: var(--accent); }
-.ch-search::before { content: "🔎"; position: absolute; left: 14px; top: 50%; translate: 0 -50%; font-size: .85rem; opacity: .7; }
+.ch-search::before { content: ""; position: absolute; left: 15px; top: 50%; translate: 0 -50%; width: 17px; height: 17px; background: currentColor; color: var(--ink-3); -webkit-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2024%2024'%20fill%3D'none'%20stroke%3D'black'%20stroke-width%3D'2.2'%20stroke-linecap%3D'round'%3E%3Ccircle%20cx%3D'11'%20cy%3D'11'%20r%3D'6.5'%2F%3E%3Cpath%20d%3D'M16%2016l4.5%204.5'%2F%3E%3C%2Fsvg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2024%2024'%20fill%3D'none'%20stroke%3D'black'%20stroke-width%3D'2.2'%20stroke-linecap%3D'round'%3E%3Ccircle%20cx%3D'11'%20cy%3D'11'%20r%3D'6.5'%2F%3E%3Cpath%20d%3D'M16%2016l4.5%204.5'%2F%3E%3C%2Fsvg%3E") center / contain no-repeat; }
+.btn > .ic, .ch-acts .ic { width: 17px; height: 17px; vertical-align: -3px; }
+.btn > .ic + * , .btn > .ic { margin-right: 5px; }
+.ch-none > b .ic, .pp-empty > b .ic { width: 30px; height: 30px; }
+.ch-none > b, .pp-empty > b { display: grid; place-items: center; width: 64px; height: 64px; margin: 0 auto 6px; border-radius: 22px; color: #fff; font-size: 0; background: linear-gradient(145deg, #a88cff, #ff8fc8); box-shadow: 0 10px 30px -10px rgba(196, 140, 255, .8), inset 0 1px 0 rgba(255, 255, 255, .35); animation: tcPoke .55s var(--spring) both; }
 .ch-rows { flex: 1; overflow-y: auto; padding: 4px 6px calc(env(safe-area-inset-bottom) + 20px); overscroll-behavior: contain; }
 /* friends strip (like Messenger's row of faces) */
 .ch-strip { display: flex; gap: 14px; overflow-x: auto; padding: 6px 10px 12px; scrollbar-width: none; }
@@ -11485,6 +11611,19 @@ body.pins-pop #bigmap .kpin:not(.was) { animation: kPop .42s cubic-bezier(.3, 1.
 .ch-add { display: grid; place-items: center; border-radius: 50%; background: rgba(255, 255, 255, .08); border: 1.5px dashed rgba(255, 255, 255, .25); color: var(--ink); transition: transform .25s var(--spring); }
 .ch-row { width: 100%; display: flex; align-items: center; gap: 12px; padding: 10px; border: 0; border-radius: 18px; background: none; color: var(--ink); text-align: left; cursor: pointer; box-sizing: border-box; animation: chRow .45s var(--spring) both; animation-delay: calc(var(--i, 0) * 45ms); transition: background .2s; }
 button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06); }
+.ch-ib > .ic { width: 22px; height: 22px; }
+.ch-ib[data-ch="activity"]:active > .ic { animation: chRing .5s ease; }
+@keyframes chRing { 25% { transform: rotate(14deg); } 50% { transform: rotate(-12deg); } 75% { transform: rotate(6deg); } }
+.ch-add > .ic { width: 24px; height: 24px; }
+.ch-sw { position: relative; border-radius: 18px; overflow: hidden; touch-action: pan-y; animation: chRow .45s var(--spring) both; animation-delay: calc(var(--i, 0) * 45ms); transition: height .3s ease, opacity .3s; }
+.ch-sw > .ch-row { position: relative; z-index: 1; background: var(--bg); animation: none; will-change: transform; }
+.ch-del { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 2px; padding: 0 22px; border: 0; border-radius: 18px; background: linear-gradient(90deg, #ff6b8a, #ff3d6e); color: #fff; font: 650 .74rem var(--ui); cursor: pointer; }
+.ch-del i .ic { width: 22px; height: 22px; } .ch-del i { font-style: normal; font-size: 1.25rem; transition: transform .3s var(--spring); }
+.ch-sw.far .ch-del i { transform: scale(1.35) rotate(-10deg); }
+.ch-sw.gone { opacity: 0; }
+.ch-delq { text-align: center; } .ch-delq .fm-acts { justify-content: center; }
+.ch-delic .ic { width: 40px; height: 40px; color: #ff8fa6; } .ch-delic { display: block; font-size: 2.4rem; margin: 4px auto 6px; animation: tcPoke .5s var(--spring) both; }
+.btn.danger { background: linear-gradient(135deg, #ff7b98, #ff3d6e); color: #fff; border-color: transparent; }
 @keyframes chRow { from { transform: translateY(14px); opacity: 0; } }
 .ch-row .ch-txt { flex: 1; min-width: 0; display: grid; gap: 2px; }
 .ch-row b { font-weight: 600; font-size: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -11627,6 +11766,10 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
 .ch-card .ch-small button.bad { color: #ff8fa6; }
 @media (prefers-reduced-motion: reduce) { .ch, .ch-row, .ch-sf, .ch-m, .ch-pk, .ch-pick, .ch-menu, .ch-pick button, .ch-rx, .ch-tray, .ch-typing span.d i, .ch-none > b, .ch-card .fav, .ch-qr { animation: none; } .ch-pane { transition: none; } }
 </style>
+<script>/* Keni · line icons for chats, friends and profiles */
+(() => { const K = window.KeniCore; if (!K) return; const P = {"x":"<path d=\"M6 6l12 12M18 6L6 18\"/>","scan":"<path d=\"M4 8.5V6a2 2 0 0 1 2-2h2.5M15.5 4H18a2 2 0 0 1 2 2v2.5M20 15.5V18a2 2 0 0 1-2 2h-2.5M8.5 20H6a2 2 0 0 1-2-2v-2.5\"/><path d=\"M7.5 12h9\"/>","search":"<circle cx=\"11\" cy=\"11\" r=\"6.5\"/><path d=\"M16 16l4.5 4.5\"/>","chat":"<path d=\"M5 18.5l1.2-3.3A7.5 7.5 0 1 1 9 18.3z\"/><path d=\"M9 11h6M9 14h3.5\"/>","link":"<path d=\"M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1\"/><path d=\"M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1\"/>","qr":"<rect x=\"4\" y=\"4\" width=\"6\" height=\"6\" rx=\"1.2\"/><rect x=\"14\" y=\"4\" width=\"6\" height=\"6\" rx=\"1.2\"/><rect x=\"4\" y=\"14\" width=\"6\" height=\"6\" rx=\"1.2\"/><path d=\"M14 14h2.5v2.5H14zM17.5 17.5H20V20h-2.5zM14 20h1M20 14v1\"/>","add":"<circle cx=\"9\" cy=\"8.5\" r=\"3.3\"/><path d=\"M3.5 19.5c.5-3.3 2.7-5 5.5-5s5 1.7 5.5 5\"/><path d=\"M18 8v6M15 11h6\"/>","check":"<path d=\"M5 12.5l4.5 4.5L19 7.5\"/>","trash":"<path d=\"M4.5 7h15M9.5 7V4.8h5V7M6.5 7l1 12.5h9l1-12.5\"/><path d=\"M10.5 11v5M13.5 11v5\"/>","bell":"<path d=\"M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z\"/><path d=\"M10 20.5a2 2 0 0 0 4 0\"/>","people":"<circle cx=\"9\" cy=\"8.5\" r=\"3.3\"/><path d=\"M3.5 19.5c.5-3.3 2.7-5 5.5-5s5 1.7 5.5 5\"/><path d=\"M15.5 5.6a3.2 3.2 0 0 1 0 6M17.5 14.7c1.7.6 2.8 2.2 3 4.8\"/>","heart":"<path d=\"M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z\"/>","steps":"<path d=\"M7 4.5c1.7 0 2.5 1.8 2.5 4s-.8 4-2.5 4-2.5-1.8-2.5-4 .8-4 2.5-4zM5 15h4.5v1.5a2.2 2.2 0 0 1-4.5 0zM17 7.5c1.7 0 2.5 1.8 2.5 4s-.8 4-2.5 4-2.5-1.8-2.5-4 .8-4 2.5-4zM14.5 18h4.5v1a2.2 2.2 0 0 1-4.5 0z\"/>","lock":"<rect x=\"5\" y=\"10.5\" width=\"14\" height=\"9.5\" rx=\"2.5\"/><path d=\"M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5M12 14.5v2\"/>","magnet":"<path d=\"M6 4h4v8a2 2 0 0 0 4 0V4h4v8a6 6 0 0 1-12 0z\"/><path d=\"M6 8h4M14 8h4\"/>"};
+  K.lic = (n, cls = '') => '<svg class="ic ' + cls + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (P[n] || '') + '</svg>'; })();
+</script>
 <script>/* Keni · Chats (Messenger style; friends + 1-on-1 chats added 2026-10-22). The 💬 Chats button in the dock opens one inbox for every chat:
    one per shared tropa (tropa_*) and 1-on-1 chats with friends (dm_*). Friends need an account: requests must be accepted (friend_request /
    friend_respond), and anyone can be blocked or reported (user_block / user_report). 🔔 Activity lists friend requests and accepts
@@ -11683,9 +11826,9 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
   /* ── the layer ── */
   const root = document.createElement('div');
   root.className = 'ch'; root.id = 'chats'; root.hidden = true; root.dataset.pane = 'inbox'; root.setAttribute('role', 'dialog'); root.setAttribute('aria-label', 'Chats');
-  root.innerHTML = `<section class="ch-pane ch-inbox"><div class="ch-top"><button class="ch-ib" data-ch="close" aria-label="Close chats">✕</button><h2>Chats</h2>
-      <button class="ch-ib" data-ch="activity" aria-label="Activity">🔔<i class="tc-badge" data-b="act" hidden></i></button>
-      <button class="ch-ib" data-ch="friends" aria-label="Friends">👥<i class="tc-badge" data-b="req" hidden></i></button></div>
+  root.innerHTML = `<section class="ch-pane ch-inbox"><div class="ch-top"><button class="ch-ib" data-ch="close" aria-label="Close chats"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button><h2>Chats</h2>
+      <button class="ch-ib" data-ch="activity" aria-label="Activity"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg><i class="tc-badge" data-b="act" hidden></i></button>
+      <button class="ch-ib" data-ch="friends" aria-label="Friends"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8.5" r="3.3"/><path d="M3.5 19.5c.5-3.3 2.7-5 5.5-5s5 1.7 5.5 5"/><path d="M15.5 5.6a3.2 3.2 0 0 1 0 6M17.5 14.7c1.7.6 2.8 2.2 3 4.8"/></svg><i class="tc-badge" data-b="req" hidden></i></button></div>
       <label class="ch-search"><input type="search" placeholder="Search" aria-label="Search chats" data-ch-q></label><div class="ch-rows"></div></section>
     <section class="ch-pane ch-thread" aria-live="polite"></section><section class="ch-pane ch-side"></section>`;
   document.body.appendChild(root);
@@ -11726,8 +11869,9 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
     root.dataset.pane = p;
   }
   addEventListener('popstate', () => {
-    if (root.hidden) return;
+    if (root.hidden || K.ppPop || K.scanPop || (K.scan && K.scan.isOpen()) || (K.profile && K.profile.isOpen())) return;
     closePick();
+    if (root.dataset.pane === 'side' && sideDirect) { sideDirect = false; return hide(); }
     if (root.dataset.pane !== 'inbox') { if (root.dataset.pane === 'thread') leaveThread(true); root.dataset.pane = 'inbox'; drawInbox(); return; }
     hide(true);
   });
@@ -11735,8 +11879,67 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
   /* ── loading the inbox, activity and friends ── */
   let ibBusy = false;
   let ibWait = null;
+  /* ── deleting a chat (for you only): messages up to then stay hidden; a new message brings the chat back ── */
+  const persist = () => K.persist();
+  const CL = () => (S.chatClears = S.chatClears && typeof S.chatClears === 'object' ? S.chatClears : {});
+  const clearedAt = (key) => CL()[key] || 0;
+  const isHidden = (x) => { const t = clearedAt(x.key); return !!t && (!x.last || Date.parse(x.last.at) <= t); };
+  let clearsLoaded = false;
+  async function loadClears() {
+    if (clearsLoaded || !uid()) return; clearsLoaded = true;
+    try { const { data } = await rpc('chat_clears'); let ch = false; for (const k in data || {}) { const t = Date.parse(data[k]); if (t > clearedAt(k)) { CL()[k] = t; ch = true; } } if (ch) { persist(); drawInbox(); badges(); } } catch { clearsLoaded = false; }
+  }
+  function askDelete(key, row) {
+    const x = rowsData().find((r) => r.key === key); if (!x) return;
+    const m = K.openModal(`<div class="fm ch-delq"><span class="ch-delic"><svg class="ic " viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 7h15M9.5 7V4.8h5V7M6.5 7l1 12.5h9l1-12.5"/><path d="M10.5 11v5M13.5 11v5"/></svg></span><h2 class="display">Delete this chat?</h2>
+      <p class="sub">${esc(x.name)} is removed for you only.${key.startsWith('t:') ? ' You stay in the tropa.' : ''} If someone sends a new message, the chat comes back.</p>
+      <div class="fm-acts"><button class="btn ghost" data-m="close">Cancel</button><span></span><button class="btn danger" data-ch-delyes>Delete</button></div></div>`, 'fm-sheet');
+    let yes = false;
+    m.addEventListener('click', (e) => { if (e.target.closest('[data-ch-delyes]')) { yes = true; K.closeModal(); doDelete(key, row); } });
+    // closed without deleting: slide the row back
+    const mr = document.getElementById('modal-root');
+    if (mr) { const ob = new MutationObserver(() => { if (!mr.querySelector('.ch-delq')) { ob.disconnect(); if (!yes && row && row.isConnected) swipeTo(row, 0); } }); setTimeout(() => ob.observe(mr, { childList: true, subtree: true }), 50); }
+  }
+  async function doDelete(key, row) {
+    const t = Date.now(); CL()[key] = t; persist();
+    const cv = conv(key), ib = cv && inboxOf(cv); if (ib) ib.unread = 0;
+    delete C[key];
+    if (row && row.isConnected) { row.style.height = row.offsetHeight + 'px'; row.classList.add('gone'); requestAnimationFrame(() => { row.style.height = '0px'; }); setTimeout(() => { drawInbox(); badges(); }, 320); }
+    else { drawInbox(); badges(); }
+    toast('Chat deleted');
+    if (uid()) { try { const { data } = await rpc('chat_clear', { p_key: key }); const st = Date.parse(data); if (st) { CL()[key] = Math.max(st, t); persist(); } } catch { /* stays deleted on this phone */ } }
+  }
+  // swipe a chat left to show Delete; swipe far to ask straight away
+  const swipeTo = (sw, x) => { const r = sw.querySelector('.ch-row'); if (!r) return; r.style.transition = 'transform .32s var(--spring)'; r.style.transform = x ? `translateX(${x}px)` : ''; sw.classList.toggle('open', x < 0); };
+  let sw0 = null;
+  rows.addEventListener('pointerdown', (e) => {
+    const sw = e.target.closest('.ch-sw'); if (!sw || e.target.closest('.ch-del')) return;
+    rows.querySelectorAll('.ch-sw.open').forEach((o) => { if (o !== sw) swipeTo(o, 0); });
+    sw0 = { sw, x: e.clientX, y: e.clientY, base: sw.classList.contains('open') ? -92 : 0, dx: 0, on: false, id: e.pointerId };
+  });
+  rows.addEventListener('pointermove', (e) => {
+    if (!sw0 || e.pointerId !== sw0.id) return;
+    const dx = e.clientX - sw0.x, dy = e.clientY - sw0.y;
+    if (!sw0.on) { if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) { sw0 = null; return; } if (Math.abs(dx) < 10) return; sw0.on = true; try { sw0.sw.setPointerCapture(e.pointerId); } catch { /* fine */ } }
+    const r = sw0.sw.querySelector('.ch-row'), w = sw0.sw.offsetWidth;
+    sw0.dx = Math.min(0, Math.max(-w, sw0.base + dx)); r.style.transition = 'none'; r.style.transform = `translateX(${sw0.dx}px)`;
+    sw0.sw.classList.toggle('far', sw0.dx < -w * 0.5);
+  });
+  const swEnd = () => {
+    if (!sw0) return; const { sw, dx, on } = sw0; sw0 = null; if (!on) return;
+    sw.dataset.swiped = '1'; setTimeout(() => { delete sw.dataset.swiped; }, 60);
+    sw.classList.remove('far');
+    if (dx < -sw.offsetWidth * 0.5) { swipeTo(sw, -sw.offsetWidth); try { if (navigator.vibrate) navigator.vibrate(12); } catch { /* no */ } askDelete(sw.dataset.key, sw); }
+    else swipeTo(sw, dx < -46 ? -92 : 0);
+  };
+  rows.addEventListener('pointerup', swEnd); rows.addEventListener('pointercancel', swEnd);
+  rows.addEventListener('click', (e) => {
+    const sw = e.target.closest('.ch-sw'); if (!sw) return;
+    if (e.target.closest('.ch-del')) { e.stopPropagation(); e.preventDefault(); return askDelete(sw.dataset.key, sw); }
+    if (sw.dataset.swiped || sw.classList.contains('open')) { e.stopPropagation(); e.preventDefault(); if (!sw.dataset.swiped) swipeTo(sw, 0); }
+  }, true);
   async function loadInbox() {
-    if (!sb()) return; if (ibBusy) return ibWait; ibBusy = true;
+    if (!sb()) return; if (ibBusy) return ibWait; ibBusy = true; loadClears();
     let done; ibWait = new Promise((r) => { done = r; });
     try {
       const ts = tropas(), jobs = [ts.length ? rpc('chat_inbox', { p_tropas: ts.map((t) => ({ code: t.remote.code, secret: t.remote.secret || null })) }) : null,
@@ -11750,8 +11953,21 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
     } catch { /* offline */ } finally { ibBusy = false; done(); }
   }
   const ready = {};
+  // people search (@username or name) and friends-of-friends suggestions
+  let FS = [], SR = { q: '', list: null }, srT = 0;
+  async function findPeople(q) {
+    q = (q || '').trim(); clearTimeout(srT);
+    if (q.replace(/^@/, '').length < 2) { if (SR.q) { SR = { q: '', list: null }; drawSide(); keepFocus(); } return; }
+    srT = setTimeout(async () => {
+      try { const { data, error } = await rpc('user_search', { q }); if (error) throw error; if ((side._q || '').trim() !== q) return; SR = { q, list: data || [] }; }
+      catch { SR = { q, list: [] }; }
+      if (sideMode === 'friends') { drawSide(); keepFocus(); }
+    }, 280);
+  }
+  function keepFocus() { const i = $('[data-ch-fq]', side); if (i && document.activeElement !== i && side._typing) { const p = i.value.length; i.focus(); try { i.setSelectionRange(p, p); } catch { /* fine */ } } }
   async function loadFriends() {
     if (!uid() || !sb()) return;
+    rpc('friend_suggest').then(({ data }) => { if (Array.isArray(data)) { FS = data; if (sideMode === 'friends' && root.dataset.pane === 'side') { drawSide(); keepFocus(); } } }, () => {});
     try { const { data, error } = await rpc('friends_list'); if (!error && data) { F = data; drawInbox(); if (root.dataset.pane === 'side') drawSide(); badges(); } } catch { /* offline */ }
   }
   function announceNotif(n) {
@@ -11764,7 +11980,10 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
     else if (n.kind === 'ps_accept') toast('🙌 You’re in! ' + ps, () => openKey2('p:' + d.ps), 'Chat');
     else if (n.kind === 'ps_soon') toast('⏰ ' + ps + ' starts in 1 hour', () => openKey2('p:' + d.ps), 'Chat');
     else if (n.kind === 'ps_cancel') toast(ps + ' was cancelled');
+    else if (n.kind === 'tropa_invite' && d.code) toast('🧲 <b>' + who + '</b> invited you to ' + esc((d.emoji || '') + ' ' + (d.name || 'a tropa')), () => tjoin(d.code), 'Join');
   }
+  const inTropa = (code) => K.tropa && K.tropa.list().some((t) => t.remote && t.remote.code === code);
+  const tjoin = (code) => { hide(); setTimeout(() => K.tsync && K.tsync.join(code), 260); };
   const whenShort = (t) => { const d = new Date(t), now = new Date(), tm = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); return (d.toDateString() === now.toDateString() ? 'Today' : d.toDateString() === new Date(now.getTime() + 864e5).toDateString() ? 'Tomorrow' : d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })) + ' ' + tm; };
   const ago = (at) => {
     const s = (Date.now() - Date.parse(at)) / 1000;
@@ -11800,30 +12019,31 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
   function drawInbox() {
     if (root.hidden) return;
     const local = (S.tropas || []).filter((t) => !(t.remote && t.remote.code));
-    const list = rowsData().filter((x) => x.last || x.key.startsWith('t:'))
+    const list = rowsData().filter((x) => (x.last || x.key.startsWith('t:')) && !isHidden(x))
       .sort((a, b) => (b.last ? Date.parse(b.last.at) : 0) - (a.last ? Date.parse(a.last.at) : 0))
       .filter((x) => !q || (x.name || '').toLowerCase().includes(q) || (x.find || '').toLowerCase().includes(q));
     let h = '';
     if (!q && uid()) { // the row of friends' faces: tap one to chat
       const fr = (F && F.friends) || [];
-      h += `<div class="ch-strip"><button class="ch-sf" data-ch="friends" style="--i:0"><span class="ch-add">＋</span><span>Add</span></button>${fr.slice(0, 20).map((p, i) => `<button class="ch-sf" data-ch-dm="${esc(p.id)}" style="--i:${i + 1}">${pface(p)}<span>${esc(first(p.name))}</span></button>`).join('')}</div>`;
+      h += `<div class="ch-strip"><button class="ch-sf" data-ch="friends" style="--i:0"><span class="ch-add"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span><span>Add</span></button>${fr.slice(0, 20).map((p, i) => `<button class="ch-sf" data-ch-dm="${esc(p.id)}" style="--i:${i + 1}">${pface(p)}<span>${esc(first(p.name))}</span></button>`).join('')}</div>`;
     }
     h += list.map((x, i) => {
       const n = openKey === x.key ? 0 : x.unread, ty = typing[x.key] && Object.keys(typing[x.key]).length;
-      return `<button class="ch-row${n ? ' unread' : ''}" data-ch-open="${esc(x.key)}" style="--i:${i}">${x.ps ? `<span class="ch-ava one"><span class="ch-emo ps">${esc(x.emoji || '🧲')}</span></span>` : avatarHTML(x.key, x.emoji, x.members, x.me)}
-        <span class="ch-txt"><b>${esc(x.name)}</b><small>${ty ? 'typing…' : esc(preview(x.last, x.me)) + (x.last ? ' · ' + ago(x.last.at) : '')}</small></span>${n ? '<i class="ch-dot" aria-label="' + n + ' unread"></i>' : ''}</button>`;
+      return `<div class="ch-sw" data-key="${esc(x.key)}" style="--i:${i}"><button class="ch-del" aria-label="Delete chat with ${esc(x.name)}"><i><svg class="ic " viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 7h15M9.5 7V4.8h5V7M6.5 7l1 12.5h9l1-12.5"/><path d="M10.5 11v5M13.5 11v5"/></svg></i>Delete</button><button class="ch-row${n ? ' unread' : ''}" data-ch-open="${esc(x.key)}" style="--i:${i}">${x.ps ? `<span class="ch-ava one"><span class="ch-emo ps">${esc(x.emoji || '🧲')}</span></span>` : avatarHTML(x.key, x.emoji, x.members, x.me)}
+        <span class="ch-txt"><b>${esc(x.name)}</b><small>${ty ? 'typing…' : esc(preview(x.last, x.me)) + (x.last ? ' · ' + ago(x.last.at) : '')}</small></span>${n ? '<i class="ch-dot" aria-label="' + n + ' unread"></i>' : ''}</button></div>`;
     }).join('');
     if (!q && local.length) h += `<p class="ch-sec">Tropas not shared yet</p>` + local.map((t, i) => `<div class="ch-row" style="--i:${list.length + i}"><span class="ch-ava one"><span class="ch-emo">${esc(t.emoji || '🧑‍🤝‍🧑')}</span></span>
         <span class="ch-txt"><b>${esc(t.name || 'Tropa')}</b><small>Invite friends to start chatting</small></span><button class="btn primary sm" data-ch-invite="${esc(t.id)}">Invite</button></div>`).join('');
     if (!list.length && !local.length) h += q ? '<div class="ch-none"><p>No chats match that.</p></div>'
-      : `<div class="ch-none"><b>💬</b><h3>No chats yet</h3><p>${uid() ? 'Add friends, or invite your tropa. Your chats show up here.' : 'Invite your tropa. Your chats show up here.'}</p><button class="btn primary" data-ch="${uid() ? 'friends' : 'signin'}">${uid() ? '👥 Add friends' : 'Sign in to add friends'}</button></div>`;
+      : `<div class="ch-none"><b>${K.lic('chat')}</b><h3>No chats yet</h3><p>${uid() ? 'Add friends, or invite your tropa. Your chats show up here.' : 'Invite your tropa. Your chats show up here.'}</p><button class="btn primary" data-ch="${uid() ? 'friends' : 'signin'}">${uid() ? '👥 Add friends' : 'Sign in to add friends'}</button></div>`;
     else if (q && !list.length) h += '<div class="ch-none"><p>No chats match that.</p></div>';
     rows.innerHTML = h;
   }
 
   /* ── side page: Friends, Activity, someone's card ── */
+  let sideDirect = false; // Friends opened from the dock button
   function openSide(mode, p) {
-    show(); sideMode = mode; sidePerson = p || null;
+    sideDirect = false; show(); sideMode = mode; sidePerson = p || null;
     if (inThread()) { leaveThread(true); root.dataset.pane = 'side'; } else setPane('side');
     drawSide();
     if (mode === 'friends') loadFriends();
@@ -11831,37 +12051,64 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
     if (mode === 'person' && p && p.id) card(p.id);
   }
   const topHTML = (title, right = '') => `<div class="ch-top"><button class="ch-ib" data-ch="back" aria-label="Back">←</button><h2>${title}</h2>${right}</div>`;
-  const signInHTML = '<div class="ch-none"><b>👥</b><h3>Friends need an account</h3><p>Sign in so friends can find you, and you can chat 1-on-1.</p><button class="btn primary" data-ch="signin">Sign in</button></div>';
+  const signInHTML = '<div class="ch-none"><b>' + K.lic('people') + '</b><h3>Friends need an account</h3><p>Sign in so friends can find you, and you can chat 1-on-1.</p><button class="btn primary" data-ch="signin">Sign in</button></div>';
   const myLink = () => location.origin + '/#friend=' + uid();
   function personRow(p, acts, i, tap) {
-    return `<div class="ch-row${tap ? ' tap' : ''}" style="--i:${i}"${tap ? ` data-ch-person="${esc(p.id)}"` : ''}><span class="ch-ava one">${pface(p)}</span><span class="ch-txt"><b>${esc(p.name || 'Someone')}</b><small>${p.username ? '@' + esc(p.username) : '&nbsp;'}</small></span><span class="ch-acts">${acts}</span></div>`;
+    return `<div class="ch-row${tap ? ' tap' : ''}" style="--i:${i}"${tap ? ` data-ch-person="${esc(p.id)}"` : ''}><span class="ch-ava one">${pface(p)}</span><span class="ch-txt"><b>${esc(p.name || 'Someone')}</b><small>${[p.username && '@' + esc(p.username), p.mutual && p.mutual + ' friend' + (p.mutual === 1 ? '' : 's') + ' in common'].filter(Boolean).join(' · ') || '&nbsp;'}</small></span><span class="ch-acts">${acts}</span></div>`;
   }
   function drawSide() {
     if (sideMode === 'friends') {
+      // Friends, laid out like a social app: title + search, filter chips, big request cards, suggestions, your friends
       if (!uid()) { side.innerHTML = topHTML('Friends') + signInHTML; return; }
-      const f = F || { friends: [], incoming: [], outgoing: [], suggested: [], blocked: [] }, fq = (side._q || '').toLowerCase();
+      const f = F || { friends: [], incoming: [], outgoing: [], suggested: [], blocked: [] }, fq = (side._q || '').trim().toLowerCase().replace(/^@/, '');
+      const tab = side._tab || 'home', searching = side._search || !!fq;
       const m = (p) => !fq || (p.name || '').toLowerCase().includes(fq) || (p.username || '').toLowerCase().includes(fq);
-      let i = 0, h = topHTML('Friends') + `<label class="ch-search"><input type="search" placeholder="Search friends" aria-label="Search friends" data-ch-fq value="${esc(side._q || '')}"></label><div class="ch-body">`;
-      h += `<div class="ch-link"><p>Share your friend link, or let them scan your code. They tap it and send you a request.</p><div class="ch-acts"><button class="btn primary" data-ch="share">🔗 Share my link</button><button class="btn ghost" data-ch="qr">▦ My code</button></div><div class="ch-qr" hidden></div></div>`;
-      if (f.incoming.length) h += '<p class="ch-sec">Friend requests</p>' + f.incoming.map((p) => personRow(p, `<button class="btn primary sm" data-ch-accept="${esc(p.id)}">Accept</button><button class="btn ghost sm" data-ch-decline="${esc(p.id)}">Decline</button>`, i++, true)).join('');
-      const fr = f.friends.filter(m);
-      h += `<p class="ch-sec">Friends${f.friends.length ? ' · ' + f.friends.length : ''}</p>` + (fr.length ? fr.map((p) => personRow(p, `<button class="btn ghost sm" data-ch-dm="${esc(p.id)}" aria-label="Message ${esc(p.name)}">💬</button><button class="ch-ib" data-ch-more="${esc(p.id)}" aria-label="More">⋯</button>`, i++, true)).join('')
-        : `<p class="ch-sec" style="text-transform:none;letter-spacing:0">${fq ? 'No friends match that.' : 'No friends yet. Share your link, or add people from your tropas below.'}</p>`);
-      const sg = f.suggested.filter(m);
-      if (sg.length) h += '<p class="ch-sec">From your tropas</p>' + sg.map((p) => personRow(p, `<button class="btn primary sm" data-ch-add="${esc(p.id)}">➕ Add</button>`, i++, true)).join('');
-      if (f.outgoing.length) h += '<p class="ch-sec">Sent</p>' + f.outgoing.filter(m).map((p) => personRow(p, `<button class="btn ghost sm" data-ch-cancel="${esc(p.id)}">Cancel</button>`, i++, true)).join('');
-      if (f.blocked.length) h += '<p class="ch-sec">Blocked</p>' + f.blocked.map((p) => personRow(p, `<button class="btn ghost sm" data-ch-unblock="${esc(p.id)}">Unblock</button>`, i++, false)).join('');
+      const hid = new Set(S.hideSugg || []), sgIds = new Set(f.suggested.map((p) => p.id));
+      const sugg = [...FS.filter((p) => !sgIds.has(p.id)), ...f.suggested].filter((p) => !hid.has(p.id));
+      const mutualHTML = (p) => p.mutual ? '<span class="fr-mut"><span class="fr-faces">' + (p.faces || []).map(pface).join('') + '</span>' + p.mutual + ' mutual friend' + (p.mutual === 1 ? '' : 's') + '</span>' : (p.username ? '<span class="fr-mut">@' + esc(p.username) + '</span>' : '');
+      const cardHTML = (p, i, acts, when) => '<div class="fr-card" style="--i:' + i + '"><button class="fr-av" data-ch-person="' + esc(p.id) + '" aria-label="See ' + esc(p.name || 'their') + ' profile">' + pface(p) + (when ? '<em>' + esc(when) + '</em>' : '') + '</button>'
+        + '<div class="fr-info"><div class="fr-name"><b>' + esc(p.name || 'Someone') + '</b></div>' + mutualHTML(p) + '<div class="fr-btns">' + acts + '</div></div></div>';
+      let i = 0;
+      let h = '<div class="ch-top fr-top"><button class="ch-ib" data-ch="back" aria-label="Back">←</button><h2>Friends</h2><button class="ch-ib" data-ch-fsearch aria-label="Search" aria-pressed="' + searching + '">' + K.lic('search') + '</button></div>';
+      if (searching) h += '<label class="ch-search"><input type="search" placeholder="Search friends or @username" aria-label="Search friends or people on Keni" data-ch-fq value="' + esc(side._q || '') + '"></label>';
+      h += '<div class="fr-chips">' + [['suggest', 'Suggestions'], ['friends', 'Your friends']].map(([k, l]) => '<button data-ch-ftab="' + k + '" aria-pressed="' + (tab === k) + '">' + l + (k === 'friends' && f.friends.length ? ' <small>' + f.friends.length + '</small>' : '') + '</button>').join('')
+        + '<button data-scan>' + K.lic('scan') + 'Scan</button><button data-ch="qr">' + K.lic('qr') + 'My code</button><button data-ch="share">' + K.lic('link') + 'Share link</button></div><div class="ch-qr" hidden></div><div class="ch-body fr-body">';
+      if (searching && fq) {
+        const fr = f.friends.filter(m);
+        if (fr.length) h += '<p class="fr-h">Your friends</p>' + fr.map((p) => personRow(p, '<button class="btn ghost sm" data-ch-dm="' + esc(p.id) + '" aria-label="Message ' + esc(p.name) + '">' + K.lic('chat') + '</button>', i++, true)).join('');
+        if (fq.length >= 2) {
+          const known = new Set(fr.map((p) => p.id)), res = SR.list && SR.q === (side._q || '').trim() ? SR.list.filter((p) => !known.has(p.id)) : null;
+          const btn = (p) => p.status === 'friends' ? '<button class="btn ghost sm" data-ch-dm="' + esc(p.id) + '">' + K.lic('chat') + '</button>' : p.status === 'sent' ? '<small class="ch-tag">Sent</small>'
+            : p.status === 'received' ? '<button class="btn primary sm" data-ch-accept="' + esc(p.id) + '">Confirm</button>' : p.status === 'blocked' ? '' : '<button class="btn primary sm" data-ch-add="' + esc(p.id) + '">' + K.lic('add') + 'Add</button>';
+          h += '<p class="fr-h">On Keni</p>' + (res === null ? '<p class="fr-note ch-wait">Searching…</p>'
+            : res.length ? res.map((p) => personRow(p, btn(p), i++, true)).join('') : '<p class="fr-note">No one called “' + esc(side._q.trim()) + '”. Check the spelling, or share your link instead.</p>');
+        } else if (!fr.length) h += '<p class="fr-note">Keep typing to search everyone on Keni.</p>';
+      } else if (tab === 'friends') {
+        h += '<p class="fr-h">' + (f.friends.length ? f.friends.length + ' friend' + (f.friends.length === 1 ? '' : 's') : 'Your friends') + '</p>';
+        h += f.friends.length ? f.friends.map((p) => personRow(p, '<button class="btn ghost sm" data-ch-dm="' + esc(p.id) + '" aria-label="Message ' + esc(p.name) + '">' + K.lic('chat') + '</button><button class="ch-ib" data-ch-more="' + esc(p.id) + '" aria-label="More">⋯</button>', i++, true)).join('')
+          : '<div class="ch-none"><b>' + K.lic('people') + '</b><h3>No friends yet</h3><p>Check Suggestions, or share your link so friends can add you.</p></div>';
+        if (f.outgoing.length) h += '<p class="fr-h">Sent requests</p>' + f.outgoing.map((p) => personRow(p, '<button class="btn ghost sm" data-ch-cancel="' + esc(p.id) + '">Cancel</button>', i++, true)).join('');
+        if (f.blocked.length) h += '<p class="fr-h">Blocked</p>' + f.blocked.map((p) => personRow(p, '<button class="btn ghost sm" data-ch-unblock="' + esc(p.id) + '">Unblock</button>', i++, false)).join('');
+      } else {
+        if (tab === 'home' && f.incoming.length) h += '<div class="fr-hrow"><p class="fr-h">Friend requests <span>' + f.incoming.length + '</span></p></div>' + f.incoming.map((p) => cardHTML(p, i++,
+          '<button class="btn primary" data-ch-accept="' + esc(p.id) + '">Confirm</button><button class="btn ghost" data-ch-decline="' + esc(p.id) + '">Delete</button>', p.at ? ago(p.at) : '')).join('');
+        if (sugg.length) h += '<p class="fr-h">People you may know</p>' + sugg.map((p) => cardHTML(p, i++,
+          '<button class="btn primary" data-ch-add="' + esc(p.id) + '">' + K.lic('add') + 'Add friend</button><button class="btn ghost" data-ch-hide="' + esc(p.id) + '">Remove</button>', '')).join('');
+        else if (tab === 'suggest' || !f.incoming.length) h += '<div class="ch-none"><b>' + K.lic('add') + '</b><h3>No suggestions yet</h3><p>As your friends add friends, people you may know show up here. You can also search for an @username.</p></div>';
+        if (tab === 'home' && f.outgoing.length) h += '<p class="fr-h">Sent requests</p>' + f.outgoing.map((p) => personRow(p, '<button class="btn ghost sm" data-ch-cancel="' + esc(p.id) + '">Cancel</button>', i++, true)).join('');
+      }
       side.innerHTML = h + '</div>';
     } else if (sideMode === 'activity') {
       if (!uid()) { side.innerHTML = topHTML('Activity') + signInHTML; return; }
       const h = notifs.map((n, i) => {
         const a = n.actor || {}, who = '<b>' + esc(a.name || 'Someone') + '</b>';
         let txt = '', acts = '';
-        if (n.kind === 'friend_request') { txt = who + ' wants to be friends'; acts = n.status === 'received' ? `<button class="btn primary sm" data-ch-accept="${esc(a.id)}">Accept</button><button class="btn ghost sm" data-ch-decline="${esc(a.id)}">Decline</button>` : n.status === 'friends' ? `<button class="btn ghost sm" data-ch-dm="${esc(a.id)}">💬</button>` : ''; }
-        else if (n.kind === 'friend_accept') { txt = who + ' accepted your friend request'; acts = n.status === 'friends' ? `<button class="btn ghost sm" data-ch-dm="${esc(a.id)}">💬 Say hi</button>` : ''; }
+        if (n.kind === 'friend_request') { txt = who + ' wants to be friends'; acts = n.status === 'received' ? `<button class="btn primary sm" data-ch-accept="${esc(a.id)}">Accept</button><button class="btn ghost sm" data-ch-decline="${esc(a.id)}">Decline</button>` : n.status === 'friends' ? `<button class="btn ghost sm" data-ch-dm="${esc(a.id)}"><svg class="ic " viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 18.5l1.2-3.3A7.5 7.5 0 1 1 9 18.3z"/><path d="M9 11h6M9 14h3.5"/></svg></button>` : ''; }
+        else if (n.kind === 'friend_accept') { txt = who + ' accepted your friend request'; acts = n.status === 'friends' ? `<button class="btn ghost sm" data-ch-dm="${esc(a.id)}"><svg class="ic " viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 18.5l1.2-3.3A7.5 7.5 0 1 1 9 18.3z"/><path d="M9 11h6M9 14h3.5"/></svg>Say hi</button>` : ''; }
+        else if (n.kind === 'tropa_invite') { const d = n.data || {}; txt = who + ' invited you to <b>' + esc((d.emoji || '') + ' ' + (d.name || 'a tropa')) + '</b>'; acts = inTropa(d.code) ? '<small>Joined ✓</small>' : `<button class="btn primary sm" data-ch-tjoin="${esc(d.code || '')}">Join</button>`; }
         else if (n.kind.startsWith('ps_')) {
           const d = n.data || {}, ps = '<b>' + esc((d.emoji || '🧲') + ' ' + (d.title || 'a Pasabit')) + '</b>', at = d.when ? ' · ' + esc(whenShort(d.when)) : '', id = esc(d.ps || '');
-          const chat = `<button class="btn ghost sm" data-ch-open="p:${id}" aria-label="Open the chat">💬</button>`, view = `<button class="btn ghost sm" data-ch-ps="${id}">View</button>`;
+          const chat = `<button class="btn ghost sm" data-ch-open="p:${id}" aria-label="Open the chat">${K.lic('chat')}</button>`, view = `<button class="btn ghost sm" data-ch-ps="${id}">View</button>`;
           if (n.kind === 'ps_new') { txt = who + ' posted a Pasabit: ' + ps + at; acts = view; }
           else if (n.kind === 'ps_ask') { txt = who + ' asks to tag along to ' + ps; acts = n.ps_status === 'asked' ? `<button class="btn primary sm" data-ch-psyes="${id}" data-u="${esc(a.id)}">Accept</button><button class="btn ghost sm" data-ch-psno="${id}" data-u="${esc(a.id)}">Decline</button>` : n.ps_status === 'in' ? '<small>Accepted</small>' : n.ps_status === 'no' ? '<small>Declined</small>' : ''; }
           else if (n.kind === 'ps_join') { txt = who + ' tagged along to ' + ps; acts = chat; }
@@ -11874,17 +12121,17 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
         else txt = who;
         return `<div class="ch-row ch-act tap${n.seenNow || !n.seen ? ' new' : ''}" style="--i:${i}" data-ch-person="${esc(a.id)}"><span class="ch-ava one">${pface(a)}</span><span class="ch-txt"><small style="color:var(--ink)">${txt}</small><small>${ago(n.at)}</small></span><span class="ch-acts">${acts}</span></div>`;
       }).join('');
-      side.innerHTML = topHTML('Activity') + '<div class="ch-body">' + (h || '<div class="ch-none"><b>🔔</b><h3>Nothing yet</h3><p>Friend requests, Pasabits and new friends show up here.</p></div>') + '</div>';
+      side.innerHTML = topHTML('Activity') + '<div class="ch-body">' + (h || '<div class="ch-none"><b>' + K.lic('bell') + '</b><h3>Nothing yet</h3><p>Friend requests, Pasabits and new friends show up here.</p></div>') + '</div>';
     } else if (sideMode === 'person') {
       const p = sidePerson || {};
       if (!p.status) { side.innerHTML = topHTML('') + '<p class="ch-load" style="margin:40px auto">Loading…</p>'; return; }
       const st = p.status, id = esc(p.id);
       const main = st === 'me' ? '<button class="btn primary" data-ch="share">🔗 Share my friend link</button>'
-        : st === 'friends' ? `<button class="btn primary" data-ch-dm="${id}">💬 Message</button><button class="btn ghost" data-ch-more="${id}">✓ Friends</button>`
+        : st === 'friends' ? `<button class="btn primary" data-ch-dm="${id}"><svg class="ic " viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 18.5l1.2-3.3A7.5 7.5 0 1 1 9 18.3z"/><path d="M9 11h6M9 14h3.5"/></svg>Message</button><button class="btn ghost" data-ch-more="${id}"><svg class="ic " viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Friends</button>`
         : st === 'sent' ? `<button class="btn ghost" data-ch-cancel="${id}">✓ Requested · Cancel</button>`
         : st === 'received' ? `<button class="btn primary" data-ch-accept="${id}">Accept</button><button class="btn ghost" data-ch-decline="${id}">Decline</button>`
         : st === 'blocked' ? `<button class="btn ghost" data-ch-unblock="${id}">Unblock</button>`
-        : `<button class="btn primary" data-ch-add="${id}">➕ Add friend</button>`;
+        : `<button class="btn primary" data-ch-add="${id}"><svg class="ic " viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8.5" r="3.3"/><path d="M3.5 19.5c.5-3.3 2.7-5 5.5-5s5 1.7 5.5 5"/><path d="M18 8v6M15 11h6"/></svg>Add friend</button>`;
       side.innerHTML = topHTML('') + `<div class="ch-body"><div class="ch-card">${pface(p)}<h3>${esc(p.name || 'Someone')}</h3><small>${p.username ? '@' + esc(p.username) : st === 'friends' ? 'Friends on Keni' : 'On Keni'}</small>
         <div class="ch-acts">${main}</div>${st !== 'me' && st !== 'blocked' ? `<div class="ch-small"><button data-ch-report="${id}">Report</button><button class="bad" data-ch-block="${id}">Block</button></div>` : ''}</div></div>`;
     }
@@ -11906,10 +12153,11 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
       if (ok) ok(data);
       await loadFriends(); loadInbox();
       if (sideMode === 'person' && sidePerson) card(sidePerson.id);
+      if (SR.q) { SR.q = ''; findPeople(side._q); }
       return data === null ? true : data;
     } catch (e) {
       const m = (e && e.message) || '';
-      toast(/slow down/.test(m) ? 'Too many requests. Try again later.' : /can't add|no such person/.test(m) ? 'You can’t add this person' : /no request/.test(m) ? 'That request is gone' : 'Couldn’t do that. Check your connection.');
+      toast(/not taking requests/.test(m) ? 'They aren’t taking friend requests' : /slow down/.test(m) ? 'Too many requests. Try again later.' : /can't add|no such person/.test(m) ? 'You can’t add this person' : /no request/.test(m) ? 'That request is gone' : 'Couldn’t do that. Check your connection.');
       return null;
     } finally { if (btn) btn.disabled = false; }
   }
@@ -11918,10 +12166,10 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
   const accept = (id, btn) => act('friend_respond', { p_user: id, p_accept: true }, () => { pop(btn, ['🤝', '💜', '✨']); toast('🤝 You’re friends now!'); }, btn);
   const decline = (id, btn) => act('friend_respond', { p_user: id, p_accept: false }, () => toast('Request declined'), btn);
   const cancel = (id, btn) => act('friend_remove', { p_user: id }, () => toast('Request cancelled'), btn);
-  function unfriend(id, name) { if (!confirm('Remove ' + (name || 'this person') + ' from your friends?')) return; act('friend_remove', { p_user: id }, () => toast('Removed from friends')); }
-  function block(id, name) {
+  function unfriend(id, name, done) { if (!confirm('Remove ' + (name || 'this person') + ' from your friends?')) return; act('friend_remove', { p_user: id }, () => { toast('Removed from friends'); if (done) done(); }); }
+  function block(id, name, done) {
     if (!confirm('Block ' + (name || 'this person') + '? They can’t message you or add you, and you won’t see their chat.')) return;
-    act('user_block', { p_user: id, p_on: true }, () => { toast('Blocked'); if (openKey.startsWith('d:')) { const cv = conv(openKey); if (cv && cv.other && cv.other.id === id) { leaveThread(true); root.dataset.pane = 'inbox'; } } });
+    act('user_block', { p_user: id, p_on: true }, () => { toast('Blocked'); if (done) done(); if (openKey.startsWith('d:')) { const cv = conv(openKey); if (cv && cv.other && cv.other.id === id) { leaveThread(true); root.dataset.pane = 'inbox'; } } });
   }
   const unblock = (id, btn) => act('user_block', { p_user: id, p_on: false }, () => toast('Unblocked'), btn);
   function report(id, msg) {
@@ -11931,13 +12179,13 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
       catch { toast('Couldn’t send the report. Try again.'); }
     });
   }
-  async function dmWith(id, btn) {
+  async function dmWith(id, btn, hint) {
     if (!uid()) return toast('Sign in to chat 1-on-1');
     const known = inboxD.find((x) => x.other && x.other.id === id); if (known) return openThread('d:' + known.dm);
     if (btn) btn.disabled = true;
     try {
       const { data, error } = await rpc('dm_open', { p_user: id }); if (error) throw error;
-      const p = (F && [...F.friends].find((x) => x.id === id)) || (sidePerson && sidePerson.id === id ? sidePerson : { id, name: 'Friend' });
+      const p = (F && [...F.friends].find((x) => x.id === id)) || (sidePerson && sidePerson.id === id ? sidePerson : hint || { id, name: 'Friend' });
       dmExtra[data] = { dm: data, other: { id, name: p.name, photo: p.photo, username: p.username }, friends: true, unread: 0 };
       openThread('d:' + data);
     } catch (e) { toast(/not friends/.test((e && e.message) || '') ? 'You can chat once you’re friends' : 'Couldn’t open the chat. Try again.'); }
@@ -12022,6 +12270,8 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
       const firstMsg = c.list.find((m) => typeof m.id === 'number');
       const { data, error } = await API.load(cv, older ? 0 : lastId(c), older ? (firstMsg ? firstMsg.id : null) : null);
       if (error || !data || !Array.isArray(data.msgs)) return;
+      const cut = clearedAt(key);
+      if (cut) { const n0 = data.msgs.length; data.msgs = data.msgs.filter((m) => Date.parse(m.at) > cut); if (older && data.msgs.length < n0) c.more = false; }
       c.me = data.me || c.me;
       (data.members || []).forEach((m) => { c.mem[m.id] = { ...c.mem[m.id], ...m }; });
       if (cv.kind === 'p' && data.ps) { const was = !!(c.ps && c.ps.cancelled); c.ps = data.ps; if (was !== !!data.ps.cancelled && openKey === key) { const ft = $('.ch-foot', thread); if (ft) ft.innerHTML = barHTML(cv); } }
@@ -12194,7 +12444,7 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
     } catch (e) {
       const m = (e && e.message) || '';
       if (kind === 'msg') { temp.pending = false; temp.failed = true; draw(); }
-      toast(/slow down/.test(m) ? (kind === 'poke' ? 'Easy! One poke every 30 seconds' : 'You’re sending a lot. Wait a moment.') : /not a member/.test(m) ? 'You’re not in this tropa anymore' : /not friends/.test(m) ? 'You can only message friends' : /not in it/.test(m) ? 'You’re not in this Pasabit anymore' : /cancelled/.test(m) ? 'This Pasabit was cancelled' : 'Couldn’t send. Check your connection.');
+      toast(/slow down/.test(m) ? (kind === 'poke' ? 'Easy! One poke every 30 seconds' : 'You’re sending a lot. Wait a moment.') : /not a member/.test(m) ? 'You’re not in this tropa anymore' : /not friends/.test(m) ? 'You can only message friends' : /not in it/.test(m) ? 'You’re not in this Pasabit anymore' : /chat deleted/.test(m) ? 'The host deleted this chat' : /cancelled/.test(m) ? 'This Pasabit was cancelled' : 'Couldn’t send. Check your connection.');
       return false;
     } finally { if (btn) btn.disabled = false; }
   }
@@ -12239,13 +12489,14 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
     popover(b, 'ch-pick', RX.map((e, i) => `<button style="--i:${i}" data-ch-react="${e}" aria-pressed="${mine === e}" aria-label="React ${e}">${e}</button>`).join(''), (k) => { if (k.dataset.chReact) react(id, k.dataset.chReact); });
   }
   const menu = (anchor, html, onTap) => popover(anchor, 'ch-menu', html, onTap);
-  function more(id, anchor) {
+  const openPerson = (id) => (K.profile ? K.profile.open(id) : openSide('person', { id }));
+  function more(id, anchor, o = {}) {
     const p = (F && [...F.friends, ...F.incoming, ...F.outgoing, ...F.suggested].find((x) => x.id === id)) || (sidePerson && sidePerson.id === id ? sidePerson : null) || ((conv(openKey) || {}).other) || { id };
     const isFriend = F && F.friends.some((x) => x.id === id);
-    menu(anchor, `<b>${esc(p.name || 'Options')}</b><button data-k="card">👤 See profile</button>${isFriend ? '<button data-k="dm">💬 Message</button><button data-k="unfriend">➖ Remove friend</button>' : ''}<button data-k="report">🚩 Report</button><button class="bad" data-k="block">⛔ Block</button>`, (b) => {
+    menu(anchor, `<b>${esc(p.name || 'Options')}</b>${o.onDone ? '' : '<button data-k="card">👤 See profile</button>'}${isFriend ? '<button data-k="dm"><svg class="ic " viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 18.5l1.2-3.3A7.5 7.5 0 1 1 9 18.3z"/><path d="M9 11h6M9 14h3.5"/></svg>Message</button><button data-k="unfriend">➖ Remove friend</button>' : ''}<button data-k="report">🚩 Report</button><button class="bad" data-k="block">⛔ Block</button>`, (b) => {
       const k = b.dataset.k;
-      if (k === 'card') openSide('person', { id }); else if (k === 'dm') dmWith(id); else if (k === 'unfriend') unfriend(id, p.name);
-      else if (k === 'report') report(id); else if (k === 'block') block(id, p.name);
+      if (k === 'card') openPerson(id); else if (k === 'dm') dmWith(id); else if (k === 'unfriend') unfriend(id, p.name || o.name, o.onDone);
+      else if (k === 'report') report(id); else if (k === 'block') block(id, p.name || o.name, o.onDone);
     });
   }
   let hold = 0, hx = 0, hy = 0, held = false, lastTap = 0;
@@ -12272,10 +12523,14 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
     const t = (sel) => e.target.closest(sel);
     let b;
     if ((b = t('[data-ch]'))) { const k = b.dataset.ch;
-      if (k === 'close') return hide(); if (k === 'back') { if (root.dataset.pane === 'thread') leaveThread(); else setPane('inbox'); return; }
+      if (k === 'close') return hide(); if (k === 'back' && root.dataset.pane === 'side' && sideDirect) { sideDirect = false; return hide(); } if (k === 'back') { if (root.dataset.pane === 'thread') leaveThread(); else setPane('inbox'); return; }
       if (k === 'plan') return goPlan(); if (k === 'pokes') return togglePokes(); if (k === 'down') return toEnd();
       if (k === 'friends' || k === 'activity') return openSide(k); if (k === 'share') return void share(); if (k === 'qr') return void showQR(); if (k === 'signin') return signIn(); }
     if ((b = t('[data-ch-open]'))) return openKey2(b.dataset.chOpen);
+    if ((b = t('[data-ch-ftab]'))) { side._tab = side._tab === b.dataset.chFtab ? 'home' : b.dataset.chFtab; side.scrollTop = 0; return drawSide(); }
+    if ((b = t('[data-ch-fsearch]'))) { side._search = !(side._search || side._q); if (!side._search) { side._q = ''; SR = { q: '', list: null }; } drawSide(); const i = $('[data-ch-fq]', side); if (i) i.focus(); return; }
+    if ((b = t('[data-ch-hide]'))) { S.hideSugg = [...new Set([...(S.hideSugg || []), b.dataset.chHide])].slice(-200); persist(); const c = b.closest('.fr-card'); if (c) { c.classList.add('gone'); setTimeout(drawSide, 260); } else drawSide(); return; }
+    if ((b = t('[data-ch-tjoin]'))) return void (b.dataset.chTjoin && tjoin(b.dataset.chTjoin));
     if ((b = t('[data-ch-ps]'))) { const id = b.dataset.chPs; hide(); setTimeout(() => K.pasabit && K.pasabit.open(id), 260); return; }
     if ((b = t('[data-ch-psyes]')) || (b = t('[data-ch-psno]'))) { const yes = !!b.dataset.chPsyes, id = b.dataset.chPsyes || b.dataset.chPsno; b.disabled = true;
       rpc('ps_answer', { p_id: id, p_user: b.dataset.u, p_yes: yes }).then(({ error }) => { if (error) throw error; toast(yes ? 'Accepted 🙌' : 'Declined'); loadInbox(); if (K.pasabit) K.pasabit.load(true); }).catch(() => { b.disabled = false; toast('Couldn’t do that. Try again.'); }); return; }
@@ -12288,7 +12543,7 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
     if ((b = t('[data-ch-more]'))) return more(b.dataset.chMore, b);
     if ((b = t('[data-ch-report]'))) return report(b.dataset.chReport);
     if ((b = t('[data-ch-block]'))) return block(b.dataset.chBlock, (sidePerson || {}).name);
-    if ((b = t('[data-ch-person]'))) { if (b.dataset.chPerson && UUID.test(b.dataset.chPerson)) openSide('person', { id: b.dataset.chPerson }); return; }
+    if ((b = t('[data-ch-person]'))) { if (b.dataset.chPerson && UUID.test(b.dataset.chPerson)) openPerson(b.dataset.chPerson); return; }
     if ((b = t('[data-ch-invite]'))) { const id = b.dataset.chInvite; hide(); setTimeout(() => { if (id && K.tropa.switchTo) K.tropa.switchTo(id); if (K.tsync) K.tsync.invite(); }, 260); return; }
     if ((b = t('[data-ch-poke]'))) return void send('poke', b.dataset.chPoke, b);
     if ((b = t('[data-ch-ans]'))) return void answer(+b.dataset.msg, b.dataset.chAns, b);
@@ -12302,7 +12557,7 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
   });
   root.addEventListener('input', (e) => {
     if (e.target.matches('[data-ch-q]')) { q = e.target.value.trim().toLowerCase(); return drawInbox(); }
-    if (e.target.matches('[data-ch-fq]')) { side._q = e.target.value; const pos = e.target.selectionStart; drawSide(); const i = $('[data-ch-fq]', side); if (i) { i.focus(); try { i.setSelectionRange(pos, pos); } catch { /* fine */ } } return; }
+    if (e.target.matches('[data-ch-fq]')) { side._q = e.target.value; side._typing = true; findPeople(side._q); const pos = e.target.selectionStart; drawSide(); const i = $('[data-ch-fq]', side); if (i) { i.focus(); try { i.setSelectionRange(pos, pos); } catch { /* fine */ } } return; }
     const ta = e.target.closest('textarea'); if (!ta) return;
     ta.style.height = 'auto'; ta.style.height = Math.min(120, ta.scrollHeight) + 'px';
     const s = $('.ch-send', thread), has = !!ta.value.trim();
@@ -12329,8 +12584,9 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
   }, true);
 
   /* ── badges: 💬 Chats in the dock (unread chats + new activity), 🔔 and 👥 in the inbox ── */
-  const unreadChats = () => inboxT.reduce((n, x) => n + ('t:' + x.code === openKey && inThread() ? 0 : +x.unread || 0), 0) + inboxD.reduce((n, x) => n + ('d:' + x.dm === openKey && inThread() ? 0 : +x.unread || 0), 0)
-    + inboxP.reduce((n, x) => n + ('p:' + x.ps === openKey && inThread() ? 0 : +x.unread || 0), 0);
+  const unreadOk = (key, x) => !isHidden({ key, last: x.last });
+  const unreadChats = () => inboxT.filter((x) => unreadOk('t:' + x.code, x)).reduce((n, x) => n + ('t:' + x.code === openKey && inThread() ? 0 : +x.unread || 0), 0) + inboxD.filter((x) => unreadOk('d:' + x.dm, x)).reduce((n, x) => n + ('d:' + x.dm === openKey && inThread() ? 0 : +x.unread || 0), 0)
+    + inboxP.filter((x) => unreadOk('p:' + x.ps, x)).reduce((n, x) => n + ('p:' + x.ps === openKey && inThread() ? 0 : +x.unread || 0), 0);
   const newActivity = () => notifs.filter((n) => !n.seen).length;
   function setBadge(el, n) { if (!el) return; const v = n > 9 ? '9+' : String(n); if (el.textContent !== v) { el.textContent = v; el.style.animation = 'none'; void el.offsetWidth; el.style.animation = ''; } el.hidden = !n; }
   function badges() {
@@ -12341,17 +12597,20 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
     setBadge($('.badge', b), unreadChats() + newActivity());
     setBadge($('[data-b="act"]', root), newActivity());
     setBadge($('[data-b="req"]', root), F ? F.incoming.length : 0);
+    setBadge($('[data-dock-friends] .badge', dock), F ? F.incoming.length : 0);
   }
   document.addEventListener('click', (e) => {
     if (e.target.closest('#dock [data-chats]')) { e.preventDefault(); e.stopPropagation(); return isOpen() ? hide() : show(); }
+    if (e.target.closest('#dock [data-dock-friends]')) { e.preventDefault(); e.stopPropagation(); if (isOpen() && root.dataset.pane === 'side' && sideMode === 'friends') return hide(); openSide('friends'); sideDirect = true; return; }
     if (e.target.closest('[data-tc-open]')) { e.preventDefault(); open(); }
   }, true);
 
   /* ── links: #friend=<id>, #chat=t:<code> / d:<id>, #activity (from friend links, QR codes and notifications) ── */
   function route(hash) {
     let m;
-    if ((m = /^#friend=([0-9a-f-]{36})$/i.exec(hash))) { if (!uid()) { toast('Sign in to add friends ✦'); return true; } openSide('person', { id: m[1] }); return true; }
+    if ((m = /^#friend=([0-9a-f-]{36})$/i.exec(hash))) { if (!uid()) { toast('Sign in to add friends ✦'); return true; } openPerson(m[1]); return true; }
     if ((m = /^#chat=p:([0-9a-f-]{36})$/i.exec(hash))) { openKey2('p:' + m[1]); return true; }
+    if ((m = /^#t=([A-Za-z0-9]{5,12})$/.exec(hash))) { tjoin(m[1].toUpperCase()); return true; } // a tropa invite push while the app is open
     if ((m = /^#chat=([td]):([A-Za-z0-9-]{4,40})$/.exec(hash))) {
       const key = m[1] + ':' + m[2];
       if (m[1] === 'd' && !conv(key)) { dmExtra[m[2]] = { dm: m[2], other: { id: '', name: 'Friend' }, friends: true, unread: 0 }; loadInbox().then(() => { if (dmExtra[m[2]] && !dmExtra[m[2]].other.id) { const x = inboxD.find((y) => y.dm === m[2]); if (x) dmExtra[m[2]] = x; } head(); }); }
@@ -12378,7 +12637,7 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
     });
   }
   function open(code) { const t = code ? tropas().find((x) => x.remote.code === code) : (K.tropa && K.tropa.active()); if (t && t.remote && t.remote.code) openThread('t:' + t.remote.code); else show(); }
-  K.tchat = { open, openKey: openKey2, reportPasabit, inbox: show, close: hide, friends: () => openSide('friends'), person: (id) => openSide('person', { id }), pull: () => loadInbox(), unread: () => unreadChats() + newActivity() };
+  K.tchat = { open, openKey: openKey2, reportPasabit, inbox: show, close: hide, friends: () => openSide('friends'), person: openPerson, card: (id) => openSide('person', { id }), dm: (id, hint) => { if (root.hidden) show(); dmWith(id, null, hint); }, more, pull: () => loadInbox(), unread: () => unreadChats() + newActivity() };
   const prevAfter = K.hooks.afterRender;
   K.hooks.afterRender = () => { if (prevAfter) prevAfter(); live(); badges(); };
   // fallback when a live channel misses something: the open chat every 5 s; the inbox, activity and friends every 20 s
@@ -12389,6 +12648,451 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
     if (!document.hidden) { loadInbox(); if (inThread()) pull(openKey); } else if (openKey) sendTyping(openKey, false);
   });
   setTimeout(() => { live(); loadInbox(); loadFriends(); fromHash(); }, 1500);
+})();
+</script>
+
+<style>
+/* Keni · profile pages: yours (from your photo in the dock) and anyone else's (tap a face) */
+.pp { position: fixed; z-index: 57; inset: 0; background: var(--bg); color: var(--ink); overflow-y: auto; overscroll-behavior: contain; animation: chIn .42s var(--spring) both; }
+.pp[hidden] { display: none; }
+.pp.out { animation: chOut .25s ease-in both; }
+.pp::before { content: ""; position: absolute; inset: 0 0 auto; height: 340px; background: radial-gradient(ellipse at 50% -10%, hsl(var(--h, 268) 80% 60% / .35), transparent 65%), radial-gradient(ellipse at 90% 10%, rgba(255, 143, 200, .14), transparent 55%); pointer-events: none; }
+.pp-top { position: sticky; top: 0; z-index: 3; display: flex; align-items: center; gap: 10px; padding: calc(env(safe-area-inset-top) + 10px) 12px 10px; background: linear-gradient(var(--bg) 60%, transparent); }
+.pp-top b { flex: 1; text-align: center; font-size: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pp-in { position: relative; max-width: 560px; margin: 0 auto; padding: 0 16px calc(env(safe-area-inset-bottom) + 40px); }
+.pp-hero { display: grid; justify-items: center; gap: 4px; text-align: center; padding: 4px 0 6px; }
+.pp-hero .me-av.lg, .pp-hero .fav { width: 104px; height: 104px; font-size: 44px; animation: tcPoke .55s var(--spring) both; }
+.pp-hero .fav { font-size: 2.8rem; }
+.pp-hero h2 { margin: 12px 0 0; font: 700 1.75rem/1.1 var(--display); overflow-wrap: anywhere; }
+.pp-hero > small { color: var(--ink-3); }
+.pp-bio { margin: 8px 0 0; max-width: 36ch; color: var(--ink-2); line-height: 1.45; overflow-wrap: anywhere; }
+.pp-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 12px; }
+.pp-chips .chip { text-decoration: none; }
+.pp-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 18px 0 14px; }
+.pp-stats > * { display: grid; justify-items: center; gap: 2px; padding: 12px 6px; border-radius: 18px; border: 1px solid var(--line); background: rgba(255, 255, 255, .05); color: var(--ink); font: inherit; animation: chRow .45s var(--spring) both; animation-delay: calc(var(--i) * 60ms); }
+.pp-stats button { cursor: pointer; transition: transform .25s var(--spring); }
+.pp-stats button:active { transform: scale(.94); }
+.pp-stats b { font: 700 1.35rem var(--display); }
+.pp-stats small { color: var(--ink-3); font-size: .76rem; }
+.pp-acts { display: flex; gap: 8px; }
+.pp-acts .btn { flex: 1; justify-content: center; min-height: 46px; }
+.pp-acts .ch-ib { flex: none; width: 46px; height: 46px; }
+.pp-mut { display: flex; align-items: center; gap: 10px; margin: 14px 0 0; padding: 10px 12px; border-radius: 16px; background: rgba(255, 255, 255, .04); font-size: .88rem; color: var(--ink-2); }
+.pp-mut .faces { display: flex; flex: none; }
+.pp-mut .faces .fav { width: 28px; height: 28px; font-size: .8rem; margin-left: -8px; box-shadow: 0 0 0 2px var(--bg); }
+.pp-mut .faces .fav:first-child { margin-left: 0; }
+.pp-code { display: grid; justify-items: center; gap: 10px; margin: 14px 0 0; padding: 18px; border-radius: 22px; background: linear-gradient(150deg, rgba(139, 108, 255, .2), rgba(255, 143, 200, .12)); border: 1px solid rgba(196, 176, 255, .25); text-align: center; animation: tcPoke .45s var(--spring) both; }
+.pp-code[hidden] { display: none; }
+.pp-code .qr { padding: 14px; border-radius: 18px; background: #fff; line-height: 0; }
+.pp-code .qr svg { width: 210px; height: 210px; }
+.pp-code p { margin: 0; color: var(--ink-2); font-size: .88rem; }
+.pp-code-acts { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; } .pp-code-acts .ic { width: 16px; height: 16px; margin-right: 4px; vertical-align: -3px; }
+.pp-tabs { position: sticky; top: calc(env(safe-area-inset-top) + 62px); z-index: 2; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; margin: 20px 0 12px; padding: 4px; border-radius: 99px; background: rgba(20, 16, 36, .92); border: 1px solid var(--line); backdrop-filter: blur(14px); }
+.pp-tabs button { min-height: 40px; border: 0; border-radius: 99px; background: none; color: var(--ink-2); font: 600 .88rem var(--ui); cursor: pointer; transition: background .3s, color .3s; }
+.pp-tabs button[aria-selected="true"] { background: linear-gradient(135deg, #c4b0ff, #ff8fc8); color: #170f2c; }
+.pp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; }
+.pp-grid .mini { animation: chRow .4s var(--spring) both; animation-delay: calc(var(--i) * 30ms); }
+.pp-grid .mini .art { --ar: .9; }
+.pp-grid .mini span { display: block; font-size: .76rem; padding: 7px 5px 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pp-ps { width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px; margin-bottom: 8px; border-radius: 18px; border: 1px solid var(--line); background: rgba(255, 255, 255, .04); color: var(--ink); text-align: left; cursor: pointer; animation: chRow .4s var(--spring) both; animation-delay: calc(var(--i) * 40ms); }
+.pp-ps > i { font-style: normal; font-size: 1.6rem; }
+.pp-ps span { display: grid; gap: 2px; min-width: 0; }
+.pp-ps small { color: var(--ink-3); }
+.pp-empty { text-align: center; color: var(--ink-3); padding: 26px 10px; display: grid; gap: 6px; justify-items: center; }
+.pp-empty b { font-size: 2.2rem; }
+.pp-more { margin-top: 30px; display: grid; gap: 8px; }
+.pp-more h4 { margin: 10px 0 2px 6px; color: var(--ink-3); font: 650 .72rem var(--ui); letter-spacing: .1em; text-transform: uppercase; }
+.pp-group { display: grid; border-radius: 22px; overflow: hidden; background: linear-gradient(160deg, rgba(255, 255, 255, .07), rgba(255, 255, 255, .025)); border: 1px solid rgba(196, 176, 255, .14); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06); }
+.pp-group > * { position: relative; display: flex; align-items: center; gap: 14px; min-height: 62px; padding: 8px 14px; border: 0; background: none; color: var(--ink); font: inherit; text-decoration: none; text-align: left; cursor: pointer; transition: background .25s; animation: chRow .45s var(--spring) both; animation-delay: calc(var(--i) * 45ms); }
+.pp-group > * + *::before { content: ""; position: absolute; top: 0; left: 64px; right: 14px; height: 1px; background: rgba(255, 255, 255, .07); }
+.pp-group > *:active { background: rgba(196, 176, 255, .1); }
+.pp-ti { flex: none; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 13px; color: #fff; background: linear-gradient(145deg, hsl(var(--th) 85% 68%), hsl(calc(var(--th) + 40) 80% 58%)); box-shadow: 0 6px 18px -6px hsl(var(--th) 90% 60% / .75), inset 0 1px 0 rgba(255, 255, 255, .35); transition: transform .3s var(--spring); }
+.pp-group > *:active .pp-ti { transform: scale(.88) rotate(-6deg); }
+.pp-ti .ic { width: 20px; height: 20px; }
+.pp-tx { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.pp-tx b { font: 600 .98rem var(--ui); }
+.pp-tx small { color: var(--ink-3); font-size: .78rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pp-chev { flex: none; width: 18px; height: 18px; color: var(--ink-3); }
+.pp-group .bad .pp-tx b { color: #ff8fa6; }
+.pp-group .bad .pp-ti { background: rgba(255, 107, 138, .16); color: #ff8fa6; box-shadow: none; }
+.pp-top .ch-ib .ic, .pp-acts .ch-ib .ic { width: 21px; height: 21px; }
+.pp-acts .btn .ic { width: 18px; height: 18px; margin-right: 6px; vertical-align: -3px; }
+@media (prefers-reduced-motion: reduce) { .pp-group > * { animation: none; } }
+.pp-load { text-align: center; color: var(--ink-3); padding: 60px 0; }
+@media (prefers-reduced-motion: reduce) { .pp, .pp-hero .me-av.lg, .pp-hero .fav, .pp-stats > *, .pp-code, .pp-grid .mini, .pp-ps { animation: none; } }
+</style>
+<script>/* Keni · profile pages (added 2026-10-22). Your page opens from your photo in the dock (signed in; otherwise the old sign-in sheet):
+   photo, name, @, bio, favourite spot, About me, Friends · Pasabits · Places been, Edit profile, My code (QR of your friend link), and
+   tabs Saved · Been there · Pasabits. Anyone else's page opens from their face (chats, friends, Activity, Pasabits): the same, plus
+   friends in common, tropas you share and Add friend / Message / ⋯. What others see comes from profile_page() and follows your
+   privacy setting; Saved and Been there are for friends only. Your favourite spot, About me, Saved, Been there and privacy are kept
+   with your account (profile_sync / profile_mine) so they follow you to a new phone. Links: #friend=<id> opens a page. */
+(() => {
+  const K = window.KeniCore; if (!K) return;
+  const { S, persist, $, esc, toast, burst, VBY, CAT, AREA } = K;
+  const uid = () => (S.user && S.user.account && S.user.id && K.sb ? S.user.id : null);
+  const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const first = (n) => String(n || 'Someone').trim().split(/\s+/)[0];
+  const pface = (p) => K.fav({ id: p.id, name: p.name || '?', emoji: '🙂', img: p.photo ? esc(p.photo) : null, hue: p.hue != null ? p.hue : 270 }, '');
+  const FREE = { days: 'weekdays', nights: 'weeknights', weekends: 'weekends', late: 'late nights' };
+
+  /* ── your profile follows your account: favourite spot, About me, Saved, Been there, privacy ── */
+  let merged = false, merging = false, synced = '', syncT = 0;
+  const mineData = () => {
+    const u = S.user || {}, pv = K.prefs && K.prefs.privacy ? K.prefs.privacy() : S.privacy || {};
+    return { fave: u.fave || '', about: u.about || {}, saved: (S.saved || []).slice(0, 500), been: Object.keys(S.been || {}).slice(0, 1000), privacy: { profile: pv.profile || 'everyone', requests: pv.requests !== false } };
+  };
+  async function merge() { // once per session, after sign-in: bring in what this account has saved on other phones
+    if (merged || merging || !uid()) return; merging = true;
+    try {
+      const { data, error } = await K.sb.rpc('profile_mine'); if (error) return;
+      const d = data || {}; let changed = false;
+      (d.saved || []).forEach((id) => { if (VBY[id] && !S.saved.includes(id)) { S.saved.push(id); changed = true; } });
+      if (Array.isArray(d.been)) { S.been = S.been && typeof S.been === 'object' ? S.been : {}; d.been.forEach((id) => { if (VBY[id] && !S.been[id]) { S.been[id] = Date.now(); changed = true; } }); }
+      if (d.fave && !S.user.fave && VBY[d.fave]) { S.user.fave = d.fave; changed = true; }
+      if (d.about && Object.keys(d.about).length && !(S.user.about && Object.values(S.user.about).some((v) => (Array.isArray(v) ? v.length : v)))) { S.user.about = { ...d.about }; changed = true; }
+      if (d.privacy && !S.privacy) { S.privacy = { ...d.privacy }; changed = true; }
+      merged = true;
+      if (changed) { persist(); K.render(); }
+    } catch { /* offline: try again later */ } finally { merging = false; }
+  }
+  function sync() {
+    if (!uid()) { merged = false; synced = ''; return; }
+    if (!merged) return void merge();
+    const d = mineData(), sig = JSON.stringify(d); if (sig === synced) return;
+    clearTimeout(syncT);
+    syncT = setTimeout(async () => { try { const { error } = await K.sb.rpc('profile_sync', { p: d }); if (!error) synced = sig; } catch { /* later */ } }, 1500);
+  }
+
+  /* ── the page ── */
+  const root = document.createElement('div');
+  root.className = 'pp'; root.hidden = true; root.setAttribute('role', 'dialog'); root.setAttribute('aria-label', 'Profile');
+  document.body.appendChild(root);
+  let cur = null, curId = null, tab = 'saved', codeOpen = false, loading = false;
+  const isOpen = () => !root.hidden;
+  const isMe = () => curId && curId === uid();
+
+  function open(id) {
+    id = id || uid();
+    if (!uid()) { if (!id || id === 'me') return oldOpen(); toast('Sign in to see profiles ✦'); return oldOpen(); }
+    if (!UUID.test(id)) return;
+    K.closeModal();
+    const again = isOpen() && curId === id;
+    curId = id; if (!again) { tab = 'saved'; codeOpen = false; cur = null; }
+    if (!isOpen()) {
+      root.hidden = false; root.classList.remove('out'); root.scrollTop = 0;
+      document.documentElement.style.overflow = 'hidden';
+      try { history.pushState({ keniPP: 1 }, ''); } catch { /* fine */ }
+    }
+    draw(); load(id);
+  }
+  function close(fromHistory) {
+    if (root.hidden) return;
+    root.classList.add('out');
+    setTimeout(() => { root.hidden = true; root.classList.remove('out'); if (!(K.tchat && document.getElementById('chats') && !document.getElementById('chats').hidden)) document.documentElement.style.overflow = ''; }, 240);
+    if (!fromHistory && history.state && history.state.keniPP) { K.ppPop = true; try { history.back(); } catch { K.ppPop = false; } }
+  }
+  addEventListener('popstate', () => { if (K.ppPop) { K.ppPop = false; return; } if (K.scanPop || (K.scan && K.scan.isOpen())) return; if (isOpen()) close(true); });
+  async function load(id) {
+    loading = true;
+    try {
+      const { data, error } = await K.sb.rpc('profile_page', { p_user: id }); if (error) throw error;
+      if (curId === id) { cur = data; if (data.lists_private && tab !== 'pasabits') tab = 'pasabits'; draw(); }
+    } catch (e) {
+      if (curId !== id) return;
+      if (/no such person/.test((e && e.message) || '')) { toast('That profile isn’t available'); close(); }
+      else if (!cur) { cur = { id, error: true }; draw(); }
+    } finally { loading = false; }
+  }
+
+  function draw() {
+    if (root.hidden) return;
+    const me = isMe(), d = cur || {}, u = S.user || {};
+    // your own page uses what's on this phone (always up to date); counts come from the server
+    const name = me ? u.name : d.name, handle = me ? u.handle || d.username : d.username;
+    const bio = me ? u.bio : d.bio, fave = me ? u.fave : d.fave, about = (me ? u.about : d.about) || {};
+    const counts = d.counts || {};
+    const hue = me ? (u.hue != null ? u.hue : 268) : 270;
+    root.style.setProperty('--h', hue);
+    if (!me && !cur) { root.innerHTML = topHTML('') + '<p class="pp-load">Loading…</p>'; return; }
+    if (!me && d.error) { root.innerHTML = topHTML('') + '<p class="pp-load">Couldn’t load this profile. Check your connection.</p>'; return; }
+    const facts = [about.from && '📍 ' + about.from, about.work && '🎓 ' + about.work, about.order && '🥤 ' + about.order,
+      Array.isArray(about.free) && about.free.length && '🕒 Free ' + about.free.map((k) => FREE[k] || k).join(', ')].filter(Boolean);
+    const socials = [about.ig && ['https://instagram.com/' + encodeURIComponent(about.ig), '📸 @' + about.ig], about.tt && ['https://www.tiktok.com/@' + encodeURIComponent(about.tt), '🎵 @' + about.tt]].filter(Boolean);
+    const beenN = me ? Object.keys(S.been || {}).length : counts.been || 0;
+    let h = topHTML(handle ? '@' + handle : name || '');
+    h += `<div class="pp-in"><div class="pp-hero">${me ? K.meAv(u, true) : pface(d)}<h2>${esc(name || 'Someone')}</h2>${handle ? `<small>@${esc(handle)}</small>` : ''}
+      ${bio ? `<p class="pp-bio">${esc(bio)}</p>` : !me && d.private ? '<p class="pp-bio">🔒 This profile is private</p>' : ''}
+      ${fave && VBY[fave] || facts.length || socials.length ? `<div class="pp-chips">${fave && VBY[fave] ? `<button class="chip" data-pp-place="${esc(fave)}">❤️ ${esc(VBY[fave].name)}</button>` : ''}${facts.map((f) => `<span class="chip">${esc(f)}</span>`).join('')}${socials.map(([href, l]) => `<a class="chip" href="${esc(href)}" target="_blank" rel="noopener noreferrer">${esc(l)}</a>`).join('')}</div>` : ''}</div>
+      <div class="pp-stats"><${me ? 'button data-pp="friends"' : 'div'} style="--i:0"><b>${counts.friends != null ? counts.friends : '–'}</b><small>Friends</small></${me ? 'button' : 'div'}>
+        <button data-pp-tab="pasabits" style="--i:1"><b>${counts.pasabits != null ? counts.pasabits : '–'}</b><small>Pasabits</small></button>
+        <button data-pp-tab="been" style="--i:2"${!me && d.lists_private ? ' disabled' : ''}><b>${beenN}</b><small>Places been</small></button></div>
+      <div class="pp-acts">${actsHTML(me, d)}</div>`;
+    if (!me && d.mutual && d.mutual.count) {
+      const ppl = d.mutual.people || [], n = d.mutual.count;
+      h += `<div class="pp-mut"><span class="faces">${ppl.slice(0, 3).map(pface).join('')}</span><span>Friends with ${ppl.slice(0, 2).map((p) => '<b>' + esc(first(p.name)) + '</b>').join(' and ')}${n > 2 ? ` and ${n - 2} other${n - 2 === 1 ? '' : 's'}` : ''}</span></div>`;
+    }
+    if (!me && d.tropas && d.tropas.length) h += `<div class="pp-mut">🧑‍🤝‍🧑 <span>In your tropa${d.tropas.length > 1 ? 's' : ''}: ${d.tropas.map((t) => '<b>' + esc((t.emoji || '') + ' ' + t.name) + '</b>').join(', ')}</span></div>`;
+    if (me) h += `<div class="pp-code"${codeOpen ? '' : ' hidden'}><div class="qr" id="pp-qr"></div><p>Friends scan this in Keni (Friends → Scan) or with their camera.</p><div class="pp-code-acts"><button class="btn primary sm" data-scan>${K.lic('scan')} Scan a code</button><button class="btn ghost sm" data-pp="share">${K.lic('link')} Share link</button></div></div>`;
+    const tabs = [['saved', 'Saved'], ['been', 'Been there'], ['pasabits', 'Pasabits']];
+    h += `<div class="pp-tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" data-pp-tab="${k}" aria-selected="${tab === k}">${l}</button>`).join('')}</div><div class="pp-tab">${tabHTML(me, d)}</div>`;
+    if (me) h += moreHTML();
+    root.innerHTML = h + '</div>';
+    if (me && codeOpen) drawQR();
+  }
+  const topHTML = (title) => `<div class="pp-top"><button class="ch-ib" data-pp="close" aria-label="Close">${ppIc('back')}</button><b>${esc(title)}</b>${curId && !isMe() && cur && !cur.error ? `<button class="ch-ib" data-pp="more" aria-label="More">⋯</button>` : isMe() ? `<button class="ch-ib" data-pp="settings" aria-label="Settings">${ppIc('gear')}</button>` : '<span style="width:44px"></span>'}</div>`;
+  function actsHTML(me, d) {
+    if (me) return `<button class="btn primary" data-pp="edit">${ppIc('edit')} Edit profile</button><button class="btn ghost" data-pp="code" aria-pressed="${codeOpen}">${ppIc('qr')} My code</button><button class="ch-ib" data-pp="share" aria-label="Share my profile">${ppIc('link')}</button>`;
+    const st = d.status;
+    if (st === 'friends') return '<button class="btn primary" data-pp="dm"><svg class="ic " viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 18.5l1.2-3.3A7.5 7.5 0 1 1 9 18.3z"/><path d="M9 11h6M9 14h3.5"/></svg>Message</button><button class="btn ghost" data-pp="more"><svg class="ic " viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Friends</button>';
+    if (st === 'sent') return '<button class="btn ghost" data-pp="cancel">✓ Requested · Cancel</button>';
+    if (st === 'received') return '<button class="btn primary" data-pp="accept">Accept</button><button class="btn ghost" data-pp="decline">Decline</button>';
+    if (st === 'blocked') return '<button class="btn ghost" data-pp="unblock">Unblock</button>';
+    return d.requests === false ? '<button class="btn ghost" disabled>Not taking friend requests</button>' : '<button class="btn primary" data-pp="add"><svg class="ic " viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8.5" r="3.3"/><path d="M3.5 19.5c.5-3.3 2.7-5 5.5-5s5 1.7 5.5 5"/><path d="M18 8v6M15 11h6"/></svg>Add friend</button>';
+  }
+  const tile = (id, i) => { const v = VBY[id]; return v ? `<button class="mini" data-pp-place="${esc(id)}" style="--i:${i}">${K.venueArt(v)}<span>${esc(v.name)}</span></button>` : ''; };
+  function tabHTML(me, d) {
+    if (tab === 'pasabits') {
+      const list = me ? (K.pasabit ? K.pasabit.list().filter((p) => p.host === 'me' || p.my === 'in') : []) : (d.pasabits_up || []).map((r) => ({ id: r.id, emoji: r.emoji, title: r.title, place: r.place, when: Date.parse(r.when) }));
+      if (!list.length) return `<div class="pp-empty"><b>${K.lic('magnet')}</b>${me ? 'No Pasabits coming up. Start one from the map.' : 'No Pasabits you can see right now.'}</div>`;
+      return list.map((p, i) => `<button class="pp-ps" data-pp-ps="${esc(p.id)}" style="--i:${i}"><i>${esc(p.emoji || '🧲')}</i><span><b>${esc(p.title)}</b><small>${esc(whenTxt(p.when))} · ${esc(p.place)}</small></span></button>`).join('');
+    }
+    if (!me && d.lists_private) return '<div class="pp-empty"><b>' + K.lic('lock') + '</b>Saved places and Been there are for friends.</div>';
+    const ids = tab === 'saved' ? (me ? S.saved : d.saved || []) : me ? Object.keys(S.been || {}).sort((a, b) => S.been[b] - S.been[a]) : (d.been || []);
+    const html = ids.filter((id) => VBY[id]).slice(0, 120).map(tile).join('');
+    if (html) return `<div class="pp-grid">${html}</div>`;
+    return `<div class="pp-empty"><b>${K.lic(tab === 'saved' ? 'heart' : 'steps')}</b>${tab === 'saved' ? (me ? 'Tap the heart on any place to save it.' : 'Nothing saved yet.') : me ? 'Mark places you’ve been on their page (👣 Been here?).' : 'No places yet.'}</div>`;
+  }
+  const whenTxt = (t) => { const d = new Date(t), now = new Date(), tm = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); return (d.toDateString() === now.toDateString() ? 'Today' : d.toDateString() === new Date(now.getTime() + 864e5).toDateString() ? 'Tomorrow' : d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })) + ' ' + tm; };
+  function moreHTML() {
+    const a = K.account, biz = K.isBiz && K.isBiz();
+    // [action, icon, label, hint, hue] — each row gets its own glowing tile in Keni's purple-pink range
+    const row = ([k, ic, l, sub, h], i) => `<${k === 'admin' ? 'a href="admin" target="_blank" rel="noopener"' : `button data-pp="${k}"`} style="--i:${i};--th:${h}"><span class="pp-ti">${ppIc(ic)}</span><span class="pp-tx"><b>${l}</b><small>${sub}</small></span>${ppIc('chev', 'pp-chev')}</${k === 'admin' ? 'a' : 'button'}>`;
+    const you = [['tune', 'tune', 'Tune my taste', 'What you like, so picks fit you', 268], ['privacy', 'lock', 'Privacy', 'Who sees your profile and lists', 300]];
+    const acct = [a && a.email() && ['pass', 'key', 'Change password', 'Keep your account safe', 18], biz ? ['studio', 'store', 'Open Studio', 'Manage your place', 330] : ['biz', 'store', 'I own a place', 'Claim it and post events', 330], a && a.admin && ['admin', 'shield', 'Admin', 'Reports and approvals', 190]].filter(Boolean);
+    return `<div class="pp-more"><h4>You</h4><div class="pp-group">${you.map(row).join('')}</div>
+      <h4>Account</h4><div class="pp-group">${acct.map((r, i) => row(r, i + 3)).join('')}</div>
+      <div class="pp-group"><button class="bad" data-pp="signout" style="--i:7;--th:350"><span class="pp-ti">${ppIc('out')}</span><span class="pp-tx"><b>Sign out</b>${a && a.email() ? `<small>${esc(a.email())}</small>` : ''}</span></button></div></div>`;
+  }
+  // Keni-style line icons (same stroke as the rest of the app)
+  const PPI = {
+    tune: '<path d="M4 7h8M18 7h2M4 17h2M12 17h8"/><circle cx="15" cy="7" r="2.4"/><circle cx="9" cy="17" r="2.4"/>',
+    lock: '<rect x="5" y="10.5" width="14" height="9.5" rx="2.5"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5M12 14.5v2"/>',
+    gear: '<circle cx="12" cy="12" r="3"/><path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7"/><circle cx="12" cy="12" r="6.3"/>',
+    key: '<circle cx="8" cy="15" r="4"/><path d="M11 12l8.5-8.5M16.5 6.5l2.5 2.5M14 9l2 2"/>',
+    store: '<path d="M4 9.5L5.5 4h13L20 9.5"/><path d="M4 9.5a2.7 2.7 0 0 0 5.3 0 2.7 2.7 0 0 0 5.4 0 2.7 2.7 0 0 0 5.3 0"/><path d="M5.5 12.5V20h13v-7.5M10 20v-4.5h4V20"/>',
+    shield: '<path d="M12 3l7.5 3v5.5c0 4.5-3.2 8-7.5 9.5-4.3-1.5-7.5-5-7.5-9.5V6z"/><path d="M8.8 12.2l2.2 2.2 4.3-4.4"/>',
+    out: '<path d="M9 4H5.5A1.5 1.5 0 0 0 4 5.5v13A1.5 1.5 0 0 0 5.5 20H9M15 8l4 4-4 4M19 12H9"/>',
+    chev: '<path d="M9.5 6l6 6-6 6"/>',
+    back: '<path d="M14.5 6l-6 6 6 6"/>',
+    edit: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',
+    qr: '<rect x="4" y="4" width="6" height="6" rx="1.2"/><rect x="14" y="4" width="6" height="6" rx="1.2"/><rect x="4" y="14" width="6" height="6" rx="1.2"/><path d="M14 14h2.5v2.5H14zM17.5 17.5H20V20h-2.5zM14 20h1M20 14v1"/>',
+    link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+  };
+  const ppIc = (n, cls = '') => `<svg class="ic ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${PPI[n]}</svg>`;
+
+  /* ── My code: a QR of your friend link ── */
+  let qrLib = null;
+  const myLink = () => location.origin + '/#friend=' + uid();
+  async function drawQR() {
+    const el = $('#pp-qr', root); if (!el || el.firstChild) return;
+    el.innerHTML = '<p style="color:#333;margin:40px 0">Making your code…</p>';
+    try {
+      qrLib = qrLib || (window.qrcode ? Promise.resolve(window.qrcode) : new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js'; s.onload = () => ok(window.qrcode); s.onerror = no; document.head.appendChild(s); }));
+      const qrcode = await qrLib, qr = qrcode(0, 'M'); qr.addData(myLink()); qr.make();
+      el.innerHTML = qr.createSvgTag({ cellSize: 6, margin: 2, scalable: true });
+    } catch { qrLib = null; el.innerHTML = '<p style="color:#333;margin:40px 0">Couldn’t make the code. Use Share instead.</p>'; }
+  }
+  async function share() {
+    const url = myLink();
+    try { if (navigator.share) { await navigator.share({ title: 'Keni', text: 'Add me on Keni ✦', url }); return; } await navigator.clipboard.writeText(url); toast('Link copied ✦'); } catch { /* cancelled */ }
+  }
+
+  /* ── friend actions from someone's page ── */
+  async function act(fn, args, msg, btn) {
+    if (btn) btn.disabled = true;
+    try {
+      const { error } = await K.sb.rpc(fn, args); if (error) throw error;
+      if (msg) toast(msg); if (btn && /friends now|sent/.test(msg || '')) { const r = btn.getBoundingClientRect(); burst(r.left + r.width / 2, r.top + r.height / 2, { glyph: ['💜', '✨', '👋'], n: 14, spread: 110 }); }
+      await load(curId); if (K.tchat && K.tchat.pull) K.tchat.pull();
+    } catch (e) {
+      const m = (e && e.message) || '';
+      toast(/not taking requests/.test(m) ? 'They aren’t taking friend requests' : /slow down/.test(m) ? 'Too many requests. Try again later.' : /can't add|no such person/.test(m) ? 'You can’t add this person' : 'Couldn’t do that. Check your connection.');
+    } finally { if (btn) btn.disabled = false; }
+  }
+  root.addEventListener('click', (e) => {
+    const t = e.target.closest('[data-pp], [data-pp-tab], [data-pp-place], [data-pp-ps]'); if (!t) return;
+    if (t.dataset.ppTab) { if (t.disabled) return; tab = t.dataset.ppTab; return draw(); }
+    if (t.dataset.ppPlace) return void K.openDetail(t.dataset.ppPlace);
+    if (t.dataset.ppPs) { const id = t.dataset.ppPs; close(); return void setTimeout(() => K.pasabit && K.pasabit.open(id), 260); }
+    const k = t.dataset.pp, id = curId;
+    if (k === 'close') return close();
+    if (k === 'edit') return K.prefs && K.prefs.openEdit();
+    if (k === 'settings') return K.prefs && K.prefs.openSettings();
+    if (k === 'privacy') return K.prefs && K.prefs.openPrivacy();
+    if (k === 'code') { codeOpen = !codeOpen; draw(); if (codeOpen) { const c = $('.pp-code', root); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'center' }); } return; }
+    if (k === 'share') return void share();
+    if (k === 'friends') { close(); return void setTimeout(() => K.tchat && K.tchat.friends(), 260); }
+    if (k === 'tune') { close(); return void setTimeout(() => K.startOnboarding(1), 260); }
+    if (k === 'pass') return K.account && K.account.newPassword();
+    if (k === 'studio') { close(); return K.setView('biz'); }
+    if (k === 'biz') { close(); return void setTimeout(() => K.openLogin && K.openLogin('business'), 260); }
+    if (k === 'signout') { if (confirm('Sign out of Keni on this phone?')) K.signOutToWelcome(); return; }
+    if (k === 'dm') { close(); return void setTimeout(() => K.tchat && K.tchat.dm(id, cur && { id, name: cur.name, photo: cur.photo, username: cur.username }), 260); }
+    if (k === 'more') return K.tchat && K.tchat.more(id, t, { name: cur && cur.name, onDone: () => load(id) });
+    if (k === 'add') return void act('friend_request', { p_user: id }, 'Request sent ✦', t);
+    if (k === 'accept') return void act('friend_respond', { p_user: id, p_accept: true }, '🤝 You’re friends now!', t);
+    if (k === 'decline') return void act('friend_respond', { p_user: id, p_accept: false }, 'Request declined', t);
+    if (k === 'cancel') return void act('friend_remove', { p_user: id }, 'Request cancelled', t);
+    if (k === 'unblock') return void act('user_block', { p_user: id, p_on: false }, 'Unblocked', t);
+  });
+  // a face anywhere with data-pp-user opens that person's page
+  document.addEventListener('click', (e) => { const f = e.target.closest('[data-pp-user]'); if (f && UUID.test(f.dataset.ppUser)) { e.preventDefault(); open(f.dataset.ppUser); } });
+
+  // your photo in the dock opens your page (signed in); otherwise the sign-in sheet as before
+  const oldOpen = K.openProfile;
+  K.openProfile = () => (uid() ? (isOpen() && isMe() ? (draw(), load(uid())) : open()) : oldOpen());
+  const showCode = () => { open(); codeOpen = true; draw(); setTimeout(() => { const c = $('.pp-code', root); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 120); };
+  K.profile = { open, close, isOpen, sync, showCode };
+  const prevAfter = K.hooks.afterRender;
+  K.hooks.afterRender = () => { if (prevAfter) prevAfter(); sync(); if (isOpen() && isMe() && !loading) draw(); };
+  setTimeout(sync, 2000);
+})();
+</script>
+
+<style>
+/* Keni · scan: a QR scanner inside the app, so friend and tropa codes open in Keni (iPhones would open them in Safari) */
+.kscan { position: fixed; inset: 0; z-index: 70; background: #000; color: #fff; display: grid; overflow: hidden; animation: chIn .38s var(--spring) both; }
+.kscan[hidden] { display: none; }
+.kscan.out { animation: chOut .22s ease-in both; }
+.kscan video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.kscan-shade { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(circle at 50% 46%, transparent 0 min(34vw, 150px), rgba(6, 4, 14, .72) calc(min(34vw, 150px) + 60px)); }
+.kscan-frame { position: absolute; left: 50%; top: 46%; width: min(68vw, 290px); aspect-ratio: 1; translate: -50% -50%; pointer-events: none; }
+.kscan-frame i { position: absolute; width: 46px; height: 46px; border: 4px solid transparent; border-radius: 6px; animation: kscanCorner 1.8s ease-in-out infinite; }
+.kscan-frame i:nth-child(1) { top: 0; left: 0; border-top-color: #c4b0ff; border-left-color: #c4b0ff; border-top-left-radius: 26px; }
+.kscan-frame i:nth-child(2) { top: 0; right: 0; border-top-color: #e3a8ff; border-right-color: #e3a8ff; border-top-right-radius: 26px; }
+.kscan-frame i:nth-child(3) { bottom: 0; left: 0; border-bottom-color: #e3a8ff; border-left-color: #e3a8ff; border-bottom-left-radius: 26px; }
+.kscan-frame i:nth-child(4) { bottom: 0; right: 0; border-bottom-color: #ff8fc8; border-right-color: #ff8fc8; border-bottom-right-radius: 26px; }
+@keyframes kscanCorner { 50% { transform: scale(.94); } }
+.kscan-frame b { position: absolute; left: 10%; right: 10%; height: 3px; border-radius: 3px; background: linear-gradient(90deg, transparent, #ff8fc8, #c4b0ff, transparent); box-shadow: 0 0 18px 2px rgba(255, 143, 200, .7); animation: kscanLine 2.2s ease-in-out infinite; }
+@keyframes kscanLine { 0%, 100% { top: 10%; } 50% { top: 88%; } }
+.kscan.hit .kscan-frame i { border-color: #8df0b4 !important; animation: none; transform: scale(.9); transition: transform .3s var(--spring); }
+.kscan.hit .kscan-frame b { opacity: 0; }
+.kscan-top { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 10px; padding: calc(env(safe-area-inset-top) + 12px) 14px 12px; }
+.kscan-top b { flex: 1; text-align: center; font: 700 1.05rem var(--ui); margin-right: 44px; }
+.kscan-top .ch-ib { background: rgba(0, 0, 0, .45); color: #fff; backdrop-filter: blur(10px); }
+.kscan-bot { position: absolute; left: 0; right: 0; bottom: 0; display: grid; justify-items: center; gap: 12px; padding: 18px 20px calc(env(safe-area-inset-bottom) + 26px); text-align: center; }
+.kscan-bot p { margin: 0; max-width: 30ch; color: rgba(255, 255, 255, .85); font-size: .95rem; line-height: 1.4; }
+.kscan-bot .btn { min-height: 46px; }
+.kscan-msg { position: absolute; left: 50%; top: 46%; translate: -50% -50%; width: min(80vw, 320px); display: grid; gap: 12px; justify-items: center; text-align: center; padding: 22px; border-radius: 24px; background: rgba(20, 14, 40, .92); border: 1px solid rgba(196, 176, 255, .25); }
+.kscan-msg[hidden] { display: none; }
+.kscan-msg .ic { width: 34px; height: 34px; color: #c4b0ff; }
+@media (prefers-reduced-motion: reduce) { .kscan, .kscan-frame i, .kscan-frame b { animation: none; } }
+</style>
+<script>/* Keni · scan (added 2026-10-22). K.scan.open() opens the camera inside Keni and reads Keni QR codes:
+   a friend code (#friend=<id>) opens their profile, a tropa invite (#t=CODE) opens the join screen, a Pasabit (#ps=<id>) opens it.
+   It uses the phone's own QR reader (BarcodeDetector) when there is one, otherwise jsQR (jsdelivr, loaded on first use). */
+(() => {
+  const K = window.KeniCore; if (!K) return;
+  const { esc, toast, burst } = K;
+  const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const root = document.createElement('div');
+  root.className = 'kscan'; root.hidden = true; root.setAttribute('role', 'dialog'); root.setAttribute('aria-label', 'Scan a Keni code');
+  root.innerHTML = `<video playsinline muted autoplay></video><div class="kscan-shade"></div><div class="kscan-frame"><i></i><i></i><i></i><i></i><b></b></div>
+    <div class="kscan-top"><button class="ch-ib" data-ks="close" aria-label="Close">${K.lic ? K.lic('x') : '✕'}</button><b>Scan a Keni code</b></div>
+    <div class="kscan-msg" hidden></div>
+    <div class="kscan-bot"><p>Point at a friend’s code, or a tropa invite.</p><button class="btn ghost" data-ks="mine">${K.lic ? K.lic('qr') : ''} Show my code</button></div>`;
+  document.body.appendChild(root);
+  const video = root.querySelector('video'), msg = root.querySelector('.kscan-msg');
+  let stream = null, raf = 0, det = null, jsqr = null, busy = false, done = false, canvas = null;
+
+  function readCode(text) {
+    let u; try { u = new URL(text, location.origin); } catch { return null; }
+    const h = u.hash || '';
+    let m;
+    if ((m = /^#friend=([0-9a-f-]{36})$/i.exec(h)) && UUID.test(m[1])) return { k: 'friend', id: m[1] };
+    if ((m = /^#t=([A-Za-z0-9]{5,12})$/.exec(h))) return { k: 'tropa', code: m[1].toUpperCase() };
+    if ((m = /^#ps=([0-9a-f-]{36})$/i.exec(h))) return { k: 'ps', id: m[1] };
+    return null;
+  }
+  function found(c) {
+    done = true; root.classList.add('hit');
+    try { if (navigator.vibrate) navigator.vibrate([12, 40, 12]); } catch { /* no */ }
+    burst(innerWidth / 2, innerHeight * 0.46, { glyph: ['✨', '💜', '✦'], n: 16, spread: 150 });
+    setTimeout(() => {
+      close();
+      setTimeout(() => {
+        if (c.k === 'friend') { if (K.profile) K.profile.open(c.id); else if (K.tchat) K.tchat.person(c.id); }
+        else if (c.k === 'tropa') { if (K.tsync && K.tsync.join) K.tsync.join(c.code); }
+        else if (c.k === 'ps') { if (K.pasabit) K.pasabit.open(c.id); }
+      }, 260);
+    }, 420);
+  }
+  let lastBad = 0;
+  function check(text) {
+    if (!text || done) return;
+    const c = readCode(text);
+    if (c) return found(c);
+    if (Date.now() - lastBad > 2500) { lastBad = Date.now(); toast('That isn’t a Keni code'); }
+  }
+  async function tick() {
+    if (done || root.hidden) return;
+    if (!busy && video.readyState >= 2) {
+      busy = true;
+      try {
+        if (det) { const r = await det.detect(video); if (r && r[0]) check(r[0].rawValue); }
+        else if (jsqr) {
+          const w = video.videoWidth, h = video.videoHeight, sc = Math.min(1, 640 / Math.max(w, h));
+          canvas = canvas || document.createElement('canvas'); canvas.width = Math.round(w * sc); canvas.height = Math.round(h * sc);
+          const cx = canvas.getContext('2d', { willReadFrequently: true }); cx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const img = cx.getImageData(0, 0, canvas.width, canvas.height), r = jsqr(img.data, img.width, img.height, { inversionAttempts: 'dontInvert' });
+          if (r) check(r.data);
+        }
+      } catch { /* try the next frame */ }
+      busy = false;
+    }
+    raf = requestAnimationFrame(tick);
+  }
+  function showMsg(html) { msg.innerHTML = html; msg.hidden = false; }
+  async function open() {
+    if (!root.hidden) return;
+    K.closeModal();
+    root.hidden = false; root.classList.remove('out', 'hit'); msg.hidden = true; done = false;
+    try { history.pushState({ keniScan: 1 }, ''); } catch { /* fine */ }
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return showMsg(`${K.lic ? K.lic('qr') : ''}<b>This browser can’t use the camera</b><p style="margin:0;color:var(--ink-3)">Open Keni from your home screen, or use your camera app instead.</p>`);
+    try {
+      if ('BarcodeDetector' in window) { try { const f = await window.BarcodeDetector.getSupportedFormats(); if (f.includes('qr_code')) det = new window.BarcodeDetector({ formats: ['qr_code'] }); } catch { det = null; } }
+      if (!det && !jsqr) {
+        jsqr = await (window.jsQR ? Promise.resolve(window.jsQR) : new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js'; s.onload = () => ok(window.jsQR); s.onerror = no; document.head.appendChild(s); }));
+      }
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 } }, audio: false });
+      if (root.hidden) return stop();
+      video.srcObject = stream; await video.play().catch(() => {});
+      raf = requestAnimationFrame(tick);
+    } catch (e) {
+      const denied = e && /NotAllowed|Permission|Security/i.test(e.name || e.message || '');
+      showMsg(`${K.lic ? K.lic('qr') : ''}<b>${denied ? 'Keni needs your camera' : 'Couldn’t start the camera'}</b><p style="margin:0;color:var(--ink-3)">${denied ? 'Allow camera access for Keni in your phone’s settings, then try again.' : 'Check your connection and try again.'}</p><button class="btn primary sm" data-ks="retry">Try again</button>`);
+    }
+  }
+  function stop() { cancelAnimationFrame(raf); if (stream) { stream.getTracks().forEach((t) => t.stop()); stream = null; } video.srcObject = null; }
+  function close(fromHistory) {
+    if (root.hidden) return;
+    stop(); root.classList.add('out');
+    setTimeout(() => { root.hidden = true; root.classList.remove('out', 'hit'); }, 220);
+    if (!fromHistory && history.state && history.state.keniScan) { K.scanPop = true; try { history.back(); } catch { K.scanPop = false; } }
+  }
+  addEventListener('popstate', () => { if (K.scanPop) { K.scanPop = false; return; } if (!root.hidden) close(true); });
+  root.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-ks]'); if (!b) return;
+    const k = b.dataset.ks;
+    if (k === 'close') return close();
+    if (k === 'retry') { close(true); setTimeout(open, 260); return; }
+    if (k === 'mine') { close(); setTimeout(() => { if (K.profile && K.profile.showCode) K.profile.showCode(); else if (K.tchat) K.tchat.friends(); }, 280); }
+  });
+  document.addEventListener('visibilitychange', () => { if (document.hidden && !root.hidden) close(); });
+  // any button with data-scan opens it
+  document.addEventListener('click', (e) => { if (e.target.closest('[data-scan]')) { e.preventDefault(); open(); } });
+  K.scan = { open, close, read: readCode, isOpen: () => !root.hidden };
 })();
 </script>
 
