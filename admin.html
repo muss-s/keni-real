@@ -5,92 +5,190 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <title>Keni Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Bricolage+Grotesque:opsz,wght@12..96,600..800&display=swap" rel="stylesheet">
 <style>
-:root { --bg: #0b0a10; --card: #16141f; --card2: #1d1a29; --line: rgba(255, 255, 255, .09); --ink: #f6f1ff; --ink2: #c9c2db; --ink3: #8e86a3;
-  --ok: #7dffc0; --no: #ffb0bf; --hi: #c4b0ff; --grad: linear-gradient(135deg, #8b6cff, #ff8fc8); color-scheme: dark; }
+:root { --bg: #06060b; --card: rgba(255, 255, 255, .045); --card2: rgba(255, 255, 255, .08); --line: rgba(255, 255, 255, .1); --ink: #f6f3ff; --ink2: #cfc6ea; --ink3: #8e86a3;
+  --ok: #7dffc0; --no: #ffb0bf; --hi: #c4b0ff; --peach: linear-gradient(135deg, #ffe2b8, #ffb07a);
+  --grad: linear-gradient(95deg, #c4b0ff 0%, #ff8fc8 50%, #ffd27a 100%); --btn: linear-gradient(135deg, #fff 0%, #ddd0ff 52%, #ffc6e6 100%);
+  --display: 'Bricolage Grotesque', Geist, system-ui, sans-serif; --spring: cubic-bezier(.2, .9, .3, 1.2); color-scheme: dark; }
 * { box-sizing: border-box; }
-body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--ink); font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+html { background: var(--bg); }
+body { margin: 0; min-height: 100vh; color: var(--ink); font: 15px/1.45 Geist, system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: radial-gradient(900px 500px at 10% -10%, rgba(139, 108, 255, .22), transparent 60%), radial-gradient(700px 400px at 100% 0%, rgba(255, 143, 200, .14), transparent 60%), var(--bg); background-attachment: fixed; }
 button, input, select, textarea { font: inherit; color: inherit; }
-button { cursor: pointer; border: 0; background: none; }
-.wrap { max-width: 860px; margin: 0 auto; padding: 16px 16px 60px; }
-header { display: flex; align-items: center; gap: 12px; padding: 6px 0 18px; }
-.logo { font-weight: 800; font-size: 1.25rem; letter-spacing: -.02em; }
-.logo em { font-style: normal; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
-header .who { margin-left: auto; font-size: .85rem; color: var(--ink3); text-align: right; }
+button { cursor: pointer; border: 0; background: none; -webkit-tap-highlight-color: transparent; }
+a { color: var(--hi); }
+.wrap { max-width: 760px; margin: 0 auto; padding: max(14px, env(safe-area-inset-top)) 16px 90px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 800; letter-spacing: -.02em; margin: 0; }
+.grad { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+header { display: flex; align-items: center; gap: 12px; padding: 4px 0 14px; }
+.logo { font-family: var(--display); font-weight: 800; font-size: 1.5rem; letter-spacing: -.03em; }
+header .who { margin-left: auto; display: flex; align-items: center; gap: 10px; font-size: .82rem; color: var(--ink3); }
+.icon-btn { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 50%; background: var(--card2); border: 1px solid var(--line); font-size: 1rem; transition: transform .2s var(--spring); }
+.icon-btn:active { transform: scale(.9); } .icon-btn.spin { animation: spin .7s linear; }
 .link { color: var(--hi); text-decoration: underline; padding: 0; }
-.card { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 18px; }
-.signin { max-width: 380px; margin: 12vh auto 0; display: grid; gap: 10px; animation: up .35s ease-out; }
-.signin h1 { margin: 0 0 4px; font-size: 1.4rem; }
-.signin p { margin: 0 0 6px; color: var(--ink3); font-size: .9rem; }
-input, select, textarea { width: 100%; height: 44px; padding: 0 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--card2); }
-textarea { height: 70px; padding: 10px 14px; resize: vertical; }
-input:focus, select:focus, textarea:focus { outline: none; border-color: var(--hi); box-shadow: 0 0 0 3px rgba(196, 176, 255, .2); }
-.btn { height: 40px; padding: 0 16px; border-radius: 999px; font-weight: 600; background: var(--card2); border: 1px solid var(--line); transition: transform .15s, background .2s; white-space: nowrap; }
-.btn:hover { background: #262236; } .btn:active { transform: scale(.96); }
-.btn.primary { background: var(--grad); color: #160d24; border: 0; }
-.btn.ok { color: var(--ok); } .btn.no { color: var(--no); }
-.btn:disabled { opacity: .5; pointer-events: none; }
-.tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
-.tab { height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink2); font-size: .9rem; }
-.tab[aria-pressed="true"] { background: var(--ink); color: #160d24; border-color: transparent; }
-.tab b { display: inline-grid; place-items: center; min-width: 20px; height: 20px; margin-left: 6px; padding: 0 6px; border-radius: 99px; background: #ff5f8f; color: #fff; font-size: .72rem; }
-.bar { display: flex; align-items: center; gap: 10px; margin: 6px 0 14px; color: var(--ink3); font-size: .85rem; }
-.bar .grow { flex: 1; }
+/* tabs */
+.tabs { position: sticky; top: 0; z-index: 5; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 5px; margin: 0 0 16px; border-radius: 999px; background: rgba(16, 11, 32, .85); border: 1px solid var(--line); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+.tab { position: relative; height: 40px; border-radius: 999px; color: var(--ink2); font-size: .88rem; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; transition: background .25s, color .25s; }
+.tab[aria-pressed="true"] { background: var(--btn); color: #120b26; box-shadow: 0 8px 26px -10px rgba(196, 176, 255, .8); }
+.tab b { min-width: 19px; height: 19px; padding: 0 5px; display: inline-grid; place-items: center; border-radius: 99px; font-size: .7rem; background: #ff5f8f; color: #fff; animation: pop .35s var(--spring); }
+.tab[aria-pressed="true"] b { background: #120b26; color: #fff; }
+/* cards */
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 24px; padding: 16px; }
 .list { display: grid; gap: 12px; }
-.group { animation: up .3s ease-out backwards; }
-.g-head { display: flex; align-items: flex-start; gap: 10px; }
-.g-head h3 { margin: 0; font-size: 1.05rem; }
-.g-head small { display: block; color: var(--ink3); font-size: .78rem; }
-.count { margin-left: auto; flex: none; min-width: 30px; height: 30px; display: grid; place-items: center; border-radius: 10px; background: var(--card2); font-weight: 700; }
-.rep { display: grid; gap: 2px; padding: 10px 0; border-top: 1px solid var(--line); }
-.rep:first-of-type { margin-top: 12px; }
-.rep .what { font-weight: 600; } .rep .what i { font-style: normal; margin-right: 6px; }
-.rep .note { color: var(--ink2); }
-.rep .meta { color: var(--ink3); font-size: .78rem; }
-.pill { display: inline-block; padding: 1px 8px; margin-left: 6px; border-radius: 99px; font-size: .72rem; font-weight: 600; background: var(--card2); color: var(--ink3); vertical-align: 1px; }
-.pill.new { background: rgba(255, 95, 143, .18); color: #ff9bbb; } .pill.fixed { background: rgba(125, 255, 192, .14); color: var(--ok); }
+.in { animation: slide .35s var(--spring); } /* only moves, never hides, so nothing can get stuck invisible */
+@keyframes slide { from { translate: 0 10px; } }
+.sec-h { display: flex; align-items: baseline; gap: 8px; margin: 22px 4px 10px; font-size: 1.15rem; }
+.sec-h:first-child { margin-top: 4px; }
+.sec-h small { font-family: Geist, sans-serif; font-weight: 500; font-size: .8rem; color: var(--ink3); letter-spacing: 0; }
+.meta { color: var(--ink3); font-size: .8rem; }
+.note { color: var(--ink2); }
+.tag { display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 9px; border-radius: 99px; font-size: .74rem; font-weight: 600; background: var(--card2); border: 1px solid var(--line); color: var(--ink2); }
+.tag.new { background: rgba(255, 95, 143, .16); color: #ff9bbb; border-color: transparent; } .tag.fixed { background: rgba(125, 255, 192, .12); color: var(--ok); border-color: transparent; }
+.tag.warn { background: rgba(255, 176, 122, .16); color: #ffc79e; border-color: transparent; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+/* buttons */
+.btn { height: 42px; padding: 0 18px; border-radius: 999px; font-weight: 600; background: var(--card2); border: 1px solid var(--line); transition: transform .2s var(--spring), background .2s; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; color: var(--ink); }
+.btn:active { transform: scale(.95); }
+.btn.primary { background: var(--btn); color: #120b26; border: 0; }
+.btn.ok { background: linear-gradient(135deg, #b8ffdf, #7dffc0); color: #062a1a; border: 0; }
+.btn.no { color: var(--no); }
+.btn.sm { height: 34px; padding: 0 13px; font-size: .84rem; }
+.btn:disabled { opacity: .5; pointer-events: none; }
 .acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-.edit { display: grid; gap: 10px; margin-top: 12px; padding: 14px; border-radius: 16px; background: var(--card2); animation: up .25s ease-out; }
+.acts.big .btn { flex: 1 1 0; height: 48px; font-size: 1rem; }
+/* a place waiting for approval */
+.pp { display: grid; gap: 12px; }
+.pp-top { display: flex; gap: 12px; align-items: flex-start; }
+.pp-top img, .pp-top .ph { flex: none; width: 76px; height: 76px; border-radius: 18px; object-fit: cover; background: var(--card2); display: grid; place-items: center; font-size: 1.8rem; }
+.pp-top h3 { font-size: 1.25rem; line-height: 1.1; overflow-wrap: anywhere; }
+.pp-map { width: 100%; height: 150px; border: 0; border-radius: 18px; filter: invert(.9) hue-rotate(200deg) saturate(.7); background: var(--card2); }
+.lvl { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.lvl .meta { grid-column: 1 / -1; margin: 0 2px; }
+.lvl-b { display: flex; align-items: center; gap: 10px; text-align: left; padding: 11px 12px; border-radius: 18px; background: var(--card); border: 1px solid var(--line); transition: transform .2s var(--spring), border-color .2s, background .2s; }
+.lvl-b:active { transform: scale(.96); }
+.lvl-b i { flex: none; width: 34px; height: 34px; display: grid; place-items: center; font-style: normal; border-radius: 12px; background: var(--card2); }
+.lvl-b i.big { font-size: 1.2rem; } .lvl-b i.small { font-size: 2rem; line-height: 0; color: var(--hi); }
+.lvl-b span { display: grid; gap: 1px; } .lvl-b b { font-size: .92rem; } .lvl-b small { color: var(--ink3); font-size: .74rem; line-height: 1.3; }
+.lvl-b[aria-checked="true"] { border-color: rgba(196, 176, 255, .85); background: rgba(176, 124, 255, .16); }
+.lvl-b[aria-checked="true"] i { background: var(--peach); color: #1b1033; animation: pop .3s var(--spring); }
+/* tags */
+.seg.sub { margin-top: -4px; } .chip.sm { height: 30px; font-size: .8rem; padding: 0 11px; }
+.note-card { display: block; width: 100%; text-align: left; margin-bottom: 12px; color: #ffc79e; font-weight: 600; }
+.tag-open { margin: 0 6px 10px; padding: 12px; border-radius: 18px; background: rgba(16, 11, 32, .6); border: 1px solid var(--line); display: grid; gap: 10px; animation: up .3s var(--spring); }
+.tp-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.tp { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 6px 0 12px; border-radius: 99px; font-size: .84rem; background: var(--card2); border: 1px solid var(--line); }
+.tp small { font-size: .66rem; font-weight: 700; padding: 1px 6px; border-radius: 99px; background: rgba(255, 255, 255, .08); color: var(--ink3); }
+.tp.k small { background: rgba(196, 176, 255, .2); color: var(--hi); } .tp.p small { background: rgba(125, 255, 192, .14); color: var(--ok); }
+.tp.g { border-style: dashed; }
+.tp button { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: .7rem; color: var(--no); background: rgba(255, 176, 191, .12); }
+.tp:not(:has(button)) { padding-right: 12px; }
+.hits { display: grid; gap: 4px; } .hit { text-align: left; padding: 9px 12px; border-radius: 14px; background: var(--card2); font-weight: 600; } .hit .meta { font-weight: 400; margin-left: 6px; }
+.need { display: grid; gap: 10px; padding: 12px 14px; }
+.need-h { display: flex; align-items: center; gap: 10px; min-width: 0; } .need-h b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .need-h .meta { margin-left: auto; flex: none; }
+.need-h .em { flex: none; width: 34px; height: 34px; border-radius: 12px; display: grid; place-items: center; background: var(--card2); }
+.qchips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: 0 -14px; padding: 0 14px 2px; } .qchips::-webkit-scrollbar { display: none; }
+.qc { flex: none; height: 34px; padding: 0 12px; border-radius: 99px; border: 1px solid var(--line); background: var(--card); font-size: .84rem; font-weight: 600; transition: transform .2s var(--spring); }
+.qc:active { transform: scale(.92); background: var(--peach); color: #1b1033; }
+.kind-row { display: flex; align-items: center; gap: 10px; } .kind-row b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .kind-row select { width: 170px; height: 38px; font-size: 14px; }
+.btn.wide { width: 100%; margin-top: 10px; }
+.who { color: var(--hi); font-weight: 700; }
+.prow .nm .meta b, .prow .nm .meta .tag { display: inline; }
+.prow .nm .meta .tag { height: auto; padding: 1px 7px; }
+/* reports */
+.g-head { display: flex; align-items: flex-start; gap: 10px; }
+.g-head h3 { font-size: 1.1rem; }
+.count { margin-left: auto; flex: none; min-width: 32px; height: 32px; display: grid; place-items: center; border-radius: 12px; background: var(--card2); font-weight: 700; }
+.rep { display: grid; gap: 3px; padding: 10px 0; border-top: 1px solid var(--line); }
+.rep:first-of-type { margin-top: 12px; }
+.rep .what { font-weight: 600; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.seg { display: flex; gap: 6px; flex-wrap: wrap; margin: 0 0 12px; }
+.chip { height: 34px; padding: 0 13px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink2); font-size: .85rem; font-weight: 600; transition: transform .2s var(--spring); }
+.chip:active { transform: scale(.94); }
+.chip[aria-pressed="true"] { background: var(--peach); color: #1b1033; border-color: transparent; }
+/* places */
+.search { position: relative; margin-bottom: 10px; }
+.search input { padding-left: 42px; }
+.search span { position: absolute; left: 15px; top: 50%; translate: 0 -50%; opacity: .6; }
+.prow { display: flex; align-items: center; gap: 12px; padding: 12px 14px; cursor: pointer; transition: background .2s; }
+.prow:active { background: var(--card2); }
+.prow .em { flex: none; width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; background: var(--card2); font-size: 1.2rem; }
+.prow .nm { min-width: 0; flex: 1; } .prow .nm b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.plist { padding: 4px; } .plist .prow + .prow { border-top: 1px solid var(--line); }
+.plist .prow.open { background: var(--card2); border-radius: 18px; }
+/* forms */
+input, select, textarea { width: 100%; height: 46px; padding: 0 15px; border-radius: 16px; border: 1px solid var(--line); background: rgba(255, 255, 255, .06); font-size: 16px; }
+textarea { height: 80px; padding: 11px 15px; resize: vertical; }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--hi); box-shadow: 0 0 0 3px rgba(196, 176, 255, .2); }
+.edit { display: grid; gap: 10px; margin: 4px 4px 10px; padding: 14px; border-radius: 18px; background: rgba(16, 11, 32, .6); border: 1px solid var(--line); animation: up .3s var(--spring); }
 .edit .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.edit label { display: grid; gap: 4px; font-size: .78rem; color: var(--ink3); }
-.edit .check { display: flex; align-items: center; gap: 8px; font-size: .9rem; color: var(--ink); }
-.edit .check input { width: 20px; height: 20px; }
-.empty { text-align: center; padding: 40px 16px; color: var(--ink3); }
-.empty b { display: block; font-size: 2rem; margin-bottom: 6px; }
-.toast { position: fixed; left: 50%; bottom: 22px; translate: -50% 0; padding: 10px 18px; border-radius: 999px; background: var(--ink); color: #160d24; font-weight: 600; box-shadow: 0 10px 30px #000; animation: up .25s ease-out; z-index: 9; }
-.note-soon { color: var(--ink3); font-size: .85rem; }
-@keyframes up { from { opacity: 0; translate: 0 8px; } }
+.edit label { display: grid; gap: 5px; font-size: .78rem; color: var(--ink3); }
+.check { display: flex !important; align-items: center; gap: 10px; font-size: .92rem !important; color: var(--ink) !important; }
+.check input { width: 22px; height: 22px; accent-color: #c4b0ff; }
+/* empty, sign in, toast */
+.empty { text-align: center; padding: 46px 16px; color: var(--ink3); }
+.empty b { display: block; font-size: 2.6rem; margin-bottom: 8px; animation: pop .5s var(--spring); }
+.empty h3 { color: var(--ink); font-size: 1.3rem; margin-bottom: 4px; }
+.signin { max-width: 380px; margin: 12vh auto 0; display: grid; gap: 10px; padding: 22px; animation: up .4s var(--spring); }
+.signin h1 { font-size: 2rem; margin-bottom: 2px; }
+.signin p { margin: 0 0 6px; color: var(--ink3); font-size: .9rem; }
+.toast { position: fixed; left: 50%; bottom: max(22px, env(safe-area-inset-bottom)); translate: -50% 0; z-index: 9; display: flex; align-items: center; gap: 12px; padding: 8px 8px 8px 18px; min-height: 46px; border-radius: 999px; background: #f6f3ff; color: #120b26; font-weight: 600; box-shadow: 0 14px 40px #000; animation: up .3s var(--spring); max-width: calc(100vw - 32px); }
+.toast:not(:has(button)) { padding-right: 18px; }
+.toast button { height: 32px; padding: 0 14px; border-radius: 99px; background: #120b26; color: #fff; font-weight: 700; }
+.toast.out { animation: down .25s ease-in forwards; }
+@keyframes up { from { opacity: 0; translate: 0 10px; } }
+@keyframes down { to { opacity: 0; translate: -50% 10px; } }
+@keyframes pop { from { transform: scale(.4); opacity: 0; } }
+@keyframes spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
-@media (max-width: 520px) { .edit .row { grid-template-columns: 1fr; } header .who span { display: none; } }
+@media (max-width: 520px) { .edit .row { grid-template-columns: 1fr; } header .who .em-t { display: none; } .tab { font-size: .8rem; gap: 4px; } }
 </style>
 </head>
 <body>
 <div class="wrap" id="app"><div class="empty"><b>⏳</b>Loading…</div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js" crossorigin="anonymous"></script>
-<script>/* Keni Admin — reports from "Report a problem", and quick fixes to places. Sign in with a Keni account that is in public.admins.
-   The database decides who sees what (row level security), so this page shows nothing to anyone who isn't an admin. */
+<script>/* Keni Admin — one page with 4 tabs: To do (places waiting for approval + new reports), Places (search and fix any place), Reports (all of them), Cravings (tags people added).
+   Sign in with a Keni account that is in public.admins. The database decides who sees what (row level security), so this page shows nothing to anyone else.
+   Spots (Gatekeep?, visibility = 'tropa') are personal, so this page never lists them. */
 (() => {
   'use strict';
   const sb = window.supabase.createClient('https://wlxkdivnktxdbwbertjw.supabase.co', 'sb_publishable_API1H-c6W-Cj7pi35cjWFA_04IVXyRU');
   const app = document.getElementById('app');
   const $ = (s, el = document) => el.querySelector(s);
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const toast = (t) => { const el = document.createElement('div'); el.className = 'toast'; el.textContent = t; document.body.append(el); setTimeout(() => el.remove(), 2600); };
   const REASON = { kind: ['🏷️', 'Wrong kind'], closed: ['🚫', 'Closed for good'], where: ['📍', 'Wrong location'], fake: ['❓', 'Not a real place'], other: ['💬', 'Something else'] };
-  const KINDS = ['cafe', 'foodtrip', 'sweets', 'inuman', 'ktv', 'sports', 'outdoors', 'movies', 'gala', 'tambayan'];
+  const KIND = { cafe: '☕', foodtrip: '🍽️', sweets: '🧋', inuman: '🍺', ktv: '🎤', sports: '🎱', outdoors: '🌳', movies: '🎬', gala: '🛍️', tambayan: '🛋️' };
+  const KINDS = Object.keys(KIND);
+  const AREA = { balibago: 'Balibago', 'santo-rosario': 'Angeles City', clark: 'Clark Freeport', 'pulung-maragul': 'Pulung Maragul', anunas: 'Friendship Hwy', pampang: 'Pampang', dau: 'Dau, Mabalacat' };
+  const area = (a) => AREA[a] || String(a || '').replace(/^./, (c) => c.toUpperCase());
+  // a person, by @username (their name too), for reports and added places
+  const whoHTML = (id) => { if (!id) return 'from a guest'; const p = st.people[id]; if (!p) return 'from an account';
+    return p.username ? `from <b class="who">@${esc(p.username)}</b> (${esc(p.name)})` : `from <b class="who">${esc(p.name)}</b> <span class="tag warn">no username yet</span>`; };
+  // a short list of people: @mia.cruz, @jo and 2 more
+  const handle = (id) => { const p = st.people[id]; return p ? (p.username ? '@' + p.username : p.name) : 'someone'; };
+  const byList = (ids = []) => { const n = ids.map(handle); return n.length > 3 ? `${n.slice(0, 3).join(', ')} and ${n.length - 3} more` : n.join(', '); };
   const ago = (t) => { const m = Math.round((Date.now() - new Date(t)) / 6e4); return m < 1 ? 'just now' : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} d ago`; };
-  const st = { user: null, filter: 'new', reports: [], places: {}, editing: null, busy: false };
+  const st = { user: null, tab: 'todo', rfilter: 'new', reports: [], places: {}, pp: [], cv: [], editing: null, busy: false, lvl: {}, people: {}, q: '', pf: 'all', plist: null, pBusy: false };
+
+  /* ── toast, with Undo for 5 seconds ── */
+  let toastT = 0;
+  function toast(t, undo) {
+    document.querySelectorAll('.toast').forEach((x) => x.remove()); clearTimeout(toastT);
+    const el = document.createElement('div'); el.className = 'toast'; el.innerHTML = `<span>${esc(t)}</span>${undo ? '<button type="button">Undo</button>' : ''}`;
+    document.body.append(el);
+    if (undo) el.querySelector('button').onclick = () => { el.remove(); clearTimeout(toastT); undo(); };
+    toastT = setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 260); }, undo ? 5000 : 2600);
+  }
 
   /* ── sign in ── */
-  function signInHTML(msg) {
-    return `<form class="card signin" id="si"><h1>Keni <span style="background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent">Admin</span></h1>
+  function showSignIn(msg) {
+    app.innerHTML = `<form class="card signin" id="si"><h1>Keni <span class="grad">admin</span></h1>
       <p>${msg || 'Sign in with your Keni account.'}</p>
       <input id="em" type="email" placeholder="Email" autocomplete="email" required>
       <input id="pw" type="password" placeholder="Password" autocomplete="current-password" required>
       <button class="btn primary" type="submit">Sign in</button></form>`;
-  }
-  function showSignIn(msg) {
-    app.innerHTML = signInHTML(msg);
     $('#si').addEventListener('submit', async (e) => {
       e.preventDefault(); const b = $('#si button'); b.disabled = true;
       const { error } = await sb.auth.signInWithPassword({ email: $('#em').value.trim(), password: $('#pw').value });
@@ -102,73 +200,276 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--h
     if (!session) { st.user = null; return showSignIn(); }
     st.user = session.user;
     const { data: ok } = await sb.rpc('is_admin');
-    if (!ok) return notAllowed();
+    if (!ok) { app.innerHTML = `<div class="card signin"><h1>Not allowed</h1><p>${esc(st.user.email)} isn’t a Keni admin.</p><button class="btn" data-a="out">Sign out</button></div>`; return; }
     load();
-  }
-  function notAllowed() {
-    app.innerHTML = `<div class="card signin"><h1>Not allowed</h1><p>${esc(st.user.email)} isn’t a Keni admin.</p><button class="btn" data-a="out">Sign out</button></div>`;
   }
   sb.auth.onAuthStateChange((ev, s) => { if (ev === 'INITIAL_SESSION' || ev === 'SIGNED_IN' || ev === 'SIGNED_OUT') setTimeout(() => onSession(s), 0); });
 
   /* ── data ── */
   async function load(quiet) {
     if (st.busy) return; st.busy = true;
-    const { data, error } = await sb.from('reports').select('*').order('created_at', { ascending: false }).limit(500);
-    st.busy = false;
-    if (error) { toast('Couldn’t load reports'); return; }
-    st.reports = data;
-    const ids = [...new Set(data.map((r) => r.place_id))].filter((id) => !st.places[id]);
-    if (ids.length) {
-      const { data: ps } = await sb.from('places').select('id, name, level, kinds, hours, hidden, lat, lng, addr').in('id', ids);
-      (ps || []).forEach((p) => { st.places[p.id] = p; });
-    }
+    try {
+      const [r, cv, pp] = await Promise.all([
+        sb.from('reports').select('*').order('created_at', { ascending: false }).limit(500),
+        sb.rpc('craving_recent'),
+        sb.from('places').select('id,name,kinds,area,blurb,photo,lat,lng,price,hours,cravings,created_at,added_by').eq('visibility', 'public').eq('status', 'pending').not('added_by', 'is', null).order('created_at', { ascending: true }).limit(100),
+      ]);
+      if (r.error) { toast('Couldn’t load. Check your connection.'); return; }
+      st.reports = r.data || []; st.cv = cv.data || []; st.pp = pp.data || [];
+      const who = [...new Set([...st.reports.map((x) => x.reporter), ...st.pp.map((x) => x.added_by), ...st.cv.flatMap((x) => x.voters || [])].filter(Boolean))].filter((id) => !st.people[id]);
+      if (who.length) { const { data: ppl } = await sb.from('profiles').select('id,name,username').in('id', who); (ppl || []).forEach((p) => { st.people[p.id] = p; }); }
+      const ids = [...new Set(st.reports.map((x) => x.place_id))].filter((id) => !st.places[id]);
+      if (ids.length) { const { data: ps } = await sb.from('places').select('id,name,level,kinds,hours,hidden,lat,lng,addr,area').in('id', ids); (ps || []).forEach((p) => { st.places[p.id] = p; }); }
+    } finally { st.busy = false; }
     if (!quiet || !st.editing) render();
   }
   setInterval(() => { if (st.user && !document.hidden) load(true); }, 30000);
+  document.addEventListener('visibilitychange', () => { if (st.user && !document.hidden) load(true); });
+
+  // the Places tab: search by name on the server (there are a lot of places)
+  let qT = 0;
+  async function findPlaces() {
+    st.pBusy = true;
+    let q = sb.from('places').select('id,name,level,kinds,hours,hidden,lat,lng,addr,area,added_by,status,visibility').or('visibility.is.null,visibility.neq.tropa').order('name').limit(60);
+    if (st.q.trim()) q = q.ilike('name', `%${st.q.trim().replace(/[%_,()]/g, ' ')}%`);
+    if (st.pf === 'people') q = q.not('added_by', 'is', null);
+    if (st.pf === 'hidden') q = q.eq('hidden', true);
+    if (st.pf === 'basic') q = q.eq('level', 'basic');
+    const { data, error } = await q; st.pBusy = false;
+    if (error) { toast('Couldn’t search places'); return; }
+    st.plist = data || []; st.plist.forEach((p) => { st.places[p.id] = { ...(st.places[p.id] || {}), ...p }; });
+    if (st.tab === 'places') paintPlaces();
+  }
 
   /* ── page ── */
+  const counts = () => ({ newRep: new Set(st.reports.filter((r) => r.status === 'new').map((r) => r.place_id)).size, pp: st.pp.length, cv: st.cv.length });
   function render() {
-    const counts = { new: 0, fixed: 0, dismissed: 0 }; st.reports.forEach((r) => { counts[r.status]++; });
-    const list = st.reports.filter((r) => st.filter === 'all' || r.status === st.filter);
-    const groups = {}; list.forEach((r) => { (groups[r.place_id] = groups[r.place_id] || []).push(r); });
-    const order = Object.entries(groups).sort((a, b) => b[1].length - a[1].length || new Date(b[1][0].created_at) - new Date(a[1][0].created_at));
-    app.innerHTML = `<header><div class="logo">keni <em>admin</em></div><div class="who"><span>${esc(st.user.email)} · </span><button class="link" data-a="out">Sign out</button></div></header>
-      <div class="tabs">${[['new', 'New'], ['fixed', 'Fixed'], ['dismissed', 'Dismissed'], ['all', 'All']].map(([k, l]) => `<button class="tab" data-f="${k}" aria-pressed="${st.filter === k}">${l}${k === 'new' && counts.new ? `<b>${counts.new}</b>` : ''}</button>`).join('')}</div>
-      <div class="bar"><span>Reports from “Report a problem”, grouped by place</span><span class="grow"></span><button class="btn" data-a="reload">↻ Refresh</button></div>
-      <div class="list">${order.length ? order.map(([id, rs], i) => groupHTML(id, rs, i)).join('') : `<div class="card empty"><b>${st.filter === 'new' ? '🎉' : '🗂️'}</b>${st.filter === 'new' ? 'No new reports. All clear.' : 'Nothing here.'}</div>`}</div>
-      <p class="note-soon">Coming next on this page: owner claims and listing requests from the Studio.</p>`;
+    const c = counts(), todo = c.pp + c.newRep;
+    const tabs = [['todo', 'To do', todo], ['places', 'Places', 0], ['reports', 'Reports', 0], ['tags', 'Tags', 0]];
+    app.innerHTML = `<header><div class="logo">keni <span class="grad">admin</span></div><div class="who"><span class="em-t">${esc(st.user.email)}</span><button class="icon-btn" data-a="reload" aria-label="Refresh" title="Refresh">↻</button><button class="link" data-a="out">Sign out</button></div></header>
+      <nav class="tabs" role="tablist">${tabs.map(([k, l, n]) => `<button class="tab" role="tab" data-tab="${k}" aria-pressed="${st.tab === k}">${l}${n ? `<b>${n}</b>` : ''}</button>`).join('')}</nav>
+      <main id="body">${st.tab === 'todo' ? todoHTML() : st.tab === 'reports' ? reportsHTML() : st.tab === 'tags' ? tagsShell() : placesShell()}</main>`;
+    if (st.tab === 'places') { if (!st.plist) findPlaces(); paintPlaces(); }
+    if (st.tab === 'tags') { if (!T.all) loadAll(); paintTags(); }
+  }
+
+  // To do: what needs you, places waiting first
+  function todoHTML() {
+    const groups = groupsOf(st.reports.filter((r) => r.status === 'new'));
+    if (!st.pp.length && !groups.length) return `<div class="card empty in"><b>🎉</b><h3>All clear</h3>Nothing waiting for you right now.</div>`;
+    return `${st.pp.length ? `<h2 class="sec-h">Places waiting for approval <small>${st.pp.length}</small></h2><div class="list">${st.pp.map(ppHTML).join('')}</div>` : ''}
+      ${groups.length ? `<h2 class="sec-h">New reports <small>${groups.length} place${groups.length === 1 ? '' : 's'}</small></h2><div class="list">${groups.map(([id, rs], i) => groupHTML(id, rs, i)).join('')}</div>` : ''}`;
+  }
+  function ppHTML(p, i) {
+    const k = (p.kinds || []).find((x) => KIND[x]), b = 0.004;
+    const mapUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${p.lng - b},${p.lat - b / 1.6},${p.lng + b},${p.lat + b / 1.6}&layer=mapnik&marker=${p.lat},${p.lng}`;
+    return `<section class="card pp in" style="--i:${i}" data-pp="${esc(p.id)}">
+      <div class="pp-top">${p.photo ? `<img src="${esc(p.photo)}" alt="">` : `<span class="ph">${KIND[k] || '📍'}</span>`}
+        <div style="min-width:0"><h3>${esc(p.name)}</h3><div class="meta">${KIND[k] || ''} ${esc(k || 'place')} · ${esc(area(p.area))} · added ${ago(p.created_at)} ${whoHTML(p.added_by).replace('from', 'by')}</div>
+        ${p.blurb ? `<p class="note" style="margin:6px 0 0">“${esc(p.blurb)}”</p>` : ''}</div></div>
+      <div class="tags">${p.price != null ? `<span class="tag">${p.price ? '₱'.repeat(p.price) : 'Free'}</span>` : ''}${Array.isArray(p.hours) ? `<span class="tag">🕒 ${p.hours[0]}:00 – ${p.hours[1]}:00</span>` : '<span class="tag warn">Hours not listed</span>'}${(p.cravings || []).map((c) => `<span class="tag">${esc(c)}</span>`).join('')}</div>
+      <iframe class="pp-map" loading="lazy" title="Where ${esc(p.name)} is" src="${mapUrl}"></iframe>
+      <div class="lvl" role="radiogroup" aria-label="How it shows on the map"><span class="meta">Show it as</span>
+        <button type="button" class="lvl-b" data-lvl="full" role="radio" aria-checked="${(st.lvl[p.id] || 'full') === 'full'}"><i class="big">📍</i><span><b>Big pin</b><small>Full listing: card, photo, hours</small></span></button>
+        <button type="button" class="lvl-b" data-lvl="basic" role="radio" aria-checked="${st.lvl[p.id] === 'basic'}"><i class="small">•</i><span><b>Small pin</b><small>Just a dot with its name</small></span></button></div>
+      <div class="acts big"><button class="btn ok" data-a="approve">✓ Approve</button><button class="btn no" data-a="reject">Reject</button></div></section>`;
+  }
+
+  function groupsOf(list) {
+    const g = {}; list.forEach((r) => { (g[r.place_id] = g[r.place_id] || []).push(r); });
+    return Object.entries(g).sort((a, b) => b[1].length - a[1].length || new Date(b[1][0].created_at) - new Date(a[1][0].created_at));
+  }
+  function reportsHTML() {
+    const n = { new: 0, fixed: 0, dismissed: 0 }; st.reports.forEach((r) => { n[r.status]++; });
+    const groups = groupsOf(st.reports.filter((r) => st.rfilter === 'all' || r.status === st.rfilter));
+    return `<div class="seg">${[['new', 'New'], ['fixed', 'Fixed'], ['dismissed', 'Dismissed'], ['all', 'All']].map(([k, l]) => `<button class="chip" data-rf="${k}" aria-pressed="${st.rfilter === k}">${l}${k !== 'all' ? ` · ${n[k]}` : ''}</button>`).join('')}</div>
+      <div class="list">${groups.length ? groups.map(([id, rs], i) => groupHTML(id, rs, i)).join('') : `<div class="card empty in"><b>${st.rfilter === 'new' ? '🎉' : '🗂️'}</b>${st.rfilter === 'new' ? 'No new reports. All clear.' : 'Nothing here.'}</div>`}</div>`;
   }
   function groupHTML(id, rs, i) {
     const p = st.places[id], open = rs.filter((r) => r.status === 'new');
-    return `<section class="card group" style="animation-delay:${Math.min(i, 8) * 40}ms" data-g="${esc(id)}">
-      <div class="g-head"><div><h3>${esc(p ? p.name : rs[0].place_name)}</h3><small>${p ? `${p.level === 'basic' ? 'Small pin' : 'Full listing'}${p.hidden ? ' · hidden from the map' : ''} · ${esc(id)}` : `${esc(id)} · not in the database (added on someone’s phone)`}</small></div><span class="count" title="Reports">${rs.length}</span></div>
-      ${rs.map((r) => `<div class="rep"><div class="what"><i>${REASON[r.reason][0]}</i>${REASON[r.reason][1]}${r.kind ? `: should be <b>${esc(r.kind)}</b>` : ''}<span class="pill ${r.status}">${r.status}</span></div>
-        ${r.note ? `<div class="note">“${esc(r.note)}”</div>` : ''}<div class="meta">${ago(r.created_at)} · ${r.reporter ? 'from an account' : 'from a guest'}</div></div>`).join('')}
-      <div class="acts">${open.length ? `<button class="btn ok" data-a="fixed">✓ Mark fixed</button><button class="btn" data-a="dismissed">Dismiss</button>` : `<button class="btn" data-a="new">Reopen</button>`}
-        ${p ? `<button class="btn" data-a="edit">✎ Fix the place</button>` : ''}
-        <a class="btn" style="display:inline-grid;place-items:center;text-decoration:none" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((p ? p.name : rs[0].place_name) + ', Angeles City')}">Look it up ↗</a></div>
+    return `<section class="card in" style="--i:${Math.min(i, 8)}" data-g="${esc(id)}">
+      <div class="g-head"><div><h3>${esc(p ? p.name : rs[0].place_name)}</h3><div class="meta">${p ? `${p.level === 'basic' ? 'Small pin' : 'Full listing'}${p.hidden ? ' · hidden from the map' : ''}` : 'Not in the database (added on someone’s phone)'}</div></div><span class="count" title="Reports">${rs.length}</span></div>
+      ${rs.map((r) => `<div class="rep"><div class="what"><span>${(REASON[r.reason] || REASON.other)[0]}</span>${(REASON[r.reason] || REASON.other)[1]}${r.kind ? `: should be <b>${esc(r.kind)}</b>` : ''}<span class="tag ${r.status}">${r.status}</span></div>
+        ${r.note ? `<div class="note">“${esc(r.note)}”</div>` : ''}<div class="meta">${ago(r.created_at)} · ${whoHTML(r.reporter)}</div></div>`).join('')}
+      <div class="acts">${open.length ? `<button class="btn ok sm" data-a="fixed">✓ Mark fixed</button><button class="btn sm" data-a="dismissed">Dismiss</button>` : `<button class="btn sm" data-a="new">Reopen</button>`}
+        <a class="btn sm primary" target="_blank" rel="noopener" href="./#place=${encodeURIComponent(id)}">📍 Open in Keni</a>
+        ${p ? `<button class="btn sm" data-a="edit">✎ Fix the place</button>` : ''}
+        <a class="btn sm" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((p ? p.name : rs[0].place_name) + ', Angeles City')}">Look it up ↗</a></div>
       ${st.editing === id && p ? editHTML(p, rs) : ''}</section>`;
   }
-  function editHTML(p, rs) {
-    const want = rs.find((r) => r.reason === 'kind' && r.kind);
-    const h = Array.isArray(p.hours) ? p.hours : ['', ''];
+  function editHTML(p, rs = []) {
+    const want = rs.find((r) => r.reason === 'kind' && r.kind), h = Array.isArray(p.hours) ? p.hours : ['', ''];
     return `<div class="edit" data-edit="${esc(p.id)}">
       <label>Name<input data-k="name" value="${esc(p.name)}" maxlength="80"></label>
-      <div class="row"><label>Main kind${want ? ` <span style="color:var(--hi)">(reported: ${esc(want.kind)})</span>` : ''}<select data-k="kind">${KINDS.map((k) => `<option${(p.kinds || [])[0] === k ? ' selected' : ''}>${k}</option>`).join('')}</select></label>
+      <div class="row"><label>Main kind${want ? ` <span style="color:var(--hi)">(reported: ${esc(want.kind)})</span>` : ''}<select data-k="kind">${KINDS.map((k) => `<option value="${k}"${(p.kinds || [])[0] === k ? ' selected' : ''}>${KIND[k]} ${k}</option>`).join('')}</select></label>
         <label>Hours (open – close, 24h; empty = not listed)<span style="display:flex;gap:6px"><input data-k="ho" inputmode="decimal" placeholder="9" value="${h[0] ?? ''}"><input data-k="hc" inputmode="decimal" placeholder="22" value="${h[1] ?? ''}"></span></label></div>
       <div class="row"><label>Latitude<input data-k="lat" inputmode="decimal" value="${p.lat}"></label><label>Longitude<input data-k="lng" inputmode="decimal" value="${p.lng}"></label></div>
       <label class="check"><input type="checkbox" data-k="hidden"${p.hidden ? ' checked' : ''}> Hide from the map (closed for good, or not real)</label>
       <div class="acts" style="margin:0"><button class="btn primary" data-a="save">Save place</button><button class="btn" data-a="cancel">Cancel</button></div>
-      <small style="color:var(--ink3)">Saved changes show on everyone’s map the next time they open Keni.</small></div>`;
+      <span class="meta">Saved changes show on everyone’s map the next time they open Keni.</span></div>`;
+  }
+
+  // Places: search, filters, tap a row to edit it
+  function placesShell() {
+    return `<div class="search"><span>🔍</span><input id="pq" type="search" placeholder="Search places by name" value="${esc(st.q)}" autocomplete="off"></div>
+      <div class="seg">${[['all', 'All'], ['people', '✦ Added by people'], ['hidden', '🙈 Hidden'], ['basic', '📍 Small pins']].map(([k, l]) => `<button class="chip" data-pf="${k}" aria-pressed="${st.pf === k}">${l}</button>`).join('')}</div>
+      <div id="plist"></div>`;
+  }
+  function paintPlaces() {
+    const box = $('#plist'); if (!box) return;
+    if (!st.plist) { box.innerHTML = '<div class="card empty"><b>⏳</b>Loading places…</div>'; return; }
+    if (!st.plist.length) { box.innerHTML = `<div class="card empty in"><b>🔎</b>No places match${st.q ? ` “${esc(st.q)}”` : ''}.</div>`; return; }
+    box.innerHTML = `<div class="card plist">${st.plist.map((p, i) => { const k = (p.kinds || [])[0];
+      return `<div class="prow in${st.editing === p.id ? ' open' : ''}" style="--i:${Math.min(i, 10)}" data-p="${esc(p.id)}" role="button" tabindex="0"><span class="em">${KIND[k] || '📍'}</span>
+        <span class="nm"><b>${esc(p.name)}</b><span class="meta">${esc(area(p.area))}${p.level === 'basic' ? ' · small pin' : ''}${p.added_by ? ` · added by people${p.status === 'pending' ? ' (waiting)' : p.status === 'rejected' ? ' (rejected)' : ''}` : ''}</span></span>
+        ${p.hidden ? '<span class="tag warn">Hidden</span>' : ''}</div>${st.editing === p.id ? `<div data-g="${esc(p.id)}">${editHTML(st.places[p.id] || p)}</div>` : ''}`; }).join('')}</div>
+      ${st.plist.length >= 60 ? '<p class="meta" style="text-align:center">Showing the first 60. Search to narrow it down.</p>' : ''}`;
+  }
+
+  /* ── Tags: cravings, vibes and kinds across every place ── */
+  // the same lists as the app. A craving guess comes from the name and kinds, like the app does when a place has no cravings saved
+  const CRAVES = [['chicken', '🍗', 'Chicken', /chicken|manok|inasal|wings/, ['chicken']], ['sushi', '🍣', 'Sushi', /sushi|maki|japanese|izakaya/], ['tusok', '🍢', 'Tusok-tusok', /fish ?balls?|kwek|tusok|isaw|kikiam|street ?food/, ['streetfood']],
+    ['ramen', '🍜', 'Ramen', /ramen|noodle/, ['ramen']], ['samgyup', '🥓', 'Samgyup', /samgyup|korean|k-?bbq|unli ?grill/], ['burger', '🍔', 'Burger', /burger/], ['pizza', '🍕', 'Pizza', /pizza/, ['pizza']],
+    ['pares', '🍲', 'Pares & lomi', /pares|lomi|mami|bulalo|lugaw|goto/], ['sisig', '🥘', 'Sisig', /sisig/, ['sisig']], ['silog', '🍳', 'Silog', /silog|tapsihan|tapa\b|longganisa|tocino/], ['milktea', '🧋', 'Milk tea', /milk ?tea|boba|pearl/, ['milktea']], ['sweets', '🍰', 'Sweets', /cake|dessert|halo-?halo|ice cream|donut|doughnut/, ['dessert', 'halo']]]
+    .map(([id, e, l, re, subs = []]) => ({ id, e, l, re, subs }));
+  const VIBES = [['cozy', '🕯️', 'Cozy'], ['lively', '🎉', 'Barkada'], ['quiet', '🤫', 'Quiet'], ['aesthetic', '✨', 'Aesthetic'], ['romantic', '💕', 'Romantic'], ['retro', '📼', 'Retro'], ['hidden', '🗝️', 'Hidden gem'], ['outdoorsy', '🌿', 'Outdoorsy']].map(([id, e, l]) => ({ id, e, l }));
+  const KINDL = { cafe: 'Café', foodtrip: 'Foodtrip', sweets: 'Sweets and drinks', inuman: 'Inuman', ktv: 'KTV', sports: 'Sports', outdoors: 'Outdoors', movies: 'Movies', gala: 'Gala', tambayan: 'Tambayan' };
+  const FOODY = ['foodtrip', 'sweets', 'cafe', 'inuman'];
+  const T = { all: null, busy: false, mode: 'crave', scope: 'full', open: '', add: '', more: 15 };
+  async function loadAll() {
+    if (T.busy) return; T.busy = true;
+    const cols = 'id,name,kinds,vibes,cravings,level,area,hidden,blurb,visibility';
+    try {
+      const pages = await Promise.all([0, 1, 2].map((i) => sb.from('places').select(cols).or('visibility.is.null,visibility.neq.tropa').eq('hidden', false).order('name').range(i * 1000, i * 1000 + 999)));
+      const bad = pages.find((p) => p.error); if (bad) { toast('Couldn’t load the places'); return; }
+      T.all = pages.flatMap((p) => p.data || []);
+    } finally { T.busy = false; }
+    if (st.tab === 'tags') paintTags();
+  }
+  const kindsOf = (p) => (p.kinds || []).filter((k) => KINDL[k]);
+  const saved = (p) => (p.cravings || []).map((c) => String(c).toLowerCase()).filter((c) => CRAVES.some((x) => x.id === c));
+  const guess = (p) => { const t = [p.name, p.blurb, ...(p.kinds || [])].join(' ').toLowerCase(); return CRAVES.filter((c) => c.subs.some((x) => (p.kinds || []).includes(x)) || c.re.test(t)).map((c) => c.id); };
+  const votes = () => { const m = {}; (st.cv || []).forEach((c) => { (m[c.place_id] = m[c.place_id] || {})[c.craving] = c.n; }); return m; };
+  // where each craving of a place comes from: Keni (saved on the place), people (2 or more agree), or a guess from its name
+  function cravesOf(p, V) {
+    const sv = saved(p), base = sv.length ? sv : guess(p), out = {};
+    base.forEach((c) => { out[c] = sv.length ? 'keni' : 'guess'; });
+    Object.entries(V[p.id] || {}).forEach(([c, n]) => { if (n >= 2 && !out[c]) out[c] = 'people'; });
+    return out;
+  }
+  const inScope = (p) => T.scope === 'all' || p.level !== 'basic';
+  function tagsShell() {
+    return `<div class="seg">${[['crave', '🍜 Cravings'], ['vibe', '✨ Vibes'], ['kind', '🏷️ Kinds']].map(([k, l]) => `<button class="chip" data-tm="${k}" aria-pressed="${T.mode === k}">${l}</button>`).join('')}</div>
+      <div class="seg sub">${[['full', 'Big pins'], ['all', 'All places']].map(([k, l]) => `<button class="chip sm" data-ts="${k}" aria-pressed="${T.scope === k}">${l}</button>`).join('')}</div>
+      <div id="tags"></div>`;
+  }
+  const SRC = { keni: ['Keni', 'k'], people: ['People', 'p'], guess: ['Guessed', 'g'] };
+  function paintTags() {
+    const box = $('#tags'); if (!box) return;
+    if (!T.all) { box.innerHTML = '<div class="card empty"><b>⏳</b>Loading every place…</div>'; return; }
+    const V = votes(), list = T.all.filter(inScope);
+    let html = '';
+    if (T.mode === 'kind') {
+      const wrong = st.reports.filter((r) => r.status === 'new' && r.reason === 'kind').length;
+      html += wrong ? `<button class="card note-card in" data-tab="reports">⚠ ${wrong} “wrong kind” report${wrong === 1 ? '' : 's'} waiting. Open Reports →</button>` : '';
+      html += `<h2 class="sec-h">Kinds <small>main kind of each place · ${list.length} places</small></h2><div class="card plist">${Object.keys(KINDL).map((k, i) => {
+        const ps = list.filter((p) => kindsOf(p)[0] === k);
+        return tagRow('kind', k, KIND[k], KINDL[k], ps.length, `${ps.length} place${ps.length === 1 ? '' : 's'}`, i) + (T.open === 'kind:' + k ? openKind(k, ps) : '');
+      }).join('')}</div>`;
+      box.innerHTML = html; return;
+    }
+    const isC = T.mode === 'crave', TAGS = isC ? CRAVES : VIBES;
+    const has = (p) => (isC ? cravesOf(p, V) : Object.fromEntries((p.vibes || []).map((x) => [x, 'keni'])));
+    const counted = TAGS.map((t) => { const ps = list.filter((p) => has(p)[t.id]); const by = { keni: 0, people: 0, guess: 0 }; ps.forEach((p) => { by[has(p)[t.id]]++; }); return { t, ps, by }; });
+    html += `<h2 class="sec-h">${isC ? 'Cravings' : 'Vibes'} <small>${list.length} places · a tag with under 3 places needs tagging</small></h2><div class="card plist">${counted.map(({ t, ps, by }, i) =>
+      tagRow(T.mode, t.id, t.e, t.l, ps.length, ps.length ? Object.entries(by).filter(([, n]) => n).map(([k, n]) => `${n} ${k === 'guess' ? 'guessed' : 'by ' + SRC[k][0]}`).join(' · ') : 'no places yet', i, ps.length < 3)
+      + (T.open === T.mode + ':' + t.id ? openTag(t, ps, has) : '')).join('')}</div>`;
+    // places without any tag of this kind
+    const need = list.filter((p) => !Object.keys(has(p)).length && (!isC || kindsOf(p).some((k) => FOODY.includes(k))));
+    html += `<h2 class="sec-h">Needs tagging <small>${need.length} place${need.length === 1 ? '' : 's'} with no ${isC ? 'craving' : 'vibe'}${isC ? ' (food and drink places)' : ''}</small></h2>`;
+    html += need.length ? `<div class="list">${need.slice(0, T.more).map((p, i) => `<div class="card need in" style="--i:${Math.min(i, 8)}" data-tp="${esc(p.id)}"><div class="need-h"><span class="em">${KIND[kindsOf(p)[0]] || '📍'}</span><b>${esc(p.name)}</b><span class="meta">${esc(area(p.area))}${p.level === 'basic' ? ' · small pin' : ''}</span></div>
+      <div class="qchips">${TAGS.map((t) => `<button class="qc" data-qadd="${t.id}">${t.e} ${esc(t.l)}</button>`).join('')}</div></div>`).join('')}</div>
+      ${need.length > T.more ? `<button class="btn wide" data-tmore>Show more (${need.length - T.more} left)</button>` : ''}` : '<div class="card empty in"><b>🎉</b>Every place here has one.</div>';
+    // from people
+    if (isC) {
+      const onPlace = (c) => { const p = T.all.find((x) => x.id === c.place_id); return !!p && saved(p).includes(c.craving); };
+      const cv = st.cv || [], one = cv.filter((c) => c.n < 2 && !onPlace(c)), two = cv.filter((c) => c.n >= 2 || onPlace(c));
+      const pr = (c, i, appr) => `<div class="prow in" style="--i:${Math.min(i, 10)};cursor:default"><span class="em">${(CRAVES.find((x) => x.id === c.craving) || {}).e || '🏷️'}</span><span class="nm"><b>${esc(c.place_name || c.place_id)} · ${esc(c.craving)}</b>
+        <span class="meta">by <b class="who">${esc(byList(c.voters))}</b> · ${ago(c.last_at)}${!appr && onPlace(c) ? ' · <span class="tag fixed">✓ approved</span>' : ''}</span></span>${appr ? `<button class="btn sm ok" data-capprove="${esc(c.place_id)}|${esc(c.craving)}">Approve</button>` : ''}<button class="btn sm no" data-cv-clear="${esc(c.place_id)}|${esc(c.craving)}">Remove</button></div>`;
+      html += `<h2 class="sec-h">From people <small>waiting · ${one.length}</small></h2>${one.length ? `<div class="card plist">${one.map((c, i) => pr(c, i, true)).join('')}</div>` : '<div class="card empty in"><b>🎉</b>Nothing waiting. Approve puts a 1-vote tag on the map.</div>'}
+        ${two.length ? `<h2 class="sec-h">On the map from people <small>${two.length}</small></h2><div class="card plist">${two.map((c, i) => pr(c, i, false)).join('')}</div>` : ''}`;
+    }
+    box.innerHTML = html;
+  }
+  const tagRow = (mode, id, e, l, n, sub, i, warn) => `<div class="prow in${T.open === mode + ':' + id ? ' open' : ''}" style="--i:${Math.min(i, 10)}" data-topen="${mode}:${id}" role="button" tabindex="0"><span class="em">${e}</span>
+    <span class="nm"><b>${esc(l)}</b><span class="meta">${sub}</span></span>${warn ? '<span class="tag warn">⚠ Needs tagging</span>' : ''}<span class="count">${n}</span></div>`;
+  function openTag(t, ps, has) {
+    const q = T.add.trim().toLowerCase(), hits = q ? T.all.filter((p) => inScope(p) && !has(p)[t.id] && p.name.toLowerCase().includes(q)).slice(0, 8) : [];
+    return `<div class="tag-open" data-tt="${t.id}">
+      <div class="search"><span>🔍</span><input data-tadd type="search" placeholder="Add a place: search by name" value="${esc(T.add)}" autocomplete="off"></div>
+      ${hits.length ? `<div class="hits">${hits.map((p) => `<button class="hit" data-tp="${esc(p.id)}" data-qadd="${t.id}">＋ ${esc(p.name)} <span class="meta">${esc(area(p.area))}</span></button>`).join('')}</div>` : q ? '<p class="meta">No match.</p>' : ''}
+      ${ps.length ? `<div class="tp-list">${ps.map((p) => { const src = has(p)[t.id]; const vt = src === 'people' ? ((st.cv || []).find((c) => c.place_id === p.id && c.craving === t.id) || {}).voters : null;
+        return `<span class="tp ${SRC[src][1]}" data-tp="${esc(p.id)}"${vt ? ` title="${esc(byList(vt))}"` : ''}>${esc(p.name)}<small>${vt ? esc(byList(vt)) : SRC[src][0]}</small>${src === 'people' ? '' : `<button data-qdel="${t.id}" aria-label="Remove ${esc(t.l)} from ${esc(p.name)}">✕</button>`}</span>`; }).join('')}</div>` : '<p class="meta">No places yet. Search above to add one.</p>'}
+      ${ps.some((p) => has(p)[t.id] === 'guess') ? '<p class="meta">“Guessed” comes from the place’s name. ✕ on a guess saves the place’s real cravings without it.</p>' : ''}</div>`;
+  }
+  function openKind(k, ps) {
+    return `<div class="tag-open">${ps.length ? `<div class="list">${ps.slice(0, 60).map((p) => `<div class="kind-row" data-tp="${esc(p.id)}"><b>${esc(p.name)}</b><select data-kset aria-label="Main kind of ${esc(p.name)}">${Object.keys(KINDL).map((x) => `<option value="${x}"${x === k ? ' selected' : ''}>${KIND[x]} ${KINDL[x]}</option>`).join('')}</select></div>`).join('')}</div>${ps.length > 60 ? `<p class="meta">Showing 60 of ${ps.length}. Use Places to find the rest.</p>` : ''}` : '<p class="meta">No places of this kind.</p>'}</div>`;
+  }
+  // save a place's tags straight to the database
+  async function setTags(id, field, next, msg) {
+    const p = T.all.find((x) => x.id === id); if (!p) return;
+    const old = p[field];
+    p[field] = next; paintTags();
+    const { error } = await sb.from('places').update({ [field]: next }).eq('id', id);
+    if (error) { p[field] = old; paintTags(); return toast('Couldn’t save that'); }
+    toast(msg, async () => { const { error: e2 } = await sb.from('places').update({ [field]: old }).eq('id', id); if (e2) return toast('Couldn’t undo'); p[field] = old; paintTags(); toast('Undone'); });
+  }
+  function addTag(id, tag) {
+    const p = T.all.find((x) => x.id === id); if (!p) return;
+    if (T.mode === 'crave') { const cur = saved(p).length ? saved(p) : guess(p); if (cur.includes(tag) && saved(p).length) return; return setTags(id, 'cravings', [...new Set([...cur, tag])], `${p.name}: ${tag} added`); }
+    const cur = p.vibes || []; if (cur.includes(tag)) return; if (cur.length >= 3) return toast('A place can have up to 3 vibes');
+    return setTags(id, 'vibes', [...cur, tag], `${p.name}: ${(VIBES.find((v) => v.id === tag) || {}).l} added`);
+  }
+  function delTag(id, tag) {
+    const p = T.all.find((x) => x.id === id); if (!p) return;
+    if (T.mode === 'crave') { const cur = saved(p).length ? saved(p) : guess(p); return setTags(id, 'cravings', cur.filter((c) => c !== tag), `${p.name}: ${tag} removed`); }
+    return setTags(id, 'vibes', (p.vibes || []).filter((v) => v !== tag), `${p.name}: vibe removed`);
+  }
+
+  function cravingsHTML() {
+    if (!st.cv.length) return `<div class="card empty in"><b>🍜</b><h3>No tags yet</h3>When people tag what a place serves, it shows up here.</div>`;
+    return `<p class="meta" style="margin:0 4px 12px">A food shows on the map once 2 people say a place serves it. Remove clears a wrong tag for everyone.</p>
+      <div class="card plist">${st.cv.map((c, i) => `<div class="prow in" style="--i:${Math.min(i, 10)};cursor:default"><span class="em">🏷️</span><span class="nm"><b>${esc(c.place_name || c.place_id)} · ${esc(c.craving)}</b>
+        <span class="meta">${c.n} ${c.n === 1 ? 'person says' : 'people say'} so · ${c.n >= 2 ? 'on the map' : 'not on the map yet'} · ${ago(c.last_at)}</span></span>
+        <button class="btn sm no" data-cv-clear="${esc(c.place_id)}|${esc(c.craving)}">Remove</button></div>`).join('')}</div>`;
   }
 
   /* ── actions ── */
+  async function setPlaceStatus(pid, status, card, level) {
+    const p = st.pp.find((x) => x.id === pid); if (!p) return;
+    if (card) { card.style.transition = 'opacity .25s, transform .25s'; card.style.opacity = '0'; card.style.transform = `translateX(${status === 'approved' ? 40 : -40}px)`; }
+    const { error } = await sb.from('places').update(level ? { status, level } : { status }).eq('id', pid);
+    if (error) { toast('Couldn’t save that'); return render(); }
+    st.pp = st.pp.filter((x) => x.id !== pid);
+    setTimeout(render, card ? 220 : 0);
+    toast(status === 'approved' ? `${p.name} approved as a ${level === 'basic' ? 'small' : 'big'} pin` : `${p.name} rejected`, async () => {
+      const { error: e2 } = await sb.from('places').update({ status: 'pending', level: 'full' }).eq('id', pid);
+      if (e2) return toast('Couldn’t undo');
+      st.pp = [...st.pp, p].sort((a, b) => new Date(a.created_at) - new Date(b.created_at)); render(); toast('Undone');
+    });
+  }
   async function setStatus(id, status) {
     const ids = st.reports.filter((r) => r.place_id === id && (status === 'new' ? r.status !== 'new' : r.status === 'new')).map((r) => r.id);
+    const before = st.reports.filter((r) => ids.includes(r.id)).map((r) => [r.id, r.status]);
     const { error } = await sb.from('reports').update({ status }).in('id', ids);
     if (error) return toast('Couldn’t update');
     st.reports.forEach((r) => { if (ids.includes(r.id)) r.status = status; });
-    toast(status === 'fixed' ? 'Marked fixed ✓' : status === 'dismissed' ? 'Dismissed' : 'Reopened'); render();
+    render();
+    toast(status === 'fixed' ? 'Marked fixed ✓' : status === 'dismissed' ? 'Dismissed' : 'Reopened', status === 'new' ? null : async () => {
+      const prev = before[0] ? before[0][1] : 'new';
+      const { error: e2 } = await sb.from('reports').update({ status: prev }).in('id', ids); if (e2) return toast('Couldn’t undo');
+      st.reports.forEach((r) => { if (ids.includes(r.id)) r.status = prev; }); render(); toast('Undone');
+    });
   }
   async function savePlace(id, box) {
     const v = (k) => $(`[data-k="${k}"]`, box), p = st.places[id];
@@ -180,17 +481,46 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--h
     const patch = { name: v('name').value.trim(), kinds, hours: ho === '' ? null : [+ho, +hc], lat, lng, hidden: v('hidden').checked };
     const { error } = await sb.from('places').update(patch).eq('id', id);
     if (error) return toast('Couldn’t save the place');
-    Object.assign(p, patch); st.editing = null;
-    toast('Place saved ✓'); render();
+    Object.assign(p, patch); if (st.plist) { const row = st.plist.find((x) => x.id === id); if (row) Object.assign(row, patch); }
+    st.editing = null; toast('Place saved ✓'); render();
   }
+
+  app.addEventListener('change', (e) => {
+    const ks = e.target.closest('[data-kset]'); if (!ks) return;
+    const p = T.all.find((x) => x.id === ks.closest('[data-tp]').dataset.tp); if (!p) return;
+    const k = ks.value; setTags(p.id, 'kinds', [k, ...(p.kinds || []).filter((x) => x !== k)], `${p.name} is now ${KINDL[k]}`);
+  });
+  let tT = 0;
+  app.addEventListener('input', (e) => { if (e.target.matches && e.target.matches('[data-tadd]')) { T.add = e.target.value; clearTimeout(tT); tT = setTimeout(() => { paintTags(); const i = $('[data-tadd]'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }, 200); return; } });
+  app.addEventListener('input', (e) => { if (e.target.id === 'pq') { st.q = e.target.value; clearTimeout(qT); qT = setTimeout(findPlaces, 250); } });
+  app.addEventListener('keydown', (e) => { const r = e.target.closest && e.target.closest('.prow[data-p], .prow[data-topen]'); if (r && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); r.click(); } });
   app.addEventListener('click', async (e) => {
-    const f = e.target.closest('[data-f]'); if (f) { st.filter = f.dataset.f; st.editing = null; return render(); }
-    const a = e.target.closest('[data-a]'); if (!a) return;
-    const k = a.dataset.a, g = a.closest('[data-g]'), id = g && g.dataset.g;
+    const tb = e.target.closest('[data-tab]'); if (tb) { st.tab = tb.dataset.tab; st.editing = null; window.scrollTo({ top: 0 }); return render(); }
+    const rf = e.target.closest('[data-rf]'); if (rf) { st.rfilter = rf.dataset.rf; st.editing = null; return render(); }
+    const pf = e.target.closest('[data-pf]'); if (pf) { st.pf = pf.dataset.pf; st.editing = null; document.querySelectorAll('[data-pf]').forEach((x) => x.setAttribute('aria-pressed', x === pf)); st.plist = null; paintPlaces(); return findPlaces(); }
+    const tm = e.target.closest('[data-tm]'); if (tm) { T.mode = tm.dataset.tm; T.open = ''; T.add = ''; T.more = 15; document.querySelectorAll('[data-tm]').forEach((x) => x.setAttribute('aria-pressed', x === tm)); return paintTags(); }
+    const ts = e.target.closest('[data-ts]'); if (ts) { T.scope = ts.dataset.ts; T.more = 15; document.querySelectorAll('[data-ts]').forEach((x) => x.setAttribute('aria-pressed', x === ts)); return paintTags(); }
+    const to = e.target.closest('[data-topen]'); if (to) { T.open = T.open === to.dataset.topen ? '' : to.dataset.topen; T.add = ''; return paintTags(); }
+    if (e.target.closest('[data-tmore]')) { T.more += 15; return paintTags(); }
+    const qa = e.target.closest('[data-qadd]'); if (qa) { const pid = qa.closest('[data-tp]').dataset.tp; qa.disabled = true; if (qa.classList.contains('hit')) T.add = ''; return addTag(pid, qa.dataset.qadd); }
+    const qd = e.target.closest('[data-qdel]'); if (qd) { return delTag(qd.closest('[data-tp]').dataset.tp, qd.dataset.qdel); }
+    const ca = e.target.closest('[data-capprove]');
+    if (ca) { const [pid, c] = ca.dataset.capprove.split('|'); if (!T.all) await loadAll(); const p = (T.all || []).find((x) => x.id === pid); if (!p) return toast('That place isn’t in the database');
+      const cur = saved(p).length ? saved(p) : guess(p); if (!cur.includes(c) || !saved(p).length) await setTags(pid, 'cravings', [...new Set([...cur, c])], `${p.name}: ${c} approved. It’s on the map now`); else { toast('It’s already on the place'); paintTags(); }
+      return; }
+    const cc = e.target.closest('[data-cv-clear]');
+    if (cc) { const [p, c] = cc.dataset.cvClear.split('|'); cc.disabled = true;
+      { const pl = (T.all || []).find((x) => x.id === p); if (pl && saved(pl).includes(c)) { const next = saved(pl).filter((x) => x !== c); const r0 = await sb.from('places').update({ cravings: next }).eq('id', p); if (!r0.error) pl.cravings = next; } } const { error } = await sb.rpc('craving_clear', { p_place: p, p_craving: c }); if (error) { cc.disabled = false; return toast('Couldn’t remove'); } st.cv = st.cv.filter((x) => !(x.place_id === p && x.craving === c)); toast('Tag removed'); return st.tab === 'tags' ? paintTags() : render(); }
+    const lv = e.target.closest('[data-lvl]'); if (lv) { const c = lv.closest('[data-pp]'); st.lvl[c.dataset.pp] = lv.dataset.lvl; c.querySelectorAll('[data-lvl]').forEach((x) => x.setAttribute('aria-checked', x === lv)); return; }
+    const a = e.target.closest('[data-a]');
+    const row = !a && e.target.closest('.prow[data-p]'); if (row) { const id = row.dataset.p; st.editing = st.editing === id ? null : id; return paintPlaces(); }
+    if (!a) return;
+    const k = a.dataset.a, g = a.closest('[data-g]'), id = g && g.dataset.g, card = a.closest('[data-pp]');
     if (k === 'out') return sb.auth.signOut();
-    if (k === 'reload') { await load(); return toast('Up to date'); }
+    if (k === 'reload') { a.classList.add('spin'); await load(); if (st.tab === 'places') findPlaces(); if (st.tab === 'tags') { T.all = null; loadAll(); } return toast('Up to date'); }
+    if (k === 'approve' || k === 'reject') { card.querySelectorAll('button').forEach((b) => { b.disabled = true; }); return setPlaceStatus(card.dataset.pp, k === 'approve' ? 'approved' : 'rejected', card, k === 'approve' ? (st.lvl[card.dataset.pp] || 'full') : null); }
     if (k === 'edit') { st.editing = st.editing === id ? null : id; return render(); }
-    if (k === 'cancel') { st.editing = null; return render(); }
+    if (k === 'cancel') { st.editing = null; return st.tab === 'places' ? paintPlaces() : render(); }
     if (k === 'save') { a.disabled = true; await savePlace(id, a.closest('.edit')); a.disabled = false; return; }
     if (['fixed', 'dismissed', 'new'].includes(k)) { a.disabled = true; return setStatus(id, k); }
   });
