@@ -1745,6 +1745,11 @@ body.k-moving .leaflet-marker-pane *, body.k-moving .leaflet-marker-pane *::befo
 .ch-pk-h > span:first-child .ic { width: 17px; height: 17px; }
 .ch-ans > span:first-child { display: inline-flex; align-items: center; gap: 6px; } .ch-ans > span:first-child .ic { width: 16px; height: 16px; flex: none; }
 .ch-planit { display: inline-flex; align-items: center; gap: 6px; } .ch-planit .ic { width: 16px; height: 16px; }
+.tz-phb, label.btn { position: relative; overflow: visible; }
+.tz-file { position: fixed; left: -100px; top: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; overflow: hidden; }
+label.tz-phb { cursor: pointer; }
+.ch-pk .ch-pk-h > span:first-child { display: inline-grid; place-items: center; flex: none; width: 30px; height: 30px; font-size: 0; line-height: 0; }
+.ch-pk .ch-pk-h > span:first-child .ic { width: 17px; height: 17px; display: block; }
 .why-c { padding: .22rem .65rem; border-radius: 999px; font-size: .72rem; font-weight: 560; color: #d9fff0; background: rgba(60, 255, 160, .12); border: 1px solid rgba(60, 255, 160, .28); }
 .cv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
 .dcard { border-radius: 28px; padding: 8px; display: grid; gap: 4px; align-content: start; transition: transform .45s var(--spring); }
@@ -7556,7 +7561,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
     if (!g.me && R.me && !g.members.some((m) => m.id === R.me)) { toast(`You were removed from <b>${esc(t.name)}</b>`); delete t.remote; persist(); return true; }
     if (g.me) R.me = g.me;
     R.owner = g.owner || null; R.planner = g.planner || null;
-    if ('photo' in g && (g.photo || null) !== (t.photo || null)) { t.photo = g.photo || null; persist(); } // who manages the tropa, and who picks the place tonight
+    if ('photo' in g && !(t.photoAt && Date.now() - t.photoAt < 20000) && (g.photo || null) !== (t.photo || null)) { t.photo = g.photo || null; persist(); } // who manages the tropa, and who picks the place tonight
     const others = g.members.filter((m) => m.id !== R.me && !(R.drop || []).includes(m.id)), pending = b.friends.filter((f) => !String(f.id).startsWith('m:'));
     b.friends = [...others.map((m) => ({ id: 'm:' + m.id, name: m.name, emoji: m.emoji, hue: m.hue, img: m.photo || null, picks: m.picks || [], vibes: m.vibes || [], nos: m.nos || [],
       budget: m.budget || 2, area: m.area || null, account: m.account, phone: m.phone !== false, owner: m.id === g.owner })), ...pending];
@@ -9761,10 +9766,10 @@ button.ms-rs:hover { filter: brightness(1.2); }
     const a = K.tropa.active(), fr = bk().friends.filter((f) => f.phone || f.account), R = a.remote, own = !K.tsync || K.tsync.role(a).owner;
     const row = (f) => `<li class="tz-row">${K.fav(f, '')}<span class="tz-n"><b>${esc(f.name)}</b><small>${f.owner ? 'Owner' : 'Member'}</small></span>${own ? `<button class="icon-btn sm" data-tz="rm" data-id="${esc(f.id)}" aria-label="Remove ${esc(first(f.name))}">${icon('x')}</button>` : ''}</li>`;
     return `<div class="fm tz tzi">
-      <div class="tzi-top"><button class="tz-phb tzi-ph" data-tz="photo" aria-label="Change the tropa photo">${a.photo ? `<img src="${esc(a.photo)}" alt="">` : `<span>${esc(a.emoji || '')}</span>`}<i>${K.lic('cam')}</i></button>
+      <div class="tzi-top"><label class="tz-phb tzi-ph" for="tz-file" aria-label="Change the tropa photo">${a.photo ? `<img src="${esc(a.photo)}" alt="">` : `<span>${esc(a.emoji || '')}</span>`}<i>${K.lic('cam')}</i></label>
         <h2 class="display"><em>${esc(a.name)}</em></h2><small>${fr.length + 1} ${fr.length ? 'people' : 'person'}${R ? ` · Code <span class="ts-code">${esc(R.code)}</span>` : ''}</small>
         ${a.photo ? '<button class="link-btn" data-tz="nophoto">Remove photo</button>' : ''}
-        <input type="file" accept="image/*" hidden data-tz-file></div>
+        </div>
       <div class="tzi-acts">${K.tsync ? `<button class="btn primary" data-tz="addp">${K.lic('padd')}Add people</button>` : ''}</div>
       <h4>People <small>(${fr.length + 1})</small></h4>
       <ul class="tz-list"><li class="tz-row"><span class="fav" style="--h:270" aria-hidden="true">🙂</span><span class="tz-n"><b>You</b><small>${own ? 'Owner' : 'Member'}</small></span></li>${fr.map(row).join('')}</ul>
@@ -9778,10 +9783,10 @@ button.ms-rs:hover { filter: brightness(1.2); }
     return `<div class="fm tz"><span class="eyebrow">Manage tropa</span><h2 class="display"><em>${esc(a.name)}</em></h2>
       <p class="sub">Rename it, change its photo, see who’s in it and invite people.</p>
       ${K.tropa.bar()}
-      <div class="tz-ph"><button class="tz-phb" data-tz="photo" aria-label="Change the tropa photo">${a.photo ? `<img src="${esc(a.photo)}" alt="">` : `<span>${esc(a.emoji || '')}</span>`}<i>${K.lic('cam')}</i></button>
+      <div class="tz-ph"><label class="tz-phb" for="tz-file" aria-label="Change the tropa photo">${a.photo ? `<img src="${esc(a.photo)}" alt="">` : `<span>${esc(a.emoji || '')}</span>`}<i>${K.lic('cam')}</i></label>
         <div class="tz-pht"><b>Tropa photo</b><small>Shows on your chats, invites and tropa list. Anyone in the tropa can change it.</small>
-        <div class="tz-phacts"><button class="btn ghost sm" data-tz="photo">${a.photo ? 'Change' : 'Add a photo'}</button>${a.photo ? '<button class="btn ghost sm" data-tz="nophoto">Remove</button>' : ''}</div></div>
-        <input type="file" accept="image/*" hidden data-tz-file></div>
+        <div class="tz-phacts"><label class="btn ghost sm" for="tz-file">${a.photo ? 'Change' : 'Add a photo'}</label>${a.photo ? '<button class="btn ghost sm" data-tz="nophoto">Remove</button>' : ''}</div></div>
+        </div>
       <h4>In ${esc(a.name)} <small>(${fr.length + 1})</small></h4>
       <ul class="tz-list"><li class="tz-row"><span class="fav" style="--h:270" aria-hidden="true">🙂</span><span class="tz-n"><b>You</b><small>${own ? 'Owner' : 'Member'}</small></span></li>${fr.filter((f) => f.phone || f.account).map(row).join('')}</ul>
       ${sync ? `<section class="tz-inv glass"><div><b>${R ? 'Invite to this tropa' : 'Share this tropa'}</b><small>${R ? `Code <span class="ts-code">${esc(R.code)}</span>. Friends tap the link or type the code.` : 'Make a link your friends can tap to join from their own phone.'}</small></div>
@@ -9806,8 +9811,7 @@ button.ms-rs:hover { filter: brightness(1.2); }
       if ((a === 'rm' || a === 'add' || a === 'addfriend') && K.tsync && !K.tsync.role().owner) return toast('Only the tropa’s owner can do that');
       if (a === 'rm') { const f = b.friends.find((x) => x.id === id); b.friends = b.friends.filter((x) => x.id !== id); b.off = (b.off || []).filter((x) => x !== id); b.locked = null; persist(); K.render(); paint(); if (f) toast(`Removed <b>${esc(first(f.name))}</b> from ${esc(K.tropa.active().name)}`); }
       else if (a === 'add') { const p = pool().find((x) => x.id === id); if (!p) return; b.friends.push({ ...p }); b.locked = null; persist(); K.render(); paint(); toast(`<b>${esc(first(p.name))}</b> is in ${esc(K.tropa.active().name)} ✦`); }
-      else if (a === 'photo') { const f = $('[data-tz-file]', M); if (f) { f.value = ''; f.click(); } }
-      else if (a === 'nophoto') setPhoto(null);
+      else if (a === 'nophoto') setPhoto(null, tid);
       else if (a === 'addp') { const at = K.tropa.active(); K.closeModal(); setTimeout(() => K.tsync.invite(at), 320); }
       else if (a === 'leave') {
         if (!leaveArm) { leaveArm = true; paint(); return; }
@@ -9820,19 +9824,25 @@ button.ms-rs:hover { filter: brightness(1.2); }
       else if (a === 'addfriend') { K.closeModal(); setTimeout(() => K.addFriendSheet && K.addFriendSheet(), 320); }
       else if (a === 'chat') { const tid = S.tropa; K.closeModal(); setTimeout(() => K.msg.open('chats', 'g:' + tid), 330); }
     });
-    M.addEventListener('change', async (e) => {
-      if (e.target.matches('[data-tr-name]')) return void setTimeout(paint, 40);
-      if (!e.target.matches('[data-tz-file]') || !e.target.files || !e.target.files[0]) return;
-      try { setPhoto(await square(e.target.files[0])); } catch { toast('Couldn’t read that photo. Try another one.'); }
-    });
+    M.addEventListener('change', (e) => { if (e.target.matches('[data-tr-name]')) setTimeout(paint, 40); });
+    tid = S.tropa;
   }
+  let tid = null;
+  // one file input that stays on the page, so the picked photo still arrives if the sheet redraws while the picker is open
+  if (!document.getElementById('tz-file')) document.body.insertAdjacentHTML('beforeend', '<input type="file" accept="image/*" id="tz-file" class="tz-file" data-tz-file aria-hidden="true" tabindex="-1">');
+  document.addEventListener('change', async (e) => {
+    if (!e.target.matches('[data-tz-file]')) return;
+    const f = e.target.files && e.target.files[0], id = tid || S.tropa; e.target.value = '';
+    if (!f) return;
+    try { setPhoto(await square(f), id); } catch { toast('Couldn’t read that photo. Try another one.'); }
+  });
   // a square, small JPEG: quick to load everywhere the tropa shows
   const square = (file) => new Promise((ok, no) => { const img = new Image(), url = URL.createObjectURL(file);
     img.onload = () => { const s = Math.min(img.width, img.height), c = document.createElement('canvas'); c.width = c.height = 256;
       c.getContext('2d').drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, 256, 256); URL.revokeObjectURL(url); ok(c.toDataURL('image/jpeg', 0.8)); };
     img.onerror = () => { URL.revokeObjectURL(url); no(); }; img.src = url; });
-  async function setPhoto(v) {
-    const t = K.tropa.active(), was = t.photo || null; t.photo = v; persist(); paint(); K.render(); if (K.tchat && K.tchat.pull) K.tchat.pull(); if (K.tchat && K.tchat.head) K.tchat.head();
+  async function setPhoto(v, id) {
+    const t = (id && S.tropas.find((x) => x.id === id)) || K.tropa.active(), was = t.photo || null; t.photo = v; t.photoAt = Date.now(); persist(); paint(); K.render(); if (K.tchat && K.tchat.pull) K.tchat.pull(); if (K.tchat && K.tchat.head) K.tchat.head();
     if (!(t.remote && K.tsync && K.tsync.setPhoto)) return toast(v ? 'Tropa photo set' : 'Photo removed');
     try { await K.tsync.setPhoto(t); toast(v ? 'Tropa photo changed. Everyone sees it now.' : 'Photo removed'); if (K.tchat && K.tchat.pull) K.tchat.pull(); }
     catch (err) { t.photo = was; persist(); paint(); K.render(); toast(/slow down/.test((err && err.message) || '') ? 'Wait a moment before changing it again' : 'Couldn’t save the photo. Check your connection.'); }
