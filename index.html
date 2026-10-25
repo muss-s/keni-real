@@ -1754,6 +1754,47 @@ label.tz-phb { cursor: pointer; }
 .tz-nick { min-width: 0; max-width: 100%; box-sizing: border-box; display: flex; gap: 8px; align-items: center; padding: 4px 0 10px 50px; list-style: none; animation: rise .3s var(--spring) both; }
 .tz-nick .btn { flex: none; } .tz-nick input { flex: 1 1 0; width: 0; min-width: 0; height: 38px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--line); background: rgba(255, 255, 255, .06); color: inherit; font: inherit; font-size: 16px; }
 .ch-menu button .ic, .menu button .ic { width: 18px; height: 18px; flex: none; }
+.ch-b { touch-action: pan-y; -webkit-touch-callout: none; }
+.ch-m.ch-sw { position: relative; overflow: visible; }
+.ch-m.ch-sw::before { content: ''; position: absolute; top: 50%; left: -30px; width: 22px; height: 22px; margin-top: -11px; border-radius: 50%; opacity: var(--rp, 0); transform: scale(calc(.5 + var(--rp, 0) * .5));
+  background: rgba(255, 255, 255, .14) center / 14px no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9.5 6.5 4.5 11.5l5 5'/%3E%3Cpath d='M4.5 11.5h9a6 6 0 0 1 6 6v1'/%3E%3C/svg%3E"); }
+.ch-m.me.ch-sw::before { left: auto; right: -30px; }
+.ch-q { display: grid; gap: 2px; max-width: 100%; margin: 2px 0 -10px; padding: 7px 12px 16px; border: 0; border-radius: 16px; background: rgba(255, 255, 255, .05); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08); color: var(--ink-2); text-align: left; font: inherit; cursor: pointer; }
+.ch-q small { display: flex; align-items: center; gap: 4px; font-size: .7rem; color: var(--ink-3); } .ch-q small .ic { width: 12px; height: 12px; }
+.ch-q span { font-size: .84rem; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; white-space: normal; }
+.ch-m.me .ch-q { text-align: right; } .ch-m.me .ch-q small { justify-content: flex-end; }
+.ch-hl .ch-b, .ch-pk.ch-hl { animation: chHl 1.5s ease both; }
+@keyframes chHl { 0%, 40% { box-shadow: 0 0 0 3px rgba(196, 176, 255, .8); } 100% { box-shadow: 0 0 0 0 rgba(196, 176, 255, 0); } }
+.ch-rp { display: flex; align-items: center; gap: 10px; margin: 0 10px; padding: 8px 6px 8px 12px; border-radius: 16px 16px 6px 6px; background: rgba(255, 255, 255, .07); border-left: 3px solid #b79cff; animation: rise .25s var(--spring) both; }
+.ch-rp > .ic { width: 18px; height: 18px; color: #c9b6ff; flex: none; }
+.ch-rp span { flex: 1; min-width: 0; display: grid; } .ch-rp b { font-size: .8rem; } .ch-rp small { color: var(--ink-3); font-size: .8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ch-rp .ch-ib { width: 32px; height: 32px; } .ch-rp .ch-ib .ic { width: 16px; height: 16px; }
+.ch-pick .ch-pick-rp { display: grid; place-items: center; color: #e7dcff; } .ch-pick .ch-pick-rp .ic { width: 22px; height: 22px; }
+.mp { display: grid; gap: 10px; padding: 16px; border-radius: 22px; background: rgba(255, 255, 255, .045); border: 1px solid var(--line); margin-bottom: 14px; }
+.mp-h { display: flex; align-items: center; gap: 8px; } .mp-h b { font-size: 1rem; } .mp-h small { padding: 1px 8px; border-radius: 99px; background: rgba(255, 255, 255, .1); font-size: .75rem; }
+.mp-strip { display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: 16px; margin: 0 -16px; padding: 0 16px 4px; scrollbar-width: none; }
+.mp-strip::-webkit-scrollbar { display: none; }
+.mp-t { position: relative; flex: none; width: 120px; height: 160px; padding: 0; border: 0; border-radius: 16px; overflow: hidden; background: rgba(255, 255, 255, .06); scroll-snap-align: start; cursor: zoom-in; animation: rise .4s var(--spring) both; animation-delay: calc(var(--i, 0) * 50ms); }
+.mp-t img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .3s var(--spring); } .mp-t:active img { transform: scale(.96); }
+.mp-t.wait img { opacity: .55; } .mp-t em { position: absolute; left: 6px; right: 6px; bottom: 6px; padding: 3px 6px; border-radius: 8px; background: rgba(10, 8, 20, .75); font-style: normal; font-size: .64rem; text-align: center; }
+.mp-sk { flex: none; width: 120px; height: 160px; border-radius: 16px; background: linear-gradient(90deg, rgba(255, 255, 255, .05), rgba(255, 255, 255, .11), rgba(255, 255, 255, .05)); background-size: 200% 100%; animation: mpSk 1.2s linear infinite; }
+@keyframes mpSk { to { background-position: -200% 0; } }
+.mp-empty { margin: 0; color: var(--ink-3); font-size: .85rem; line-height: 1.45; }
+.mp-add { justify-self: start; gap: 6px; cursor: pointer; } .mp-add .ic { width: 16px; height: 16px; } .mp-add.busy { opacity: .7; pointer-events: none; }
+body.mpv-on { overflow: hidden; }
+.mpv { position: fixed; inset: 0; z-index: 200; background: rgba(4, 3, 10, .96); animation: chFade .2s both; touch-action: none; }
+.mpv.out { animation: chFade .2s reverse both; }
+.mpv-s { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; touch-action: none; }
+.mpv-s img { max-width: 100%; max-height: 100%; min-width: 0; min-height: 0; flex: none; object-fit: contain; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; will-change: transform; }
+.mpv-s img.in.r { animation: mpvR .3s var(--spring); } .mpv-s img.in.l { animation: mpvL .3s var(--spring); } .mpv-s img.in.c { animation: mpvC .3s var(--spring); }
+@keyframes mpvR { from { opacity: 0; translate: 40px 0; } } @keyframes mpvL { from { opacity: 0; translate: -40px 0; } } @keyframes mpvC { from { opacity: 0; scale: .94; } }
+.mpv-top { position: absolute; top: calc(env(safe-area-inset-top) + 10px); left: 12px; right: 12px; display: flex; align-items: center; justify-content: space-between; pointer-events: none; }
+.mpv-n { font-size: .85rem; color: var(--ink-2); padding-left: 6px; }
+.mpv-x, .mpv-a { pointer-events: auto; width: 44px; height: 44px; display: grid; place-items: center; border: 0; border-radius: 50%; background: rgba(255, 255, 255, .12); color: #fff; cursor: pointer; }
+.mpv-x .ic, .mpv-a .ic { width: 20px; height: 20px; }
+.mpv-a { position: absolute; top: 50%; margin-top: -22px; } .mpv-a.prev { left: 10px; } .mpv-a.next { right: 10px; } .mpv-a.next .ic { transform: scaleX(-1); }
+.mpv-c { position: absolute; left: 16px; right: 16px; bottom: calc(env(safe-area-inset-bottom) + 16px); margin: 0; text-align: center; color: var(--ink-2); font-size: .85rem; pointer-events: none; }
+@media (hover: none) { .mpv-a { display: none; } }
 .why-c { padding: .22rem .65rem; border-radius: 999px; font-size: .72rem; font-weight: 560; color: #d9fff0; background: rgba(60, 255, 160, .12); border: 1px solid rgba(60, 255, 160, .28); }
 .cv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
 .dcard { border-radius: 28px; padding: 8px; display: grid; gap: 4px; align-content: start; transition: transform .45s var(--spring); }
@@ -5009,8 +5050,8 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
   const money = (n) => (n === 0 ? 'Free' : '₱' + n.toLocaleString('en-PH'));
 
   function menuHTML(v) {
-    const m = MENUS[v.id], c0 = CAT[v.cats[0]], food = menuLabel(v) === 'Menu';
-    if (!m) return `<p class="fine">${v.real ? `No ${food ? 'menu' : 'price list'} has been added for this place yet. Keni doesn’t make one up for a real place.` : v.user ? 'No menu has been added for this place yet.' : 'The menu for this spot is coming soon.'}</p>`;
+    const m = MENUS[v.id], c0 = CAT[v.cats[0]], food = menuLabel(v) === 'Menu', mp = v.real || v.user ? `<div class="mp" data-mp="${esc(v.id)}"></div>` : '';
+    if (!m) return `${mp}<p class="fine">${v.real ? `No ${food ? 'menu' : 'price list'} has been added for this place yet. Keni doesn’t make one up for a real place.` : v.user ? 'No menu has been added for this place yet.' : 'The menu for this spot is coming soon.'}</p>`;
     const s = m.sig;
     const hero = artHTML({
       seed: v.id + '|dish', hue: c0.hue, emoji: c0.ic, ar: 0.72, img: v.real ? '' : IMG(`images/menu/${v.id}.jpg`), alt: `${s.name} at ${v.name}`,
@@ -5020,6 +5061,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
     return `<div class="menu">
       <figure class="dish">${hero}</figure>
       ${m.sections.map((sec) => `<section class="msec"><h4>${esc(sec.title)}</h4><ul>${sec.items.map(item).join('')}</ul></section>`).join('')}
+      ${mp}
       <p class="fine">${v.real ? 'Copied from the place’s own menu. Prices can change, so check when you order.' : v.user ? `${food ? 'Menu' : 'Prices'} added by ${esc(v.by)} — not verified yet.` : `Sample ${food ? 'menu' : 'price list'} for a fictional listing — ₱ amounts are illustrative. Dish photos are AI‑generated.`}</p>
     </div>`;
   }
@@ -12026,7 +12068,7 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
 @media (prefers-reduced-motion: reduce) { .ch, .ch-row, .ch-sf, .ch-m, .ch-pk, .ch-pick, .ch-menu, .ch-pick button, .ch-rx, .ch-tray, .ch-typing span.d i, .ch-none > b, .ch-card .fav, .ch-qr { animation: none; } .ch-pane { transition: none; } }
 </style>
 <script>/* Keni · line icons for chats, friends and profiles */
-(() => { const K = window.KeniCore; if (!K) return; const P = {"user":"<circle cx=\"12\" cy=\"8\" r=\"3.6\"/><path d=\"M5 20a7 7 0 0 1 14 0\"/>","minus":"<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M8 12h8\"/>","flag":"<path d=\"M5.5 21V4\"/><path d=\"M5.5 4.5h11l-2.2 4 2.2 4h-11\"/>","block":"<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"m5.7 5.7 12.6 12.6\"/>","pen":"<path d=\"M4 20h4L18.5 9.5a2.1 2.1 0 0 0-4-4L4 16z\"/><path d=\"m13.5 6.5 4 4\"/>","moon":"<path d=\"M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z\"/>","bowl":"<path d=\"M3.5 11h17a8.5 8.5 0 0 1-17 0z\"/><path d=\"M9 20.5h6\"/><path d=\"M13.5 3 11 11\"/><path d=\"M18.5 4.5 13.5 11\"/>","car":"<path d=\"M4 16.5v-4L6.2 7h11.6l2.2 5.5v4z\"/><path d=\"M4 12.5h16\"/><circle cx=\"7.5\" cy=\"16.5\" r=\"1.6\"/><circle cx=\"16.5\" cy=\"16.5\" r=\"1.6\"/>","help":"<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .8-1 1.5v.5\"/><path d=\"M12 17h.01\"/>","smile":"<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M8.5 14.2a4.5 4.5 0 0 0 7 0\"/><path d=\"M9 9.5h.01\"/><path d=\"M15 9.5h.01\"/>","cam":"<path d=\"M4 8.5A2.5 2.5 0 0 1 6.5 6h1.8l1.4-2h4.6l1.4 2h1.8A2.5 2.5 0 0 1 20 8.5v8a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5z\"/><circle cx=\"12\" cy=\"12.5\" r=\"3.3\"/>","swap":"<path d=\"M5 8.5h13.5L15 5M19 15.5H5.5L9 19\"/>","padd":"<circle cx=\"9.5\" cy=\"8\" r=\"3.5\"/><path d=\"M3 20c.5-3.6 3-5.6 6.5-5.6s6 2 6.5 5.6M19 8v6M16 11h6\"/>","more":"<circle cx=\"5.5\" cy=\"12\" r=\"1.3\"/><circle cx=\"12\" cy=\"12\" r=\"1.3\"/><circle cx=\"18.5\" cy=\"12\" r=\"1.3\"/>","back":"<path d=\"M19 12H5.5M11 5.5L4.5 12l6.5 6.5\"/>","cal":"<rect x=\"3.5\" y=\"5\" width=\"17\" height=\"15.5\" rx=\"3\"/><path d=\"M3.5 10h17M8 3v4M16 3v4M8 14h.01M12 14h.01M16 14h.01M8 17.5h.01M12 17.5h.01\"/>","pin":"<path d=\"M12 21s-6.5-6.2-6.5-11.2a6.5 6.5 0 0 1 13 0C18.5 14.8 12 21 12 21z\"/><circle cx=\"12\" cy=\"9.8\" r=\"2.4\"/>","cap":"<path d=\"M2.5 9.5L12 5l9.5 4.5L12 14z\"/><path d=\"M6.5 11.5v4.2c1.4 1.4 3.4 2.1 5.5 2.1s4.1-.7 5.5-2.1v-4.2M21.5 9.5v5\"/>","cup":"<path d=\"M6.5 8h11l-1.3 11.5a1.5 1.5 0 0 1-1.5 1.3H9.3a1.5 1.5 0 0 1-1.5-1.3z\"/><path d=\"M5.5 8h13M13.5 8l1.5-5 2.5-.5\"/>","clock":"<circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"M12 7.5V12l3 2\"/>","x":"<path d=\"M6 6l12 12M18 6L6 18\"/>","scan":"<path d=\"M4 8.5V6a2 2 0 0 1 2-2h2.5M15.5 4H18a2 2 0 0 1 2 2v2.5M20 15.5V18a2 2 0 0 1-2 2h-2.5M8.5 20H6a2 2 0 0 1-2-2v-2.5\"/><path d=\"M7.5 12h9\"/>","search":"<circle cx=\"11\" cy=\"11\" r=\"6.5\"/><path d=\"M16 16l4.5 4.5\"/>","chat":"<path d=\"M5 18.5l1.2-3.3A7.5 7.5 0 1 1 9 18.3z\"/><path d=\"M9 11h6M9 14h3.5\"/>","link":"<path d=\"M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1\"/><path d=\"M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1\"/>","qr":"<rect x=\"4\" y=\"4\" width=\"6\" height=\"6\" rx=\"1.2\"/><rect x=\"14\" y=\"4\" width=\"6\" height=\"6\" rx=\"1.2\"/><rect x=\"4\" y=\"14\" width=\"6\" height=\"6\" rx=\"1.2\"/><path d=\"M14 14h2.5v2.5H14zM17.5 17.5H20V20h-2.5zM14 20h1M20 14v1\"/>","add":"<circle cx=\"9\" cy=\"8.5\" r=\"3.3\"/><path d=\"M3.5 19.5c.5-3.3 2.7-5 5.5-5s5 1.7 5.5 5\"/><path d=\"M18 8v6M15 11h6\"/>","check":"<path d=\"M5 12.5l4.5 4.5L19 7.5\"/>","trash":"<path d=\"M4.5 7h15M9.5 7V4.8h5V7M6.5 7l1 12.5h9l1-12.5\"/><path d=\"M10.5 11v5M13.5 11v5\"/>","bell":"<path d=\"M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z\"/><path d=\"M10 20.5a2 2 0 0 0 4 0\"/>","people":"<circle cx=\"9\" cy=\"8.5\" r=\"3.3\"/><path d=\"M3.5 19.5c.5-3.3 2.7-5 5.5-5s5 1.7 5.5 5\"/><path d=\"M15.5 5.6a3.2 3.2 0 0 1 0 6M17.5 14.7c1.7.6 2.8 2.2 3 4.8\"/>","heart":"<path d=\"M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z\"/>","steps":"<path d=\"M7 4.5c1.7 0 2.5 1.8 2.5 4s-.8 4-2.5 4-2.5-1.8-2.5-4 .8-4 2.5-4zM5 15h4.5v1.5a2.2 2.2 0 0 1-4.5 0zM17 7.5c1.7 0 2.5 1.8 2.5 4s-.8 4-2.5 4-2.5-1.8-2.5-4 .8-4 2.5-4zM14.5 18h4.5v1a2.2 2.2 0 0 1-4.5 0z\"/>","lock":"<rect x=\"5\" y=\"10.5\" width=\"14\" height=\"9.5\" rx=\"2.5\"/><path d=\"M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5M12 14.5v2\"/>","magnet":"<path d=\"M6 4h4v8a2 2 0 0 0 4 0V4h4v8a6 6 0 0 1-12 0z\"/><path d=\"M6 8h4M14 8h4\"/>"};
+(() => { const K = window.KeniCore; if (!K) return; const P = {"reply":"<path d=\"M9.5 6.5 4.5 11.5l5 5\"/><path d=\"M4.5 11.5h9a6 6 0 0 1 6 6v1\"/>","user":"<circle cx=\"12\" cy=\"8\" r=\"3.6\"/><path d=\"M5 20a7 7 0 0 1 14 0\"/>","minus":"<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M8 12h8\"/>","flag":"<path d=\"M5.5 21V4\"/><path d=\"M5.5 4.5h11l-2.2 4 2.2 4h-11\"/>","block":"<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"m5.7 5.7 12.6 12.6\"/>","pen":"<path d=\"M4 20h4L18.5 9.5a2.1 2.1 0 0 0-4-4L4 16z\"/><path d=\"m13.5 6.5 4 4\"/>","moon":"<path d=\"M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z\"/>","bowl":"<path d=\"M3.5 11h17a8.5 8.5 0 0 1-17 0z\"/><path d=\"M9 20.5h6\"/><path d=\"M13.5 3 11 11\"/><path d=\"M18.5 4.5 13.5 11\"/>","car":"<path d=\"M4 16.5v-4L6.2 7h11.6l2.2 5.5v4z\"/><path d=\"M4 12.5h16\"/><circle cx=\"7.5\" cy=\"16.5\" r=\"1.6\"/><circle cx=\"16.5\" cy=\"16.5\" r=\"1.6\"/>","help":"<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .8-1 1.5v.5\"/><path d=\"M12 17h.01\"/>","smile":"<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M8.5 14.2a4.5 4.5 0 0 0 7 0\"/><path d=\"M9 9.5h.01\"/><path d=\"M15 9.5h.01\"/>","cam":"<path d=\"M4 8.5A2.5 2.5 0 0 1 6.5 6h1.8l1.4-2h4.6l1.4 2h1.8A2.5 2.5 0 0 1 20 8.5v8a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5z\"/><circle cx=\"12\" cy=\"12.5\" r=\"3.3\"/>","swap":"<path d=\"M5 8.5h13.5L15 5M19 15.5H5.5L9 19\"/>","padd":"<circle cx=\"9.5\" cy=\"8\" r=\"3.5\"/><path d=\"M3 20c.5-3.6 3-5.6 6.5-5.6s6 2 6.5 5.6M19 8v6M16 11h6\"/>","more":"<circle cx=\"5.5\" cy=\"12\" r=\"1.3\"/><circle cx=\"12\" cy=\"12\" r=\"1.3\"/><circle cx=\"18.5\" cy=\"12\" r=\"1.3\"/>","back":"<path d=\"M19 12H5.5M11 5.5L4.5 12l6.5 6.5\"/>","cal":"<rect x=\"3.5\" y=\"5\" width=\"17\" height=\"15.5\" rx=\"3\"/><path d=\"M3.5 10h17M8 3v4M16 3v4M8 14h.01M12 14h.01M16 14h.01M8 17.5h.01M12 17.5h.01\"/>","pin":"<path d=\"M12 21s-6.5-6.2-6.5-11.2a6.5 6.5 0 0 1 13 0C18.5 14.8 12 21 12 21z\"/><circle cx=\"12\" cy=\"9.8\" r=\"2.4\"/>","cap":"<path d=\"M2.5 9.5L12 5l9.5 4.5L12 14z\"/><path d=\"M6.5 11.5v4.2c1.4 1.4 3.4 2.1 5.5 2.1s4.1-.7 5.5-2.1v-4.2M21.5 9.5v5\"/>","cup":"<path d=\"M6.5 8h11l-1.3 11.5a1.5 1.5 0 0 1-1.5 1.3H9.3a1.5 1.5 0 0 1-1.5-1.3z\"/><path d=\"M5.5 8h13M13.5 8l1.5-5 2.5-.5\"/>","clock":"<circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"M12 7.5V12l3 2\"/>","x":"<path d=\"M6 6l12 12M18 6L6 18\"/>","scan":"<path d=\"M4 8.5V6a2 2 0 0 1 2-2h2.5M15.5 4H18a2 2 0 0 1 2 2v2.5M20 15.5V18a2 2 0 0 1-2 2h-2.5M8.5 20H6a2 2 0 0 1-2-2v-2.5\"/><path d=\"M7.5 12h9\"/>","search":"<circle cx=\"11\" cy=\"11\" r=\"6.5\"/><path d=\"M16 16l4.5 4.5\"/>","chat":"<path d=\"M5 18.5l1.2-3.3A7.5 7.5 0 1 1 9 18.3z\"/><path d=\"M9 11h6M9 14h3.5\"/>","link":"<path d=\"M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1\"/><path d=\"M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1\"/>","qr":"<rect x=\"4\" y=\"4\" width=\"6\" height=\"6\" rx=\"1.2\"/><rect x=\"14\" y=\"4\" width=\"6\" height=\"6\" rx=\"1.2\"/><rect x=\"4\" y=\"14\" width=\"6\" height=\"6\" rx=\"1.2\"/><path d=\"M14 14h2.5v2.5H14zM17.5 17.5H20V20h-2.5zM14 20h1M20 14v1\"/>","add":"<circle cx=\"9\" cy=\"8.5\" r=\"3.3\"/><path d=\"M3.5 19.5c.5-3.3 2.7-5 5.5-5s5 1.7 5.5 5\"/><path d=\"M18 8v6M15 11h6\"/>","check":"<path d=\"M5 12.5l4.5 4.5L19 7.5\"/>","trash":"<path d=\"M4.5 7h15M9.5 7V4.8h5V7M6.5 7l1 12.5h9l1-12.5\"/><path d=\"M10.5 11v5M13.5 11v5\"/>","bell":"<path d=\"M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z\"/><path d=\"M10 20.5a2 2 0 0 0 4 0\"/>","people":"<circle cx=\"9\" cy=\"8.5\" r=\"3.3\"/><path d=\"M3.5 19.5c.5-3.3 2.7-5 5.5-5s5 1.7 5.5 5\"/><path d=\"M15.5 5.6a3.2 3.2 0 0 1 0 6M17.5 14.7c1.7.6 2.8 2.2 3 4.8\"/>","heart":"<path d=\"M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z\"/>","steps":"<path d=\"M7 4.5c1.7 0 2.5 1.8 2.5 4s-.8 4-2.5 4-2.5-1.8-2.5-4 .8-4 2.5-4zM5 15h4.5v1.5a2.2 2.2 0 0 1-4.5 0zM17 7.5c1.7 0 2.5 1.8 2.5 4s-.8 4-2.5 4-2.5-1.8-2.5-4 .8-4 2.5-4zM14.5 18h4.5v1a2.2 2.2 0 0 1-4.5 0z\"/>","lock":"<rect x=\"5\" y=\"10.5\" width=\"14\" height=\"9.5\" rx=\"2.5\"/><path d=\"M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5M12 14.5v2\"/>","magnet":"<path d=\"M6 4h4v8a2 2 0 0 0 4 0V4h4v8a6 6 0 0 1-12 0z\"/><path d=\"M6 8h4M14 8h4\"/>"};
   K.lic = (n, cls = '') => '<svg class="ic ' + cls + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (P[n] || '') + '</svg>'; })();
 </script>
 <script>/* Keni · Chats (Messenger style; friends + 1-on-1 chats added 2026-10-22). The 💬 Chats button in the dock opens one inbox for every chat:
@@ -12072,7 +12114,7 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
   const lastId = (c) => { for (let i = c.list.length - 1; i >= 0; i--) if (typeof c.list[i].id === 'number') return c.list[i].id; return 0; };
   const API = { // the same chat screen talks to three kinds of chats: a tropa (t), a friend (d), a Pasabit (p)
     load: (cv, after, before) => cv.kind === 't' ? rpc('tropa_chat', { p_code: cv.code, p_secret: cv.secret, p_after: after, p_before: before }) : cv.kind === 'p' ? rpc('ps_chat', { p_id: cv.ps, p_after: after, p_before: before }) : rpc('dm_chat', { p_dm: cv.dm, p_after: after, p_before: before }),
-    send: (cv, kind, body) => cv.kind === 't' ? rpc('tropa_msg_send', { p_code: cv.code, p_secret: cv.secret, p_kind: kind, p_body: body }) : cv.kind === 'p' ? rpc('ps_send', { p_id: cv.ps, p_body: body }) : rpc('dm_send', { p_dm: cv.dm, p_body: body }),
+    send: (cv, kind, body, rid) => { const R = rid ? { p_reply: rid } : {}; return cv.kind === 't' ? rpc('tropa_msg_send', { p_code: cv.code, p_secret: cv.secret, p_kind: kind, p_body: body, ...R }) : cv.kind === 'p' ? rpc('ps_send', { p_id: cv.ps, p_body: body, ...R }) : rpc('dm_send', { p_dm: cv.dm, p_body: body, ...R }); },
     read: (cv, id) => cv.kind === 't' ? rpc('tropa_read', { p_code: cv.code, p_secret: cv.secret, p_id: id }) : cv.kind === 'p' ? rpc('ps_read', { p_id: cv.ps, p_msg: id }) : rpc('dm_read', { p_dm: cv.dm, p_id: id }),
     react: (cv, msg, e) => cv.kind === 't' ? rpc('tropa_react', { p_code: cv.code, p_secret: cv.secret, p_msg: msg, p_emoji: e }) : cv.kind === 'p' ? rpc('ps_react', { p_id: cv.ps, p_msg: msg, p_emoji: e }) : rpc('dm_react', { p_dm: cv.dm, p_msg: msg, p_emoji: e }),
   };
@@ -12083,6 +12125,7 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
     return { id, name: x.name || '?', emoji: esc(x.emoji || '🙂'), img: x.photo ? esc(x.photo) : null, hue: x.hue != null ? x.hue : 270 };
   };
   const face = (c, id, m) => K.fav(person(c, id, m), '');
+  const nm = (c, id, name) => { const x = (c && c.mem[id]) || {}; return x.nick || first(name != null ? name : x.name); }; // a nickname in full, a real name by its first word
   const pface = (p) => K.fav({ id: p.id, name: p.name || '?', emoji: esc(p.emoji || '🙂'), img: p.photo ? esc(p.photo) : null, hue: p.hue != null ? p.hue : 270 }, '');
 
   /* ── the layer ── */
@@ -12249,6 +12292,8 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
     else if (n.kind === 'ps_accept') toast('🙌 You’re in! ' + ps, () => openKey2('p:' + d.ps), 'Chat');
     else if (n.kind === 'ps_soon') toast('⏰ ' + ps + ' starts in 1 hour', () => openKey2('p:' + d.ps), 'Chat');
     else if (n.kind === 'ps_cancel') toast(ps + ' was cancelled');
+    else if (n.kind === 'menu_ok') toast('Your menu photo for <b>' + esc(d.name || 'a place') + '</b> is up. Thanks!', d.place ? () => { hide(); setTimeout(() => K.menuPhotos && K.menuPhotos.see(d.place), 320); } : null, 'View');
+    else if (n.kind === 'menu_no') toast('Your menu photo for <b>' + esc(d.name || 'a place') + '</b> wasn’t added this time');
     else if (n.kind === 'tropa_invite' && d.code) toast('🧲 <b>' + who + '</b> invited you to ' + esc((d.emoji || '') + ' ' + (d.name || 'a tropa')), () => tjoin(d.code), 'Join');
   }
   const inTropa = (code) => K.tropa && K.tropa.list().some((t) => t.remote && t.remote.code === code);
@@ -12387,6 +12432,8 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
         if (n.kind === 'friend_request') { txt = who + ' wants to be friends'; acts = n.status === 'received' ? `<button class="btn primary sm" data-ch-accept="${esc(a.id)}">Accept</button><button class="btn ghost sm" data-ch-decline="${esc(a.id)}">Decline</button>` : n.status === 'friends' ? `<button class="btn ghost sm" data-ch-dm="${esc(a.id)}"><svg class="ic " viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 18.5l1.2-3.3A7.5 7.5 0 1 1 9 18.3z"/><path d="M9 11h6M9 14h3.5"/></svg></button>` : ''; }
         else if (n.kind === 'friend_accept') { txt = who + ' accepted your friend request'; acts = n.status === 'friends' ? `<button class="btn ghost sm" data-ch-dm="${esc(a.id)}"><svg class="ic " viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 18.5l1.2-3.3A7.5 7.5 0 1 1 9 18.3z"/><path d="M9 11h6M9 14h3.5"/></svg>Say hi</button>` : ''; }
         else if (n.kind === 'tropa_invite') { const d = n.data || {}; txt = who + ' invited you to <b>' + esc((d.emoji || '') + ' ' + (d.name || 'a tropa')) + '</b>'; acts = inTropa(d.code) ? '<small>Joined ✓</small>' : `<button class="btn primary sm" data-ch-tjoin="${esc(d.code || '')}">Join</button>`; }
+        else if (n.kind === 'menu_ok') { const d = n.data || {}; txt = 'Your menu photo for <b>' + esc(d.name || 'a place') + '</b> is up. Thanks for helping!'; acts = d.place ? `<button class="btn ghost sm" data-mp-see="${esc(d.place)}">View</button>` : ''; }
+        else if (n.kind === 'menu_no') { const d = n.data || {}; txt = 'Your menu photo for <b>' + esc(d.name || 'a place') + '</b> wasn’t added this time. Make sure it’s clear and shows the menu.'; }
         else if (n.kind.startsWith('ps_')) {
           const d = n.data || {}, ps = '<b>' + esc((d.emoji || '🧲') + ' ' + (d.title || 'a Pasabit')) + '</b>', at = d.when ? ' · ' + esc(whenShort(d.when)) : '', id = esc(d.ps || '');
           const chat = `<button class="btn ghost sm" data-ch-open="p:${id}" aria-label="Open the chat">${K.lic('chat')}</button>`, view = `<button class="btn ghost sm" data-ch-ps="${id}">View</button>`;
@@ -12530,7 +12577,7 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
     let html;
     if (cv.kind === 't') {
       const others = Object.values(c.mem).filter((m) => m.id !== c.me);
-      const sub = on.length ? (on.length === 1 && others.length > 1 ? first((c.mem[on[0]] || {}).name) + ' is active now' : 'Active now') : others.length ? (others.length + 1) + ' people' : 'Just you so far';
+      const sub = on.length ? (on.length === 1 && others.length > 1 ? nm(c, on[0]) + ' is active now' : 'Active now') : others.length ? (others.length + 1) + ' people' : 'Just you so far';
       html = `<button class="ch-tinfo" data-ch="tinfo" aria-label="Tropa photo and settings">${avatarHTML(openKey, cv.emoji, Object.values(c.mem), c.me)}<span class="ch-who"><b>${esc(cv.name || 'Tropa')}</b><small${on.length ? ' class="live"' : ''}>${esc(sub)}</small></span></button>`;
     } else if (cv.kind === 'p') {
       const n = Object.keys(c.mem).length, when = (c.ps && c.ps.when) || cv.when;
@@ -12565,7 +12612,7 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
         if (fresh.length) { c.list = c.list.filter((m) => typeof m.id === 'number').concat(fresh, c.list.filter((m) => typeof m.id !== 'number')); if (c.ready) fresh.filter((m) => m.member !== c.me).forEach((m) => announce(cv, m)); }
       }
       const ans = {}; (data.answers || []).forEach((a) => { (ans[a.msg] = ans[a.msg] || {})[a.member] = a.answer; });
-      if (c.ready && !older) for (const id in ans) { const p = c.list.find((m) => m.id === +id); if (!p || p.member !== c.me) continue; for (const who in ans[id]) if (who !== c.me && (c.ans[id] || {})[who] !== ans[id][who]) toast('<b>' + esc(first((c.mem[who] || {}).name)) + '</b>: ' + esc(ansText(p.body, ans[id][who]))); }
+      if (c.ready && !older) for (const id in ans) { const p = c.list.find((m) => m.id === +id); if (!p || p.member !== c.me) continue; for (const who in ans[id]) if (who !== c.me && (c.ans[id] || {})[who] !== ans[id][who]) toast('<b>' + esc(nm(c, who)) + '</b>: ' + esc(ansText(p.body, ans[id][who]))); }
       if (!older) c.ans = ans;
       const rx = {}; (data.reactions || []).forEach((r) => { (rx[r.msg] = rx[r.msg] || {})[r.member] = r.emoji; });
       if (!older) { const lo = (data.msgs[0] || {}).id; for (const id in c.rx) if (lo != null && +id >= lo && !rx[id]) delete c.rx[id]; }
@@ -12582,7 +12629,7 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
   function announce(cv, m) {
     if (openKey === cv.key && !document.hidden) { if (m.kind === 'poke') try { if (navigator.vibrate) navigator.vibrate([20, 40, 20]); } catch { /* no */ } return; }
     if (m.kind === 'sys') return;
-    const where = cv.kind !== 'd' ? esc(cv.name) + ' · ' : '', who = cv.kind === 'd' ? esc(first((cv.other || {}).name)) : esc(first(m.name));
+    const where = cv.kind !== 'd' ? esc(cv.name) + ' · ' : '', who = cv.kind === 'd' ? esc(first((cv.other || {}).name)) : esc(nm(box(cv.key), m.member, m.name));
     const go = () => openThread(cv.key);
     if (m.kind === 'poke') {
       const p = PK[m.body] || ['', '👋', 'Hey!'];
@@ -12624,6 +12671,7 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
     return `<span class="ch-rx" data-ch-rx="${id}">${[...new Set(v)].slice(0, 3).join('')}${v.length > 1 ? '<em>' + v.length + '</em>' : ''}</span>`;
   }
   function draw() {
+    if (thread.classList.contains('ch-swiping')) { clearTimeout(thread._dl); thread._dl = setTimeout(draw, 350); return; } // a redraw would snap a message back mid-swipe
     const el = $('.ch-list', thread); if (!el || !openKey) return;
     const key = openKey, cv = conv(key), c = box(key), L = c.list;
     if (!L.length) {
@@ -12642,15 +12690,15 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
       if (m.kind === 'sys') h += `<p class="ch-sys">${esc(m.body)}</p>`;
       else if (m.kind === 'poke') {
         const pk = PK[m.body] || ['', '👋', 'Hey!'], mine = m.member === c.me;
-        h += `<div class="ch-pk" data-id="${m.id}"><div class="ch-pk-h"><span>${pic(m.body)}</span><b>${mine ? 'You' : esc(first(m.name))}: ${esc(pk[2])}</b><small>${new Date(t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</small></div><div data-poll="${m.id}">${pollHTML(key, m)}</div></div>`;
+        h += `<div class="ch-pk" data-id="${m.id}"><div class="ch-pk-h"><span>${pic(m.body)}</span><b>${mine ? 'You' : esc(nm(c, m.member, m.name))}: ${esc(pk[2])}</b><small>${new Date(t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</small></div><div data-poll="${m.id}">${pollHTML(key, m)}</div></div>`;
       } else {
         const mine = m.member === c.me, gap = (a, b) => !a || !b || a.kind !== 'msg' || b.kind !== 'msg' || a.member !== b.member || Math.abs(Date.parse(a.at) - Date.parse(b.at)) > 5 * 60e3;
         const isFirst = gap(p, m) || (p && t - Date.parse(p.at) > 30 * 60e3), isLast = gap(m, n), big = onlyEmoji(m.body.trim());
         const acct = cv.kind === 't' ? (c.mem[m.member] || {}).user : m.member;
-        const fc = isLast ? (acct && acct !== uid() ? `<button data-ch-person="${esc(acct)}" aria-label="${esc(first(m.name))}">${face(c, m.member, m)}</button>` : face(c, m.member, m)) : '<span class="ch-sp"></span>';
+        const fc = isLast ? (acct && acct !== uid() ? `<button data-ch-person="${esc(acct)}" aria-label="${esc(nm(c, m.member, m.name))}">${face(c, m.member, m)}</button>` : face(c, m.member, m)) : '<span class="ch-sp"></span>';
         h += `<div class="ch-m${mine ? ' me' : ''}${isFirst ? ' first' : ''}${isLast ? ' last' : ''}${!isFirst && !isLast ? ' mid' : ''}${m.pending ? ' pend' : ''}${m.failed ? ' fail' : ''}" data-id="${m.id}">`
           + (mine ? '' : fc)
-          + `<span class="ch-col">${!mine && isFirst && group ? `<span class="ch-name">${esc(first(m.name))}</span>` : ''}<span class="ch-b${big ? ' big' : ''}" data-ch-b="${m.id}">${linky(m.body)}</span>${rxHTML(c, m.id)}`
+          + `<span class="ch-col">${!mine && isFirst && group ? `<span class="ch-name">${esc(nm(c, m.member, m.name))}</span>` : ''}${quoteHTML(c, m, mine)}<span class="ch-b${big ? ' big' : ''}" data-ch-b="${m.id}">${linky(m.body)}</span>${rxHTML(c, m.id)}`
           + `<span class="ch-t">${new Date(t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</span>`
           + (m.failed ? '<span class="ch-meta err" data-ch-retry="' + m.id + '">Not sent. Tap to try again.</span>' : m.pending ? '<span class="ch-meta">Sending…</span>' : mine && m === lastMine && !seenAt[m.id] && !L.slice(i + 1).some((x) => x.member !== c.me) ? '<span class="ch-meta">Sent</span>' : '')
           + '</span></div>';
@@ -12698,14 +12746,14 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
 
   /* ── sending ── */
   let lastPoke = 0, tmp = 0;
-  async function send(kind, body, btn) {
+  async function send(kind, body, btn, rp) {
     const key = openKey, cv = conv(key); if (!cv || !sb()) return false;
     if (kind === 'poke' && Date.now() - lastPoke < 30e3) { toast('Easy! One poke every 30 seconds'); return false; }
-    const c = box(key), temp = { id: 'tmp' + ++tmp, member: c.me, kind, body, at: new Date().toISOString(), pending: true };
+    const c = box(key), temp = { id: 'tmp' + ++tmp, member: c.me, kind, body, at: new Date().toISOString(), pending: true, ...(rp ? { reply: rp.id, rq: rp.q } : {}) };
     if (kind === 'msg') { c.list.push(temp); draw(); toEnd(); }
     if (btn) btn.disabled = true;
     try {
-      const { data, error } = await API.send(cv, kind, body);
+      const { data, error } = await API.send(cv, kind, body, rp && rp.id);
       if (error) throw error;
       c.list = c.list.filter((m) => m !== temp);
       if (data && !c.list.some((m) => m.id === data.id)) { const i = c.list.findIndex((m) => typeof m.id !== 'number'); if (i < 0) c.list.push(data); else c.list.splice(i, 0, data); }
@@ -12749,6 +12797,35 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
     catch { if (was) c.rx[msg][c.me] = was; else delete c.rx[msg][c.me]; draw(); toast('Couldn’t react. Try again.'); }
   }
 
+  /* ── replies: swipe a message (or long-press → Reply), a bar shows above the box, the sent message quotes it ── */
+  let replying = null;
+  const qText = (q) => (!q || q.gone ? 'Message removed' : q.kind === 'poke' ? ((PK[q.body] || [])[2] || 'Poke') : q.body || '');
+  const qWho = (c, q) => (!q || q.gone ? '' : q.member === c.me ? 'yourself' : nm(c, q.member, q.name));
+  function clearReply() { replying = null; const r = $('.ch-rp', thread); if (r) r.remove(); }
+  function startReply(id) {
+    const c = box(openKey), m = c.list.find((x) => x.id === id); if (!m || m.kind === 'sys') return;
+    replying = { key: openKey, id, q: { id, member: m.member, kind: m.kind, body: String(m.body || '').slice(0, 140), name: m.name } };
+    const bar = $('.ch-bar', thread); if (!bar) return;
+    const old = $('.ch-rp', thread); if (old) old.remove();
+    const who = m.member === c.me ? 'yourself' : nm(c, m.member, m.name);
+    bar.insertAdjacentHTML('beforebegin', `<div class="ch-rp">${K.lic('reply')}<span><b>Replying to ${esc(who)}</b><small>${esc(qText(replying.q))}</small></span><button type="button" class="ch-ib" data-ch-rpx aria-label="Cancel reply">${K.lic('x')}</button></div>`);
+    const ta = $('textarea', bar); if (ta) ta.focus();
+    const atEnd = nearEnd(); fit(); if (atEnd) toEnd();
+    try { if (navigator.vibrate) navigator.vibrate(10); } catch { /* not supported */ }
+  }
+  function quoteHTML(c, m, mine) {
+    if (!m.reply) return '';
+    const q = m.rq || (() => { const o = c.list.find((x) => x.id === m.reply); return o ? { id: o.id, member: o.member, kind: o.kind, body: o.body, name: o.name } : { gone: true }; })();
+    const who = qWho(c, q), by = mine ? 'You' : nm(c, m.member, m.name);
+    return `<button class="ch-q" data-ch-jump="${esc(String(m.reply))}"><small>${K.lic('reply')}${esc(by)} replied${who ? ' to ' + esc(who === 'yourself' && !mine ? 'themself' : who) : ''}</small><span>${esc(qText(q))}</span></button>`;
+  }
+  function jumpTo(id) {
+    const el = thread.querySelector(`.ch-m[data-id="${id}"], .ch-pk[data-id="${id}"]`);
+    if (!el) return toast('That message is further up. Scroll up to load it.');
+    el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    el.classList.remove('ch-hl'); void el.offsetWidth; el.classList.add('ch-hl'); setTimeout(() => el.classList.remove('ch-hl'), 1600);
+  }
+
   /* ── popovers: the reaction picker, and small menus (⋯, report reasons) ── */
   let pick = null;
   function closePick() { if (pick) { pick.forEach((x) => x.remove()); pick = null; } }
@@ -12767,7 +12844,7 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
   function openPick(b) {
     const id = +b.dataset.chB; if (!id) return;
     const c = box(openKey), mine = (c.rx[id] || {})[c.me];
-    popover(b, 'ch-pick', RX.map((e, i) => `<button style="--i:${i}" data-ch-react="${e}" aria-pressed="${mine === e}" aria-label="React ${e}">${e}</button>`).join(''), (k) => { if (k.dataset.chReact) react(id, k.dataset.chReact); });
+    popover(b, 'ch-pick', RX.map((e, i) => `<button style="--i:${i}" data-ch-react="${e}" aria-pressed="${mine === e}" aria-label="React ${e}">${e}</button>`).join('') + `<button class="ch-pick-rp" style="--i:${RX.length}" data-ch-reply aria-label="Reply">${K.lic('reply')}</button>`, (k) => { if (k.dataset.chReact) react(id, k.dataset.chReact); else if ('chReply' in k.dataset) startReply(id); });
   }
   const menu = (anchor, html, onTap) => popover(anchor, 'ch-menu', html, onTap);
   const openPerson = (id) => (K.profile ? K.profile.open(id) : openSide('person', { id }));
@@ -12781,14 +12858,31 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
     });
   }
   let hold = 0, hx = 0, hy = 0, held = false, lastTap = 0;
+  let sw = null;
   thread.addEventListener('pointerdown', (e) => {
     const b = e.target.closest('[data-ch-b]'); if (!b || isNaN(+b.dataset.chB)) return;
+    const row = b.closest('.ch-m'); sw = row ? { row, id: +b.dataset.chB, dir: row.classList.contains('me') ? -1 : 1, on: false, d: 0, buzz: false } : null;
     hx = e.clientX; hy = e.clientY; held = false; b.classList.add('press');
     hold = setTimeout(() => { held = true; b.classList.remove('press'); openPick(b); }, 420);
   });
   const cancelHold = () => { clearTimeout(hold); thread.querySelectorAll('.press').forEach((x) => x.classList.remove('press')); };
-  thread.addEventListener('pointermove', (e) => { if (Math.abs(e.clientX - hx) + Math.abs(e.clientY - hy) > 10) cancelHold(); });
-  thread.addEventListener('pointerup', cancelHold); thread.addEventListener('pointercancel', cancelHold);
+  thread.addEventListener('pointermove', (e) => {
+    if (Math.abs(e.clientX - hx) + Math.abs(e.clientY - hy) > 10) cancelHold();
+    if (!sw || held) return;
+    const d = (e.clientX - hx) * sw.dir, dy = Math.abs(e.clientY - hy);
+    if (!sw.on) { if (dy > 14) { sw = null; return; } if (d > 14 && d > dy * 1.5) sw.on = true; else return; }
+    sw.d = Math.max(0, Math.min(d, 110)); const pull = sw.d * 0.6;
+    sw.row.style.transition = 'none'; sw.row.style.transform = `translateX(${pull * sw.dir}px)`; sw.row.style.setProperty('--rp', Math.min(1, sw.d / 60));
+    sw.row.classList.add('ch-sw'); thread.classList.add('ch-swiping');
+    if (sw.d >= 60 && !sw.buzz) { sw.buzz = true; try { if (navigator.vibrate) navigator.vibrate(8); } catch { /* not supported */ } }
+  });
+  const endSwipe = () => {
+    if (!sw) return; const { row, on, d, id } = sw; sw = null; thread.classList.remove('ch-swiping'); if (!on) return;
+    row.style.transition = 'transform .3s var(--spring)'; row.style.transform = ''; row.classList.remove('ch-sw'); row.style.removeProperty('--rp');
+    setTimeout(() => { row.style.transition = ''; }, 320);
+    if (d >= 60) startReply(id);
+  };
+  thread.addEventListener('pointerup', () => { cancelHold(); endSwipe(); }); thread.addEventListener('pointercancel', () => { cancelHold(); endSwipe(); });
   thread.addEventListener('contextmenu', (e) => { if (e.target.closest('[data-ch-b]')) e.preventDefault(); });
 
   /* ── taps ── */
@@ -12832,8 +12926,10 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
     if ((b = t('[data-ch-invite]'))) { const id = b.dataset.chInvite; hide(); setTimeout(() => { if (id && K.tropa.switchTo) K.tropa.switchTo(id); if (K.tsync) K.tsync.invite(); }, 260); return; }
     if ((b = t('[data-ch-poke]'))) return void send('poke', b.dataset.chPoke, b);
     if ((b = t('[data-ch-ans]'))) return void answer(+b.dataset.msg, b.dataset.chAns, b);
+    if ((b = t('[data-ch-jump]'))) { jumpTo(b.dataset.chJump); return; }
+    if ((b = t('[data-ch-rpx]'))) { clearReply(); return; }
     if ((b = t('[data-ch-retry]'))) { const c = box(openKey), m = c.list.find((x) => x.id === b.dataset.chRetry); if (m) { c.list = c.list.filter((x) => x !== m); draw(); send('msg', m.body); } return; }
-    if ((b = t('[data-ch-rx]'))) { const c = box(openKey), r = c.rx[b.dataset.chRx] || {}; toast(Object.keys(r).map((id) => r[id] + ' ' + esc(id === c.me ? 'You' : first((c.mem[id] || {}).name))).join(' · ')); return; }
+    if ((b = t('[data-ch-rx]'))) { const c = box(openKey), r = c.rx[b.dataset.chRx] || {}; toast(Object.keys(r).map((id) => r[id] + ' ' + esc(id === c.me ? 'You' : nm(c, id))).join(' · ')); return; }
     if ((b = t('[data-ch-b]')) && !held && !t('a')) {
       const now = Date.now();
       if (now - lastTap < 300 && !isNaN(+b.dataset.chB)) { lastTap = 0; const c = box(openKey); if ((c.rx[+b.dataset.chB] || {})[c.me] !== '❤️') react(+b.dataset.chB, '❤️'); return; }
@@ -12856,9 +12952,10 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
   });
   root.addEventListener('submit', (e) => {
     e.preventDefault(); const ta = $('textarea', e.target), v = ta.value.trim();
-    if (!v) return void send('msg', '👍');
+    const rp = replying && replying.key === openKey ? replying : null; clearReply();
+    if (!v) return void send('msg', '👍', null, rp);
     ta.value = ''; ta.style.height = ''; ta.dispatchEvent(new Event('input', { bubbles: true })); ta.focus();
-    send('msg', v);
+    send('msg', v, null, rp);
   });
   root.addEventListener('focusin', (e) => { if (e.target.matches('textarea')) setTimeout(() => { fit(); toEnd(); }, 300); });
   root.addEventListener('scroll', (e) => {
@@ -13393,6 +13490,148 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
   // any button with data-scan opens it
   document.addEventListener('click', (e) => { if (e.target.closest('[data-scan]')) { e.preventDefault(); open(); } });
   K.scan = { open, close, read: readCode, isOpen: () => !root.hidden };
+})();
+</script>
+<script>/* Keni · menu photos (added 2026-10-26). People snap a place's menu from the Menu tab; an admin approves it (admin.html);
+   approved photos show to everyone as a swipe strip, tap for a full-screen viewer with pinch zoom.
+   Files: Supabase Storage bucket "menu-photos" (<user id>/<random>.jpg). Data: menu_photos_for / menu_photo_add. */
+(() => {
+  const K = window.KeniCore; if (!K || !K.sb) return;
+  const { S, esc, toast } = K;
+  const B = 'menu-photos', cache = {};
+  const url = (p) => K.sb.storage.from(B).getPublicUrl(p).data.publicUrl;
+  const uid = () => (S.user && S.user.account && S.user.id ? S.user.id : null);
+  const month = (at) => new Date(at).toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
+  const caption = (p) => (p.status === 'pending' ? 'Your photo · waiting for review' : 'Added by ' + (p.mine ? 'you' : p.by) + ' · ' + month(p.at));
+  // one file input that stays on the page: iPhone opens the picker from a real tap on a <label for>
+  document.body.insertAdjacentHTML('beforeend', '<input type="file" accept="image/*" multiple id="mp-file" class="tz-file" aria-hidden="true" tabindex="-1">');
+  let cur = null; const busy = {};
+
+  function html(id, list) {
+    const ok = list.filter((p) => p.status === 'approved').length, b = busy[id];
+    const thumbs = list.map((p, i) => '<button class="mp-t' + (p.status === 'pending' ? ' wait' : '') + '" data-mp-open="' + i + '" style="--i:' + i + '" aria-label="Open menu photo ' + (i + 1) + '"><img src="' + esc(url(p.path)) + '" alt="" loading="lazy">' + (p.status === 'pending' ? '<em>Waiting for review</em>' : '') + '</button>').join('');
+    return '<div class="mp-h"><b>Menu photos</b>' + (ok ? '<small>' + ok + '</small>' : '') + '</div>'
+      + (list ? (list.length ? '<div class="mp-strip">' + thumbs + '</div>' : '<p class="mp-empty">No photos of the menu yet. Been here? Snap the menu and help everyone.</p>') : '')
+      + '<label class="btn ghost sm mp-add' + (b ? ' busy' : '') + '" for="mp-file" data-mp-add="' + esc(id) + '">' + K.lic('cam') + (b || 'Add menu photo') + '</label>';
+  }
+  const skeleton = '<div class="mp-h"><b>Menu photos</b></div><div class="mp-strip"><span class="mp-sk"></span><span class="mp-sk"></span><span class="mp-sk"></span></div>';
+  async function fill(box, force) {
+    const id = box.dataset.mp; box.dataset.mpDone = '1';
+    box.innerHTML = cache[id] && !force ? html(id, cache[id]) : skeleton;
+    if (cache[id] && !force) return;
+    try { const { data, error } = await K.sb.rpc('menu_photos_for', { p_place: id }); if (error) throw error; cache[id] = Array.isArray(data) ? data : []; }
+    catch { cache[id] = cache[id] || []; }
+    if (document.body.contains(box)) box.innerHTML = html(id, cache[id]);
+  }
+  const boxes = (id) => document.querySelectorAll('[data-mp="' + CSS.escape(id) + '"]');
+  const repaint = (id) => boxes(id).forEach((b) => { b.innerHTML = html(id, cache[id] || []); });
+  const scan = () => document.querySelectorAll('[data-mp]:not([data-mp-done])').forEach((b) => fill(b));
+  new MutationObserver(scan).observe(document.getElementById('modal-root') || document.body, { childList: true, subtree: true });
+  scan();
+
+  /* adding photos */
+  document.addEventListener('click', (e) => {
+    const l = e.target.closest('[data-mp-add]'); if (!l) return;
+    cur = l.dataset.mpAdd;
+    if (busy[cur]) { e.preventDefault(); return; }
+    if (!uid()) { e.preventDefault(); toast('Sign in to add menu photos'); K.closeModal(); setTimeout(() => K.openLogin && K.openLogin('explorer', 'up1'), 320); }
+  });
+  document.addEventListener('change', (e) => {
+    if (e.target.id !== 'mp-file') return;
+    const files = [...(e.target.files || [])].filter((f) => /^image\//.test(f.type) || !f.type).slice(0, 5); e.target.value = '';
+    if (files.length && cur) upload(cur, files);
+  });
+  // phone photos are big: make them at most 1600px on the long side, as a JPEG
+  const shrink = (file) => new Promise((ok, no) => {
+    const img = new Image(), u = URL.createObjectURL(file);
+    img.onload = () => {
+      const k = Math.min(1, 1600 / Math.max(img.width, img.height)), w = Math.max(50, Math.round(img.width * k)), h = Math.max(50, Math.round(img.height * k));
+      const c = document.createElement('canvas'); c.width = w; c.height = h; c.getContext('2d').drawImage(img, 0, 0, w, h); URL.revokeObjectURL(u);
+      c.toBlob((b) => (b ? ok({ b, w, h }) : no(new Error('read'))), 'image/jpeg', 0.82);
+    };
+    img.onerror = () => { URL.revokeObjectURL(u); no(new Error('read')); }; img.src = u;
+  });
+  const rid = () => Array.from(crypto.getRandomValues(new Uint8Array(12)), (x) => x.toString(16).padStart(2, '0')).join('');
+  async function upload(id, files) {
+    let ok = 0, err = '';
+    for (let i = 0; i < files.length; i++) {
+      busy[id] = files.length > 1 ? 'Uploading ' + (i + 1) + ' of ' + files.length + '…' : 'Uploading…'; repaint(id);
+      try {
+        const { b, w, h } = await shrink(files[i]), path = uid() + '/' + rid() + '.jpg';
+        const up = await K.sb.storage.from(B).upload(path, b, { contentType: 'image/jpeg', upsert: false }); if (up.error) throw up.error;
+        const { error } = await K.sb.rpc('menu_photo_add', { p_place: id, p_path: path, p_w: w, p_h: h });
+        if (error) { K.sb.storage.from(B).remove([path]).catch(() => {}); throw error; }
+        ok++;
+      } catch (x) { err = (x && x.message) || 'error'; if (/too many/.test(err)) break; }
+    }
+    delete busy[id]; delete cache[id];
+    boxes(id).forEach((b) => fill(b, true));
+    if (ok) { toast((ok === 1 ? 'Photo' : ok + ' photos') + ' sent for review. You’ll get a notification when ' + (ok === 1 ? 'it’s' : 'they’re') + ' up.'); try { if (navigator.vibrate) navigator.vibrate(12); } catch { /* not supported */ } }
+    if (/too many/.test(err)) toast('You have 10 photos waiting for review. Try again once they’re checked.');
+    else if (!ok) toast(/read/.test(err) ? 'Couldn’t read that photo. Try another one.' : 'Couldn’t upload. Check your connection.');
+  }
+
+  /* full-screen viewer: swipe between photos, pinch or double-tap to zoom */
+  function viewer(list, start) {
+    let i = start, sc = 1, tx = 0, ty = 0;
+    const el = document.createElement('div'); el.className = 'mpv'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Menu photo');
+    el.innerHTML = '<div class="mpv-s"><img alt="Menu photo" draggable="false"></div><div class="mpv-top"><span class="mpv-n"></span><button class="mpv-x" aria-label="Close">' + K.lic('x') + '</button></div><p class="mpv-c"></p>'
+      + (list.length > 1 ? '<button class="mpv-a prev" aria-label="Previous photo">' + K.lic('back') + '</button><button class="mpv-a next" aria-label="Next photo">' + K.lic('back') + '</button>' : '');
+    document.body.appendChild(el); document.body.classList.add('mpv-on');
+    const img = el.querySelector('img'), stage = el.querySelector('.mpv-s');
+    const apply = (anim) => { img.style.transition = anim ? 'transform .25s var(--spring)' : 'none'; img.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + sc + ')'; };
+    const show = (n, dir) => {
+      i = (n + list.length) % list.length; sc = 1; tx = 0; ty = 0; apply(false);
+      const p = list[i]; img.src = url(p.path);
+      img.classList.remove('in', 'l', 'r'); void img.offsetWidth; img.classList.add('in', dir > 0 ? 'r' : dir < 0 ? 'l' : 'c');
+      el.querySelector('.mpv-c').textContent = caption(p); el.querySelector('.mpv-n').textContent = list.length > 1 ? (i + 1) + ' / ' + list.length : '';
+    };
+    const close = () => { el.classList.add('out'); document.body.classList.remove('mpv-on'); document.removeEventListener('keydown', key); setTimeout(() => el.remove(), 220); };
+    const key = (e) => { if (e.key === 'Escape') close(); else if (e.key === 'ArrowRight') show(i + 1, 1); else if (e.key === 'ArrowLeft') show(i - 1, -1); };
+    document.addEventListener('keydown', key);
+    el.addEventListener('click', (e) => {
+      if (e.target.closest('.mpv-x')) return close();
+      if (e.target.closest('.mpv-a.prev')) return show(i - 1, -1);
+      if (e.target.closest('.mpv-a.next')) return show(i + 1, 1);
+    });
+    // gestures
+    const pts = new Map(); let d0 = 0, s0 = 1, x0 = 0, y0 = 0, tx0 = 0, ty0 = 0, moved = false, lastTap = 0;
+    const dist = () => { const [a, b] = [...pts.values()]; return Math.hypot(a.x - b.x, a.y - b.y); };
+    stage.addEventListener('pointerdown', (e) => {
+      stage.setPointerCapture(e.pointerId); pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pts.size === 2) { d0 = dist(); s0 = sc; } else { x0 = e.clientX; y0 = e.clientY; tx0 = tx; ty0 = ty; moved = false; }
+    });
+    stage.addEventListener('pointermove', (e) => {
+      if (!pts.has(e.pointerId)) return; pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pts.size === 2) { sc = Math.min(5, Math.max(1, s0 * dist() / (d0 || 1))); moved = true; return apply(false); }
+      const dx = e.clientX - x0, dy = e.clientY - y0; if (Math.abs(dx) + Math.abs(dy) > 8) moved = true;
+      if (sc > 1) { tx = tx0 + dx; ty = ty0 + dy; apply(false); }
+      else { tx = dx; apply(false); }
+    });
+    const up = (e) => {
+      if (!pts.has(e.pointerId)) return; pts.delete(e.pointerId);
+      if (pts.size) { const [p] = [...pts.values()]; x0 = p.x; y0 = p.y; tx0 = tx; ty0 = ty; return; }
+      if (sc <= 1.02) {
+        const dx = e.clientX - x0;
+        if (list.length > 1 && Math.abs(dx) > 70) return show(i + (dx < 0 ? 1 : -1), dx < 0 ? 1 : -1);
+        sc = 1; tx = 0; ty = 0; apply(true);
+      }
+      if (!moved) { const now = Date.now(); if (now - lastTap < 300) { if (sc > 1) { sc = 1; tx = 0; ty = 0; } else { sc = 2.5; const r = stage.getBoundingClientRect(); tx = (r.width / 2 - e.clientX) * 1.5; ty = (r.height / 2 - e.clientY) * 1.5; } apply(true); lastTap = 0; } else lastTap = now; }
+    };
+    stage.addEventListener('pointerup', up); stage.addEventListener('pointercancel', up);
+    show(i, 0);
+  }
+  document.addEventListener('click', (e) => {
+    const t = e.target.closest('[data-mp-open]'); if (!t) return;
+    const box = t.closest('[data-mp]'), list = box && cache[box.dataset.mp]; if (list && list.length) viewer(list, +t.dataset.mpOpen);
+  });
+  // "View" from Activity: open the place on its Menu tab
+  function see(id) {
+    if (!(K.VBY && K.VBY[id])) return toast('Open that place from the map to see it');
+    delete cache[id]; K.openDetail(id, 'menu');
+  }
+  document.addEventListener('click', (e) => { const b = e.target.closest('[data-mp-see]'); if (!b) return; if (K.tchat && K.tchat.close) K.tchat.close(); setTimeout(() => see(b.dataset.mpSee), 320); });
+  K.menuPhotos = { see, refresh: (id) => { delete cache[id]; boxes(id).forEach((b) => fill(b, true)); } };
 })();
 </script>
 
