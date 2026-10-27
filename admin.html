@@ -65,6 +65,7 @@ header .who { margin-left: auto; display: flex; align-items: center; gap: 10px; 
 .mp-card { display: flex; gap: 14px; align-items: flex-start; }
 .mp-img { flex: none; width: 132px; height: 176px; border-radius: 16px; overflow: hidden; background: var(--card2); }
 .mp-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.mp-kind { display: inline-block; font-size: .68rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-2, #9aa); margin-bottom: 2px; }
 .mp-info { min-width: 0; flex: 1; display: grid; gap: 6px; } .mp-info h3 { margin: 0; } .mp-info .note { margin: 0; }
 @media (max-width: 520px) { .mp-card { flex-direction: column; } .mp-img { width: 100%; height: 300px; } }
 .pp-top img, .pp-top .ph { flex: none; width: 76px; height: 76px; border-radius: 18px; object-fit: cover; background: var(--card2); display: grid; place-items: center; font-size: 1.8rem; }
@@ -265,29 +266,30 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--h
     const groups = groupsOf(st.reports.filter((r) => r.status === 'new'));
     const mps = st.mp || [];
     if (!st.pp.length && !groups.length && !mps.length) return `<div class="card empty in"><b>🎉</b><h3>All clear</h3>Nothing waiting for you right now.</div>`;
-    return `${mps.length ? `<h2 class="sec-h">Menu photos waiting <small>${mps.length}</small></h2><div class="list mp-list">${mps.map(mpHTML).join('')}</div>` : ''}
+    return `${mps.length ? `<h2 class="sec-h">Photos waiting <small>${mps.length}</small></h2><div class="list mp-list">${mps.map(mpHTML).join('')}</div>` : ''}
       ${st.pp.length ? `<h2 class="sec-h">Places waiting for approval <small>${st.pp.length}</small></h2><div class="list">${st.pp.map(ppHTML).join('')}</div>` : ''}
       ${groups.length ? `<h2 class="sec-h">New reports <small>${groups.length} place${groups.length === 1 ? '' : 's'}</small></h2><div class="list">${groups.map(([id, rs], i) => groupHTML(id, rs, i)).join('')}</div>` : ''}`;
   }
   const mpUrl = (path) => sb.storage.from('menu-photos').getPublicUrl(path).data.publicUrl;
   function mpHTML(m, i) {
     return `<section class="card mp-card in" style="--i:${Math.min(i, 8)}" data-mp="${m.id}">
-      <a class="mp-img" href="${esc(mpUrl(m.path))}" target="_blank" rel="noopener" title="Open full size"><img src="${esc(mpUrl(m.path))}" alt="Menu photo for ${esc(m.place)}" loading="lazy"></a>
-      <div class="mp-info"><h3>${esc(m.place)}</h3><div class="meta">by ${esc(m.by)} · ${ago(m.at)}${m.approved_here ? ` · ${m.approved_here} already up` : ' · first menu photo'}</div>
-        <p class="note">Approve if it clearly shows the menu or prices. Tap the photo to see it full size.</p>
+      <a class="mp-img" href="${esc(mpUrl(m.path))}" target="_blank" rel="noopener" title="Open full size"><img src="${esc(mpUrl(m.path))}" alt="Photo of ${esc(m.place)}" loading="lazy"></a>
+      <div class="mp-info"><span class="mp-kind">${m.kind === 'place' ? 'Place photo' : 'Menu photo'}</span><h3>${esc(m.place)}</h3><div class="meta">by ${esc(m.by)} · ${ago(m.at)}${m.approved_here ? ` · ${m.approved_here} already up` : (m.kind === 'place' ? ' · first photo' : ' · first menu photo')}</div>
+        <p class="note">${m.kind === 'place' ? 'Approve if it clearly shows this place, its food or its vibe. No selfies, ads or unrelated pics.' : 'Approve if it clearly shows the menu or prices.'} Tap the photo to see it full size.</p>
         <div class="acts big"><button class="btn ok" data-a="mpok">✓ Approve</button><button class="btn no" data-a="mpno">Reject</button></div></div></section>`;
   }
   async function reviewMenu(id, ok, card) {
     const m = (st.mp || []).find((x) => x.id === id); if (!m) return;
     card.querySelectorAll('button').forEach((b) => { b.disabled = true; });
-    const { error } = await sb.rpc('menu_photo_review', { p_id: id, p_ok: ok });
+    const { data: res, error } = await sb.rpc('menu_photo_review', { p_id: id, p_ok: ok });
     if (error) { toast('Couldn’t save that'); return render(); }
     card.style.transition = 'opacity .25s, transform .25s'; card.style.opacity = '0'; card.style.transform = `translateX(${ok ? 40 : -40}px)`;
     st.mp = st.mp.filter((x) => x.id !== id); setTimeout(render, 220);
     let undone = false;
     // a rejected photo's file is deleted once the undo has had its chance
     if (!ok) setTimeout(() => { if (!undone) sb.storage.from('menu-photos').remove([m.path]).catch(() => {}); }, 9000);
-    toast(ok ? `Menu photo for ${m.place} is up` : `Menu photo for ${m.place} rejected`, async () => {
+    const lbl = m.kind === 'place' ? 'Photo of' : 'Menu photo for';
+    toast(ok ? `${lbl} ${m.place} is up${res && res.cover ? ", now its cover photo" : ""}` : `${lbl} ${m.place} rejected`, async () => {
       undone = true;
       const { error: e2 } = await sb.rpc('menu_photo_unreview', { p_id: id });
       if (e2) return toast('Couldn’t undo');
