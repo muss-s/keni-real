@@ -67,6 +67,11 @@ header .who { margin-left: auto; display: flex; align-items: center; gap: 10px; 
 .mp-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .mp-kind { display: inline-block; font-size: .68rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-2, #9aa); margin-bottom: 2px; }
 .mp-info { min-width: 0; flex: 1; display: grid; gap: 6px; } .mp-info h3 { margin: 0; } .mp-info .note { margin: 0; }
+.cl-card { display: flex; gap: 14px; align-items: flex-start; }
+.cl-proof { display: grid; place-items: center; text-align: center; padding: 6px; }
+.cl-reason { width: 100%; font: inherit; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line, #333); background: var(--card2); color: inherit; }
+.cl-card h3 a { color: inherit; text-decoration: none; } .cl-card h3 a:hover { text-decoration: underline; }
+@media (max-width: 520px) { .cl-card { flex-direction: column; } .cl-proof { width: 100%; height: 260px; } }
 @media (max-width: 520px) { .mp-card { flex-direction: column; } .mp-img { width: 100%; height: 300px; } }
 .pp-top img, .pp-top .ph { flex: none; width: 76px; height: 76px; border-radius: 18px; object-fit: cover; background: var(--card2); display: grid; place-items: center; font-size: 1.8rem; }
 .pp-top h3 { font-size: 1.25rem; line-height: 1.1; overflow-wrap: anywhere; }
@@ -215,13 +220,17 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--h
   async function load(quiet) {
     if (st.busy) return; st.busy = true;
     try {
-      const [r, cv, pp, mp] = await Promise.all([
+      const [r, cv, pp, mp, cl, po] = await Promise.all([
         sb.from('reports').select('*').order('created_at', { ascending: false }).limit(500),
         sb.rpc('craving_recent'),
         sb.from('places').select('id,name,kinds,area,blurb,photo,lat,lng,price,hours,cravings,created_at,added_by').eq('visibility', 'public').eq('status', 'pending').not('added_by', 'is', null).order('created_at', { ascending: true }).limit(100),
         sb.rpc('menu_photo_pending'),
+        sb.rpc('claims_pending'),
+        sb.rpc('posts_admin'),
       ]);
       st.mp = Array.isArray(mp && mp.data) ? mp.data : (st.mp || []);
+      st.cl = Array.isArray(cl && cl.data) ? cl.data : (st.cl || []);
+      st.po = Array.isArray(po && po.data) ? po.data : (st.po || []);
       if (r.error) { toast('Couldn’t load. Check your connection.'); return; }
       st.reports = r.data || []; st.cv = cv.data || []; st.pp = pp.data || [];
       const who = [...new Set([...st.reports.map((x) => x.reporter), ...st.pp.map((x) => x.added_by), ...st.cv.flatMap((x) => x.voters || [])].filter(Boolean))].filter((id) => !st.people[id]);
@@ -250,13 +259,14 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--h
   }
 
   /* ── page ── */
-  const counts = () => ({ newRep: new Set(st.reports.filter((r) => r.status === 'new').map((r) => r.place_id)).size, pp: st.pp.length, cv: st.cv.length, mp: (st.mp || []).length });
+  const counts = () => ({ newRep: new Set(st.reports.filter((r) => r.status === 'new').map((r) => r.place_id)).size, pp: st.pp.length, cv: st.cv.length, mp: (st.mp || []).length, cl: (st.cl || []).length, po: poRep().length });
+  const poRep = () => (st.po || []).filter((p) => p.status === 'live' && p.reports > 0);
   function render() {
-    const c = counts(), todo = c.pp + c.newRep + c.mp;
-    const tabs = [['todo', 'To do', todo], ['places', 'Places', 0], ['reports', 'Reports', 0], ['tags', 'Tags', 0]];
+    const c = counts(), todo = c.pp + c.newRep + c.mp + c.cl + c.po;
+    const tabs = [['todo', 'To do', todo], ['places', 'Places', 0], ['reports', 'Reports', 0], ['promos', 'Promos', 0], ['tags', 'Tags', 0]];
     app.innerHTML = `<header><div class="logo">keni <span class="grad">admin</span></div><div class="who"><span class="em-t">${esc(st.user.email)}</span><button class="icon-btn" data-a="reload" aria-label="Refresh" title="Refresh">↻</button><button class="link" data-a="out">Sign out</button></div></header>
       <nav class="tabs" role="tablist">${tabs.map(([k, l, n]) => `<button class="tab" role="tab" data-tab="${k}" aria-pressed="${st.tab === k}">${l}${n ? `<b>${n}</b>` : ''}</button>`).join('')}</nav>
-      <main id="body">${st.tab === 'todo' ? todoHTML() : st.tab === 'reports' ? reportsHTML() : st.tab === 'tags' ? tagsShell() : placesShell()}</main>`;
+      <main id="body">${st.tab === 'todo' ? todoHTML() : st.tab === 'reports' ? reportsHTML() : st.tab === 'tags' ? tagsShell() : st.tab === 'promos' ? promosHTML() : placesShell()}</main>`;
     if (st.tab === 'places') { if (!st.plist) findPlaces(); paintPlaces(); }
     if (st.tab === 'tags') { if (!T.all) loadAll(); paintTags(); }
   }
@@ -264,9 +274,13 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--h
   // To do: what needs you, places waiting first
   function todoHTML() {
     const groups = groupsOf(st.reports.filter((r) => r.status === 'new'));
-    const mps = st.mp || [];
-    if (!st.pp.length && !groups.length && !mps.length) return `<div class="card empty in"><b>🎉</b><h3>All clear</h3>Nothing waiting for you right now.</div>`;
-    return `${mps.length ? `<h2 class="sec-h">Photos waiting <small>${mps.length}</small></h2><div class="list mp-list">${mps.map(mpHTML).join('')}</div>` : ''}
+    const mps = st.mp || [], cls = st.cl || [];
+    const pos = poRep();
+    if (!st.pp.length && !groups.length && !mps.length && !cls.length && !pos.length) return `<div class="card empty in"><b>🎉</b><h3>All clear</h3>Nothing waiting for you right now.</div>`;
+    setTimeout(fillProofs, 0);
+    return `${pos.length ? `<h2 class="sec-h">Reported promos and events <small>${pos.length}</small></h2><div class="list">${pos.map(poHTML).join('')}</div>` : ''}
+      ${cls.length ? `<h2 class="sec-h">Owner claims <small>${cls.length}</small></h2><div class="list">${cls.map(clHTML).join('')}</div>` : ''}
+      ${mps.length ? `<h2 class="sec-h">Photos waiting <small>${mps.length}</small></h2><div class="list mp-list">${mps.map(mpHTML).join('')}</div>` : ''}
       ${st.pp.length ? `<h2 class="sec-h">Places waiting for approval <small>${st.pp.length}</small></h2><div class="list">${st.pp.map(ppHTML).join('')}</div>` : ''}
       ${groups.length ? `<h2 class="sec-h">New reports <small>${groups.length} place${groups.length === 1 ? '' : 's'}</small></h2><div class="list">${groups.map(([id, rs], i) => groupHTML(id, rs, i)).join('')}</div>` : ''}`;
   }
@@ -295,6 +309,86 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--h
       if (e2) return toast('Couldn’t undo');
       st.mp = [...st.mp, m].sort((a, b) => new Date(a.at) - new Date(b.at)); render(); toast('Undone');
     });
+  }
+  // owner claims: someone says they run a place. Check the number or page they gave (call or message them), and the photo if any.
+  const ROLE = { owner: 'Owner', manager: 'Manager', staff: 'Staff' };
+  const ctLine = (c) => Object.entries(c || {}).map(([k, v]) => `${{ phone: 'Phone', fb: 'Facebook', ig: 'Instagram', web: 'Website' }[k] || k}: ${esc(v)}`).join(' · ');
+  const proofUrls = {};
+  function clHTML(c, i) {
+    const who = `${esc(c.by)}${c.username ? ` @${esc(c.username)}` : ''}`;
+    return `<section class="card cl-card in" style="--i:${Math.min(i, 8)}" data-cl="${c.id}">
+      ${c.proof ? `<a class="mp-img cl-proof" data-proof="${esc(c.proof)}" target="_blank" rel="noopener" title="Open full size"><span class="meta">Loading photo…</span></a>` : ''}
+      <div class="mp-info"><span class="mp-kind">${esc(ROLE[c.role] || c.role)} claim${c.level === 'basic' ? ' · small pin, becomes a full listing' : ''}</span>
+        <h3><a href="/#place=${encodeURIComponent(c.place_id)}" target="_blank" rel="noopener">${esc(c.place)}</a></h3>
+        <div class="meta">by ${who}${c.email ? ` · ${esc(c.email)}` : ''} · ${ago(c.at)}${c.added_it ? ' · they added this place' : ''}${c.managers ? ` · ${c.managers} already manage${c.managers === 1 ? 's' : ''} it` : ''}</div>
+        <p class="note" style="margin:0"><b>Contact to check:</b> ${esc(c.contact)}</p>
+        ${c.note ? `<p class="note" style="margin:0">“${esc(c.note)}”</p>` : ''}
+        <p class="meta" style="margin:0">${c.place_contacts && Object.keys(c.place_contacts).length ? 'Listed contacts: ' + ctLine(c.place_contacts) : 'The listing has no contacts to compare with.'}${c.proof ? '' : ' · No photo sent'}</p>
+        <p class="note" style="margin:0">Approve only once you’ve confirmed it’s them (a call, a reply from the page, or a clear permit). Approved owners can change the hours, photo, contacts and description.</p>
+        <div class="cl-why" hidden><input class="cl-reason" maxlength="200" placeholder="Why not? They see this (optional)">
+          <div class="acts" style="margin:6px 0 0">${['We couldn’t confirm you run it', 'The number didn’t answer', 'Send a clearer photo'].map((r) => `<button class="btn sm" data-a="clwhy">${esc(r)}</button>`).join('')}</div></div>
+        <div class="acts big"><button class="btn ok" data-a="clok">✓ Approve</button><button class="btn no" data-a="clno">Reject</button></div></div></section>`;
+  }
+  async function fillProofs() {
+    for (const a of document.querySelectorAll('[data-proof]')) {
+      const p = a.dataset.proof;
+      if (!proofUrls[p]) { const { data } = await sb.storage.from('claim-proofs').createSignedUrl(p, 3600); if (data && data.signedUrl) proofUrls[p] = data.signedUrl; }
+      if (proofUrls[p] && document.body.contains(a)) { a.href = proofUrls[p]; a.innerHTML = `<img src="${esc(proofUrls[p])}" alt="Proof photo">`; }
+    }
+  }
+  async function reviewClaim(id, ok, card) {
+    const c = (st.cl || []).find((x) => x.id === id); if (!c) return;
+    const reason = ok ? null : ((card.querySelector('.cl-reason') || {}).value || '').trim().slice(0, 200) || null;
+    card.querySelectorAll('button').forEach((b) => { b.disabled = true; });
+    const { error } = await sb.rpc('claim_review', { p_id: id, p_ok: ok, p_reason: reason });
+    if (error) { toast('Couldn’t save that'); return render(); }
+    card.style.transition = 'opacity .25s, transform .25s'; card.style.opacity = '0'; card.style.transform = `translateX(${ok ? 40 : -40}px)`;
+    st.cl = st.cl.filter((x) => x.id !== id); setTimeout(render, 220);
+    toast(ok ? `${c.by} now manages ${c.place}` : `Claim for ${c.place} rejected`, async () => {
+      const { error: e2 } = await sb.rpc('claim_unreview', { p_id: id });
+      if (e2) return toast('Couldn’t undo');
+      st.cl = [...st.cl, c].sort((a, b) => new Date(a.at) - new Date(b.at)); render(); toast('Undone');
+    });
+  }
+  // promos and events owners posted. Reported ones show in To do; every live one is in the Promos tab.
+  const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const fmtT = (h) => { const hh = Math.floor(h), m = h % 1 ? ':30' : ''; return ((hh + 11) % 12 + 1) + m + (hh < 12 ? ' AM' : ' PM'); };
+  const dTxt = (s) => new Date(s + 'T12:00:00').toLocaleDateString('en-PH', { weekday: 'short', month: 'short', day: 'numeric' });
+  const poWhen = (p) => p.kind === 'event' ? dTxt(p.starts) + ' · ' + fmtT(+p.time) : dTxt(p.starts) + ' to ' + dTxt(p.ends) + (p.days ? ' · ' + p.days.map((d) => DAYS[d]).join(', ') : '');
+  function poHTML(p, i) {
+    const down = p.status === 'down';
+    return `<section class="card cl-card in" style="--i:${Math.min(i, 8)}" data-po="${p.id}">
+      ${p.photo ? `<a class="mp-img cl-proof" href="${esc(p.photo)}" target="_blank" rel="noopener" title="Open full size"><img src="${esc(p.photo)}" alt="" loading="lazy"></a>` : ''}
+      <div class="mp-info"><span class="mp-kind">${p.kind === 'event' ? 'Event' : 'Promo'}${p.reports ? ` · ${p.reports} report${p.reports === 1 ? '' : 's'}` : ''}${down ? ' · taken down' : ''}</span>
+        <h3>${esc(p.title)}</h3>
+        <div class="meta"><a href="/#place=${encodeURIComponent(p.place)}" target="_blank" rel="noopener">${esc(p.name || p.place)}</a> · by ${esc(p.by || 'someone')}${p.username ? ' @' + esc(p.username) : ''} · ${ago(p.at)}</div>
+        <p class="note" style="margin:0">${esc(poWhen(p))}${p.price ? ' · ' + esc(p.price) : ''}</p>
+        ${p.details ? `<p class="note" style="margin:0">“${esc(p.details)}”</p>` : ''}
+        ${down ? `<p class="meta" style="margin:0">${p.reason ? 'Reason: ' + esc(p.reason) : 'No reason given'}</p><div class="acts big"><button class="btn" data-a="poback">Put it back</button></div>`
+          : `<div class="cl-why" hidden><input class="cl-reason" maxlength="200" placeholder="Why? The owner sees this (optional)">
+          <div class="acts" style="margin:6px 0 0">${['It looks fake', 'Wrong place or details', 'Not allowed on Keni'].map((r) => `<button class="btn sm" data-a="powhy">${esc(r)}</button>`).join('')}</div></div>
+        <div class="acts big"><button class="btn no" data-a="podown">Take down</button></div>`}</div></section>`;
+  }
+  function promosHTML() {
+    const ps = st.po || [], live = ps.filter((p) => p.status === 'live'), down = ps.filter((p) => p.status === 'down');
+    if (!ps.length) return '<div class="card empty in"><b>🏷️</b><h3>No promos or events</h3>Nothing live right now. Owners post them from Studio.</div>';
+    return `${live.length ? `<h2 class="sec-h">Live <small>${live.length}</small></h2><div class="list">${live.map(poHTML).join('')}</div>` : ''}
+      ${down.length ? `<h2 class="sec-h">Taken down this week <small>${down.length}</small></h2><div class="list">${down.map(poHTML).join('')}</div>` : ''}`;
+  }
+  async function takeDown(id, card) {
+    const p = (st.po || []).find((x) => x.id === id); if (!p) return;
+    const reason = ((card.querySelector('.cl-reason') || {}).value || '').trim().slice(0, 200) || null;
+    card.querySelectorAll('button').forEach((b) => { b.disabled = true; });
+    const { error } = await sb.rpc('post_takedown', { p_id: id, p_reason: reason });
+    if (error) { toast('Couldn’t take it down'); return render(); }
+    p.status = 'down'; p.reason = reason; render();
+    toast(`“${p.title}” is down. The owner was told.`, async () => { const { error: e2 } = await sb.rpc('post_restore', { p_id: id }); if (e2) return toast('Couldn’t undo'); p.status = 'live'; p.reason = null; render(); toast('Undone'); });
+  }
+  async function putBack(id) {
+    const p = (st.po || []).find((x) => x.id === id); if (!p) return;
+    const { error } = await sb.rpc('post_restore', { p_id: id });
+    if (error) return toast(/not down/.test(error.message) ? 'It’s already back' : 'Couldn’t put it back');
+    p.status = 'live'; p.reason = null; render(); toast('It’s back up');
   }
   function ppHTML(p, i) {
     const k = (p.kinds || []).find((x) => KIND[x]), b = 0.004;
@@ -554,6 +648,12 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--h
     const k = a.dataset.a, g = a.closest('[data-g]'), id = g && g.dataset.g, card = a.closest('[data-pp]');
     if (k === 'out') return sb.auth.signOut();
     if (k === 'reload') { a.classList.add('spin'); await load(); if (st.tab === 'places') findPlaces(); if (st.tab === 'tags') { T.all = null; loadAll(); } return toast('Up to date'); }
+    if (k === 'clok') { const c = a.closest('[data-cl]'); return reviewClaim(+c.dataset.cl, true, c); }
+    if (k === 'clno') { const c = a.closest('[data-cl]'), w = c.querySelector('.cl-why'); if (w.hidden) { w.hidden = false; a.textContent = 'Reject now'; c.querySelector('.cl-reason').focus(); return; } return reviewClaim(+c.dataset.cl, false, c); }
+    if (k === 'podown') { const c = a.closest('[data-po]'), w = c.querySelector('.cl-why'); if (w.hidden) { w.hidden = false; a.textContent = 'Take down now'; c.querySelector('.cl-reason').focus(); return; } return takeDown(+c.dataset.po, c); }
+    if (k === 'powhy') { const c = a.closest('[data-po]'); c.querySelector('.cl-reason').value = a.textContent; return; }
+    if (k === 'poback') { a.disabled = true; return putBack(+a.closest('[data-po]').dataset.po); }
+    if (k === 'clwhy') { const c = a.closest('[data-cl]'); c.querySelector('.cl-reason').value = a.textContent; return; }
     if (k === 'mpok' || k === 'mpno') { const c = a.closest('[data-mp]'); return reviewMenu(+c.dataset.mp, k === 'mpok', c); }
     if (k === 'approve' || k === 'reject') { card.querySelectorAll('button').forEach((b) => { b.disabled = true; }); return setPlaceStatus(card.dataset.pp, k === 'approve' ? 'approved' : 'rejected', card, k === 'approve' ? (st.lvl[card.dataset.pp] || 'full') : null); }
     if (k === 'edit') { st.editing = st.editing === id ? null : id; return render(); }

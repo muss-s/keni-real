@@ -4784,7 +4784,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
   const pinIcon = (v, cls = '') => {
     const c = CAT[v.cats[0]];
     const open = !!v.hours && status(v).open; // places that are open right now breathe a little
-    return window.L.divIcon({ className: 'kpin-wrap', iconSize: [36, 36], iconAnchor: [18, 44], tooltipAnchor: [0, -42], html: `<div class="kpin ${cls}${open ? ' is-open' : ''}" style="--h:${c.hue};--d:${(hash(v.id || '') % 24) / 10}s"><span>${v.symbol || c.ic}</span>${v.priv ? '<i class="plock">🔒</i>' : ''}</div>` });
+    return window.L.divIcon({ className: 'kpin-wrap', iconSize: [36, 36], iconAnchor: [18, 44], tooltipAnchor: [0, -42], html: `<div class="kpin ${cls}${open ? ' is-open' : ''}" style="--h:${c.hue};--d:${(hash(v.id || '') % 24) / 10}s"><span>${v.symbol || c.ic}</span>${v.priv ? '<i class="plock">🔒</i>' : ''}${v.deal ? `<i class="pdeal">${icon('tag')}</i>` : ''}</div>` });
   };
   const dotIcon = (v) => window.L.divIcon({ className: 'kdot-wrap', iconSize: [26, 26], iconAnchor: [13, 13], tooltipAnchor: [0, -12], html: `<div class="kdot" style="--h:${CAT[v.cats[0]].hue}"><span>${v.symbol || CAT[v.cats[0]].emoji}</span>${v.priv ? '<i class="plock">🔒</i>' : ''}</div>` });
   const homeIcon = () => {
@@ -5226,7 +5226,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
     artHTML, venueArt, ringHTML, setRing,
     openModal, closeModal, openDetail, toggleSave, startOnboarding, setView, render: () => render(), resetCards, isBiz, share,
     hasMap, baseLayer, pinIcon, dotIcon, homeIcon, areaPt, locate, setLoc, nearestArea, distKm, fromTxt,
-    mapParts: () => ({ map: bmap, layer: bLayer }), selectOnMap,
+    mapParts: () => ({ map: bmap, layer: bLayer }), selectOnMap, repin: (v) => { const m = bMarkers.get(v.id); if (m) m.setIcon(pinIcon(v)); },
     mapLooks: () => Object.keys(MB_LOOKS).map((k) => ({ k, name: MB_LOOKS[k][0], thumb: lookThumb(k), on: k === mapLook() })), setMapLook, mapOnOSM: () => osmMode, geoFind, geoName, tripLine, usualTrip, TRIPS, CRAVES, CRAVE, cravesOf, cravesHere, craveVotes: community, craveInfo, COMMUNITY_MIN,
   });
   window.KeniCore = core;
@@ -5672,7 +5672,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
       const p = VBY[id]; if (!p) return ''; const c0 = CAT[p.cats[0]], st = status(p), who = T.by[id], on = mine === id, win = T.done && T.win === id;
       return `<button class="vt-o glass${on ? ' on' : ''}${win ? ' win' : ''}${T.done && !win ? ' lose' : ''}" data-p="bk-vote" data-id="${id}" data-k="vo-${id}" style="--i:${i}"${T.done ? ' disabled' : ''}>
         <span class="vt-art">${venueArt(p, '', undefined, true)}</span>
-        <span class="vt-i"><b>${esc(p.name)}</b><small>${c0 ? c0.ic + ' ' + esc(c0.label) + ' · ' : ''}${priceLabel(p.price)} · ${st.text}</small>
+        <span class="vt-i"><b>${esc(p.name)}</b><small>${c0 ? c0.ic + ' ' + esc(c0.label) + ' · ' : ''}${priceLabel(p.price)} · ${st.text}</small>${K.posts ? K.posts.voteTag(p) : ''}
           <span class="vt-who">${who.map((x) => fav(x)).join('')}${who.length ? `<span class="vt-n">${who.length} vote${who.length === 1 ? '' : 's'}</span>` : '<span class="vt-n z">no votes yet</span>'}</span></span>
         ${win ? '<span class="vt-ck">👑</span>' : on ? '<span class="vt-ck">✓</span>' : ''}</button>`;
     };
@@ -6123,126 +6123,668 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
   if (!K.$('#shell').hidden) importPending();
 })();
 </script>
-  <script>/* Keni · Studio — the owner side. Empty until the backend: an owner asks to claim a place that is already on the map,
-   or asks for a new listing. Nothing goes live from here: every request waits for a check, which keeps fake places and fake owners out.
-   For now requests stay on this device (S.biz.requests / S.biz.claims); the backend will send them to the Keni team.
-   The owner tools (edit the listing, menu, promos, reports) open once a place is checked. */
+  <script>/* Keni · Studio — the owner side (real since 2026-10-27).
+   1 · Claim: an owner picks their place, says who they are there, leaves a number or page we can check, and can add a photo of
+       their permit or sign (private bucket claim-proofs). claim_send → the Keni team checks it in /admin (claim_review).
+   2 · Once approved, Studio lists the places they manage: edit the listing (owner_update: about, hours per day, price, contacts,
+       good to know, cover photo in the place-photos bucket) and see what people reported (owner_reports). Name and pin changes
+       go through the Keni team. Every edit is kept in place_edits so a bad one can be undone.
+   A place that isn't on the map yet is added with Add a place first, then claimed. Promos and events: see Keni · promos and events. */
 (() => {
   'use strict';
   const K = window.KeniCore; if (!K) return;
-  const { S, ui, persist, AREAS, AREA, CATS, CAT, VENUES, VBY, $, esc, icon, toast, burst, venueArt } = K;
+  const { S, persist, AREA, CAT, PERKS, VENUES, VBY, $, esc, icon, toast, burst, venueArt, fmtH, PRICE_RANGE } = K;
   const bizview = $('#bizview');
-  const biz = () => {
-    if (!S.biz) S.biz = {};
-    if (!Array.isArray(S.biz.requests)) S.biz.requests = [];
-    if (!Array.isArray(S.biz.claims)) S.biz.claims = [];
-    return S.biz;
-  };
+  const $$ = (q, el = document) => [...el.querySelectorAll(q)];
+  const uid = () => (S.user && S.user.account && S.user.id && K.sb ? S.user.id : null);
+  const rpc = (n, a) => K.sb.rpc(n, a);
   const places = () => [...VENUES, ...(K.BASIC || [])];
-  const kindOf = (v) => CAT[v.cats[0]] || { emoji: '📍', ic: icon('pin'), label: 'Place' };
-  const clean = (s, n) => String(s || '').trim().replace(/[<>]/g, '').slice(0, n);
-  const thumb = (file) => new Promise((ok, no) => { const img = new Image(), url = URL.createObjectURL(file); img.onload = () => { const k = Math.min(1, 360 / Math.max(img.width, img.height)), c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url); ok(c.toDataURL('image/jpeg', 0.72)); }; img.onerror = () => { URL.revokeObjectURL(url); no(); }; img.src = url; });
+  const kindOf = (v) => CAT[v.cats[0]] || { ic: icon('pin'), label: 'Place' };
+  const clean = (s, n) => String(s || '').trim().replace(/[<>"]/g, '').slice(0, n);
+  const ago = (t) => { const s = (Date.now() - Date.parse(t)) / 1000; return s < 3600 ? Math.max(1, Math.round(s / 60)) + 'm ago' : s < 86400 ? Math.round(s / 3600) + 'h ago' : Math.round(s / 86400) + 'd ago'; };
+  const rid = () => Array.from(crypto.getRandomValues(new Uint8Array(12)), (x) => x.toString(16).padStart(2, '0')).join('');
+  const PUB = 'https://wlxkdivnktxdbwbertjw.supabase.co/storage/v1/object/public/place-photos/';
+  const ROLES = [['owner', 'Owner'], ['manager', 'Manager'], ['staff', 'Staff']];
+  const DAYN = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'], ORDER = [1, 2, 3, 4, 5, 6, 0];
+  const REPN = { kind: 'Wrong kind of place', closed: 'Says it closed for good', where: 'Pin is in the wrong spot', fake: 'Says it isn’t a real place', other: 'Something else' };
 
-  /* ═════════════════════ OWNER FLOW: claim a place, or request a new one ═════════════════════ */
-  // Runs inside an open modal. done() is called after a request is saved.
-  function ownerFlow(modalEl, done) {
+  // my claims, from the server (claims_mine). null = not loaded yet
+  let M = null, loading = null;
+  const mineOf = (vid) => (M || []).find((c) => c.place === vid);
+  const owned = () => (M || []).filter((c) => c.status === 'approved');
+  function loadMine() {
+    if (!uid()) { M = []; return Promise.resolve(M); }
+    if (loading) return loading;
+    loading = rpc('claims_mine').then(({ data, error }) => {
+      loading = null; if (error || !Array.isArray(data)) return M || [];
+      M = data;
+      if (M.length && !(S.user && S.user.role === 'business')) { S.user = { ...(S.user || {}), role: 'business' }; persist(); }
+      paint(); K.render(); return M;
+    }, () => { loading = null; return M || []; });
+    return loading;
+  }
+
+  // phone photos are big: at most 1600px on the long side, as a JPEG
+  const shrink = (file, max = 1600) => new Promise((ok, no) => {
+    const img = new Image(), u = URL.createObjectURL(file);
+    img.onload = () => {
+      const k = Math.min(1, max / Math.max(img.width, img.height)), w = Math.max(50, Math.round(img.width * k)), h = Math.max(50, Math.round(img.height * k));
+      const c = document.createElement('canvas'); c.width = w; c.height = h; c.getContext('2d').drawImage(img, 0, 0, w, h); URL.revokeObjectURL(u);
+      c.toBlob((b) => (b ? ok(b) : no(new Error('read'))), 'image/jpeg', 0.82);
+    };
+    img.onerror = () => { URL.revokeObjectURL(u); no(new Error('read')); }; img.src = u;
+  });
+  // one file input for Studio, outside every sheet (iPhone only opens the picker from a <label for> pointing at a real input)
+  document.body.insertAdjacentHTML('beforeend', '<input type="file" accept="image/*" id="st-file" class="tz-file" aria-hidden="true" tabindex="-1">');
+  let onFile = null;
+  document.addEventListener('change', (e) => { if (e.target.id !== 'st-file') return; const f = e.target.files && e.target.files[0]; e.target.value = ''; if (f && onFile) onFile(f); });
+
+  /* ═════════════════════ 1 · CLAIM A PLACE ═════════════════════ */
+  // Runs inside an open modal. done() is called after a claim is sent.
+  function ownerFlow(modalEl, done, startId) {
     const set = (html) => { $('.sheet', modalEl).innerHTML = `<button class="icon-btn close" data-m="close" aria-label="Close">${icon('x')}</button>${html}`; };
-    let picked = null;
+    let picked = null, role = 'owner', proof = null, sending = false;
+    // signed in a moment ago: give the account a second to arrive before sending them back to sign-in
+    if (!uid()) { if (!ownerFlow.retry) { ownerFlow.retry = 1; return void setTimeout(() => ownerFlow(modalEl, done, startId), 900); } ownerFlow.retry = 0; K.closeModal(); setTimeout(() => K.openLogin && K.openLogin('business'), 320); return; }
+    ownerFlow.retry = 0;
+    if (!M) loadMine();
+    const tagOf = (v) => { const c = mineOf(v.id); return c ? (c.status === 'approved' ? '<em class="cr-tag ok">Yours</em>' : c.status === 'pending' ? '<em class="cr-tag">Waiting</em>' : '') : ''; };
     const listHTML = (q) => {
       const s = q.trim().toLowerCase(); if (s.length < 2) return '<p class="fine">Type at least 2 letters of your place’s name.</p>';
-      return places().filter((v) => `${v.name} ${AREA[v.area] ? AREA[v.area].name : ''}`.toLowerCase().includes(s)).slice(0, 30)
-        .map((v) => `<button class="claim-row" data-claim="${v.id}"><span class="cr-th">${venueArt(v, '', 1)}</span><span class="cr-t"><b>${esc(v.name)}</b><small>${kindOf(v).ic} ${esc(kindOf(v).label)}${AREA[v.area] ? ` · ${esc(AREA[v.area].name)}` : ''}</small></span><span class="cr-go">${icon('arrow')}</span></button>`).join('') || '<p class="fine">No place matches that.</p>';
+      return places().filter((v) => v.real && `${v.name} ${AREA[v.area] ? AREA[v.area].name : ''}`.toLowerCase().includes(s)).slice(0, 30)
+        .map((v) => `<button class="claim-row" data-claim="${esc(v.id)}"><span class="cr-th">${venueArt(v, '', 1)}</span><span class="cr-t"><b>${esc(v.name)}</b><small>${kindOf(v).ic} ${esc(kindOf(v).label)}${AREA[v.area] ? ` · ${esc(AREA[v.area].name)}` : ''}</small></span>${tagOf(v)}<span class="cr-go">${icon('arrow')}</span></button>`).join('')
+        || '<p class="fine">No place matches that. If it isn’t on the map yet, add it first.</p>';
     };
-    const proofField = `<label class="fm-l">A page or number we can check <small>(Facebook, Instagram or phone)</small><input id="rq-proof" maxlength="80" placeholder="facebook.com/yourplace or 09…" autocomplete="off"></label>`;
     const pickStep = () => {
       set(`<div class="fm claim"><span class="eyebrow">I own a place</span><h2 class="display">Which place is <em>yours?</em></h2>
         <label class="fm-l"><input id="claim-q" type="search" placeholder="Search by name" autocomplete="off"></label><div class="claim-list" id="claim-list">${listHTML('')}</div>
-        <p class="fine center">Not on the map yet? <button class="link-btn" data-claim-req>Request a listing</button></p></div>`);
+        <p class="fine center">Not on the map yet? <button class="link-btn" data-claim-add>Add it to the map</button></p></div>`);
       const q = $('#claim-q', modalEl); q.addEventListener('input', () => { $('#claim-list', modalEl).innerHTML = listHTML(q.value); }); q.focus();
     };
+    const proofHTML = () => proof ? `<div class="st-proof has"><img src="${proof.url}" alt="Your proof photo"><span><b>Photo added</b><small>Only the Keni team sees it</small></span><button type="button" class="link-btn" data-claim-noproof>Remove</button></div>`
+      : `<label class="st-proof" for="st-file">${K.lic ? K.lic('cam') : ''}<span><b>Add a photo</b><small>Business permit, DTI paper or your sign. Optional, but it’s checked faster.</small></span></label>`;
     const claimStep = () => {
-      const v = VBY[picked];
+      const v = VBY[picked], c = mineOf(picked);
+      if (c && c.status === 'approved') { K.closeModal(); return setTimeout(() => openEditor(picked), 320); }
+      if (c && c.status === 'pending') return toast('Your claim for ' + esc(v.name) + ' is already waiting for a check');
+      onFile = async (f) => { try { const b = await shrink(f, 1400); proof = { b, url: URL.createObjectURL(b) }; const box = $('#st-proof-box', modalEl); if (box) box.innerHTML = proofHTML(); } catch { toast('Couldn’t read that photo. Try another one.'); } };
       set(`<div class="fm claim"><span class="eyebrow">Claim your place</span><h2 class="display">Confirm you run <em>${esc(v.name)}</em></h2>
         <div class="claim-card glass"><span class="cr-th lg">${venueArt(v, '', 1)}</span><div><b>${esc(v.name)}</b><small>${esc(v.addr || (AREA[v.area] ? AREA[v.area].addr : ''))}</small></div></div>
-        <p class="sub">We check every claim before the place is yours on Keni.</p>${proofField}
+        <div class="fm-l">You are the<div class="chips wrap st-roles">${ROLES.map(([id, l]) => `<button type="button" class="chip" data-claim-role="${id}" aria-pressed="${role === id}">${l}</button>`).join('')}</div></div>
+        <label class="fm-l">A number or page we can check <small>(we may call or message to confirm)</small><input id="rq-proof" maxlength="80" placeholder="09… or facebook.com/yourplace" autocomplete="off"></label>
+        <div id="st-proof-box">${proofHTML()}</div>
+        <label class="fm-l">Anything else? <small>(optional)</small><textarea id="rq-note" maxlength="300" rows="2" placeholder="e.g. I’m the owner since 2021. Call me after 3pm."></textarea></label>
+        <p class="fine">The Keni team checks every claim, usually within a day. You’ll get a notification.</p>
         <div class="fm-acts"><button class="btn ghost" data-claim-back>Back</button><span></span><button class="btn primary" data-claim-send>Send claim ${icon('arrow')}</button></div></div>`);
       $('#rq-proof', modalEl).focus();
     };
-    const reqStep = (name) => {
-      set(`<div class="fm claim req"><span class="eyebrow">Request a listing</span><h2 class="display">Tell us about <em>your place</em></h2>
-        <p class="sub">We check every request before a place goes on the map, so it won’t show up right away.</p>
-        <label class="fm-l">Name of the place<input id="rq-name" maxlength="48" value="${esc(name)}" placeholder="e.g. Kape ni Juan" autocomplete="off"></label>
-        <div class="rq-2"><label class="fm-l">Kind of place<select id="rq-cat">${CATS.map((c) => `<option value="${c.id}">${esc(c.label)}</option>`).join('')}</select></label>
-          <label class="fm-l">Area<select id="rq-area">${AREAS.map((a) => `<option value="${a.id}"${a.id === S.area ? ' selected' : ''}>${esc(a.name)}</option>`).join('')}</select></label></div>
-        <label class="fm-l">Address or nearest landmark<input id="rq-addr" maxlength="80" placeholder="Street, building, or what it is beside" autocomplete="off"></label>
-        ${proofField}
-        <label class="fm-l">A photo of the place <small>(optional)</small><input id="rq-photo" type="file" accept="image/*"></label>
-        <div class="fm-acts"><button class="btn ghost" data-claim-back>Back</button><span></span><button class="btn primary" data-req-send>Send request ${icon('arrow')}</button></div></div>`);
-      const n = $('#rq-name', modalEl); if (!n.value) n.focus();
-    };
     const sent = (name) => {
-      persist();
-      set(`<div class="fm conn done-s"><div class="conn-orb ok">${icon('check')}</div><h2 class="display">Request <em>sent</em></h2>
-        <p class="sub"><b>${esc(name)}</b> is waiting for a check. Follow it in your Studio.</p><div class="fm-acts"><span></span><button class="btn primary" data-req-done>Okay</button></div></div>`);
+      set(`<div class="fm conn done-s"><div class="conn-orb ok">${icon('check')}</div><h2 class="display">Claim <em>sent</em></h2>
+        <p class="sub"><b>${esc(name)}</b> is waiting for a check. We’ll let you know here and in Activity.</p><div class="fm-acts"><span></span><button class="btn primary" data-claim-done>Open Studio</button></div></div>`);
       burst(innerWidth / 2, innerHeight * 0.4, { glyph: ['📨', '✨', '📍'], n: 18, spread: 180 });
       if (done) done(); K.render();
     };
-    const val = (id) => clean(($(id, modalEl) || {}).value, 80);
-    const needProof = () => { if (val('#rq-proof')) return false; toast('Add a page or a number, so we can check the place is real'); $('#rq-proof', modalEl).focus(); return true; };
+    async function send(btn) {
+      const contact = clean(($('#rq-proof', modalEl) || {}).value, 80), note = clean(($('#rq-note', modalEl) || {}).value, 300);
+      if (contact.length < 3) { toast('Add a number or a page, so we can check it’s you'); return $('#rq-proof', modalEl).focus(); }
+      if (sending) return; sending = true; btn.disabled = true; btn.innerHTML = 'Sending…';
+      let path = null;
+      try {
+        if (proof) { path = uid() + '/' + rid() + '.jpg'; const up = await K.sb.storage.from('claim-proofs').upload(path, proof.b, { contentType: 'image/jpeg', upsert: false }); if (up.error) throw up.error; }
+        const { error } = await rpc('claim_send', { p_place: picked, p_role: role, p_contact: contact, p_note: note || null, p_proof: path });
+        if (error) throw error;
+        S.user = { ...(S.user || {}), role: 'business' }; persist();
+        M = null; loadMine(); onFile = null;
+        try { if (navigator.vibrate) navigator.vibrate(14); } catch { /* not supported */ }
+        sent(VBY[picked].name);
+      } catch (x) {
+        if (path) K.sb.storage.from('claim-proofs').remove([path]).catch(() => {});
+        const m = (x && x.message) || '';
+        toast(/already yours/.test(m) ? 'You already manage this place' : /already waiting/.test(m) ? 'Your claim is already waiting for a check' : /too many/.test(m) ? 'You have 3 claims waiting. Try again once they’re checked.' : /no such place/.test(m) ? 'This place can’t be claimed yet' : 'Couldn’t send. Check your connection.');
+        sending = false; btn.disabled = false; btn.innerHTML = `Send claim ${icon('arrow')}`;
+      }
+    }
     modalEl.addEventListener('click', (e) => {
       const c = e.target.closest('[data-claim]'); if (c) { picked = c.dataset.claim; return claimStep(); }
-      if (e.target.closest('[data-claim-back]')) return pickStep();
-      if (e.target.closest('[data-claim-req]')) return reqStep(clean(($('#claim-q', modalEl) || {}).value, 48));
-      if (e.target.closest('[data-req-done]')) return K.closeModal();
-      if (e.target.closest('[data-claim-send]')) {
-        if (needProof()) return;
-        const b = biz(); b.claims = [{ id: 'cl' + Date.now().toString(36), vid: picked, proof: val('#rq-proof'), at: Date.now(), status: 'pending' }, ...b.claims.filter((x) => x.vid !== picked)];
-        return sent(VBY[picked].name);
-      }
-      if (e.target.closest('[data-req-send]')) {
-        if (val('#rq-name').length < 2) { toast('What is the place called?'); return $('#rq-name', modalEl).focus(); }
-        if (!val('#rq-addr')) { toast('Add an address or a landmark so it can be found'); return $('#rq-addr', modalEl).focus(); }
-        if (needProof()) return;
-        const r = { id: 'rq' + Date.now().toString(36), name: val('#rq-name').slice(0, 48), cat: val('#rq-cat'), area: val('#rq-area'), addr: val('#rq-addr'), proof: val('#rq-proof'), at: Date.now(), status: 'pending' };
-        const save = (photo) => { if (photo) r.photo = photo; biz().requests.unshift(r); sent(r.name); };
-        const file = $('#rq-photo', modalEl).files[0];
-        return file ? thumb(file).then(save, () => save(null)) : save(null);
-      }
+      const r = e.target.closest('[data-claim-role]'); if (r) { role = r.dataset.claimRole; $$('[data-claim-role]').forEach((b) => b.setAttribute('aria-pressed', b === r)); return; }
+      if (e.target.closest('[data-claim-back]')) { onFile = null; proof = null; return pickStep(); }
+      if (e.target.closest('[data-claim-noproof]')) { proof = null; $('#st-proof-box', modalEl).innerHTML = proofHTML(); return; }
+      if (e.target.closest('[data-claim-add]')) { K.closeModal(); return setTimeout(() => { if (K.community) K.community.openAdd(); toast('Once your place is approved, claim it in Studio'); }, 320); }
+      if (e.target.closest('[data-claim-done]')) { K.closeModal(); return K.setView('biz'); }
+      const s = e.target.closest('[data-claim-send]'); if (s) return send(s);
     });
-    pickStep();
+    if (startId && VBY[startId]) { picked = startId; claimStep(); } else pickStep();
+  }
+
+  /* ═════════════════════ 2 · EDIT YOUR LISTING ═════════════════════ */
+  const closeLabel = (h) => fmtH(h) + (h === 24 ? ' (midnight)' : h > 24 ? ' (next day)' : '');
+  const hourOpts = (kind, sel) => { const out = []; for (let h = kind === 'open' ? 0 : 0.5; h <= (kind === 'open' ? 23.5 : 30); h += 0.5) out.push(`<option value="${h}"${h === sel ? ' selected' : ''}>${kind === 'open' ? fmtH(h) : closeLabel(h)}</option>`); return out.join(''); };
+  const bare = (s) => clean(s, 120).replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/+$/, '').slice(0, 80);
+  let D = null; // the listing being edited
+
+  function draftOf(v) {
+    const base = v.hoursKnown ? v.hours.slice() : [10, 22];
+    const week = {}; for (let d = 0; d < 7; d++) { const h = v.days && d in v.days ? v.days[d] : v.off && v.off.includes(d) ? null : base; week[d] = h ? h.slice() : null; }
+    return { id: v.id, blurb: v.blurb && !/^A .* on the map\. So far Keni only has/.test(v.blurb) ? v.blurb : '', week, known: !!v.hoursKnown, note: v.hoursNote || '', price: v.price,
+      ct: { phone: '', fb: '', ig: '', web: '', ...(v.ct || {}) }, perks: (v.perks || []).slice(), photo: v.img || '', photo0: v.img || '', busy: false };
+  }
+  function editorHTML() {
+    const v = VBY[D.id];
+    const day = (d) => { const h = D.week[d]; return `<div class="st-day${h ? '' : ' off'}" data-day="${d}"><b>${DAYN[d].slice(0, 3)}</b>
+        <select data-st-h="open" aria-label="${DAYN[d]} opens" ${h ? '' : 'disabled'}>${hourOpts('open', h ? h[0] : 10)}</select><span>to</span>
+        <select data-st-h="close" aria-label="${DAYN[d]} closes" ${h ? '' : 'disabled'}>${hourOpts('close', h ? h[1] : 22)}</select>
+        <button type="button" class="chip sm" data-st="closed" aria-pressed="${!h}">Closed</button></div>`; };
+    const field = (k, label, ph, type = 'text') => `<label class="fm-l">${label}<input data-st-ct="${k}" type="${type}" maxlength="80" value="${esc(D.ct[k] || '')}" placeholder="${ph}" autocomplete="off" autocapitalize="off"></label>`;
+    return `<div class="fm st-ed"><span class="eyebrow">Studio · edit your listing</span><h2 class="display">${esc(v.name)}</h2>
+      <section class="st-sec"><h4>Cover photo</h4><div class="st-cover">${D.photo ? `<img src="${esc(D.photo)}" alt="Cover photo">` : `<span class="st-cover-none">${venueArt(v, '', 1)}</span>`}
+        <div class="st-cover-acts"><label class="btn ghost sm" for="st-file">${K.lic ? K.lic('cam') : ''} ${D.photo ? 'Change photo' : 'Add a photo'}</label>${D.photo ? '<button type="button" class="link-btn" data-st="nophoto">Remove</button>' : ''}<small>${D.busy ? 'Uploading…' : 'The first thing people see. A bright, wide shot works best.'}</small></div></div></section>
+      <section class="st-sec"><h4>About</h4><label class="fm-l">Why should people go? <small>(${D.blurb.length}/300)</small><textarea id="st-blurb" maxlength="300" rows="3" placeholder="What you’re known for, the vibe, what to order first.">${esc(D.blurb)}</textarea></label></section>
+      <section class="st-sec"><h4>Hours</h4>${D.known ? '' : '<p class="fine">Your hours aren’t listed yet. Set them so people know when to come.</p>'}
+        <div class="st-week">${ORDER.map(day).join('')}</div>
+        <div class="chips wrap"><button type="button" class="chip" data-st="same">Same hours every day</button><button type="button" class="chip" data-st="h24">Open 24 hours</button></div>
+        <label class="fm-l">A note about your hours <small>(optional)</small><input id="st-note" maxlength="120" value="${esc(D.note)}" placeholder="e.g. Kitchen closes 30 minutes earlier" autocomplete="off"></label></section>
+      <section class="st-sec"><h4>Price per person</h4><div class="apw-prices">${[0, 1, 2, 3, 4].map((n) => `<button type="button" class="apw-price" data-st-price="${n}" aria-pressed="${D.price === n}"><b>${n ? '₱'.repeat(n) : 'Free'}</b><small>${esc(PRICE_RANGE[n])}</small></button>`).join('')}</div></section>
+      <section class="st-sec"><h4>Contact</h4><div class="st-ct">${field('phone', 'Phone', '09… or (045) …', 'tel')}${field('fb', 'Facebook page', 'facebook.com/yourplace')}${field('ig', 'Instagram', 'instagram.com/yourplace')}${field('web', 'Website', 'yourplace.com')}</div></section>
+      <section class="st-sec"><h4>Good to know</h4><div class="chips wrap">${Object.entries(PERKS).map(([id, p]) => `<button type="button" class="chip" data-st-perk="${id}" aria-pressed="${D.perks.includes(id)}">${esc(p[1])}</button>`).join('')}</div></section>
+      <p class="fine">Need to change the name or move the pin? Use “Report a problem” on your place’s page and the Keni team will fix it.</p>
+      <div class="fm-acts st-foot"><button class="btn ghost" data-m="close">Cancel</button><span></span><button class="btn primary" data-st="save">Save changes ${icon('check')}</button></div></div>`;
+  }
+  function openEditor(vid) {
+    const v = VBY[vid]; if (!v) return toast('Couldn’t find that place. Try again in a moment.');
+    D = draftOf(v);
+    const m = K.openModal(editorHTML(), 'login-sheet st-sheet');
+    const sheet = $('.sheet', m);
+    const repaint = () => { const top = sheet.scrollTop; readForm(); sheet.innerHTML = `<button class="icon-btn close" data-m="close" aria-label="Close">${icon('x')}</button>` + editorHTML(); sheet.scrollTop = top; };
+    const readForm = () => {
+      const b = $('#st-blurb', sheet); if (b) D.blurb = b.value; const n = $('#st-note', sheet); if (n) D.note = n.value;
+      $$('[data-st-ct]', sheet).forEach((i) => { D.ct[i.dataset.stCt] = i.value; });
+      $$('.st-day', sheet).forEach((r) => { const d = +r.dataset.day; if (!D.week[d]) return; D.week[d] = [+$('[data-st-h="open"]', r).value, +$('[data-st-h="close"]', r).value]; });
+    };
+    onFile = async (f) => {
+      if (!uid()) return toast('Sign in again to add a photo');
+      D.busy = true; repaint();
+      try {
+        const b = await shrink(f), path = uid() + '/' + rid() + '.jpg';
+        const up = await K.sb.storage.from('place-photos').upload(path, b, { contentType: 'image/jpeg', upsert: false }); if (up.error) throw up.error;
+        D.photo = PUB + path; toast('Photo ready. Tap Save changes to put it up.');
+      } catch (x) { toast(/read/.test((x && x.message) || '') ? 'Couldn’t read that photo. Try another one.' : 'Couldn’t upload. Check your connection.'); }
+      D.busy = false; if (document.body.contains(sheet)) repaint();
+    };
+    sheet.addEventListener('input', (e) => { if (e.target.id === 'st-blurb') { const s = e.target.closest('label').querySelector('small'); if (s) s.textContent = `(${e.target.value.length}/300)`; } });
+    sheet.addEventListener('change', (e) => { const sel = e.target.closest('[data-st-h]'); if (sel) readForm(); });
+    sheet.addEventListener('click', async (e) => {
+      const t = e.target.closest('[data-st]'), pr = e.target.closest('[data-st-price]'), pk = e.target.closest('[data-st-perk]');
+      if (pr) { readForm(); D.price = D.price === +pr.dataset.stPrice ? null : +pr.dataset.stPrice; return repaint(); }
+      if (pk) { const id = pk.dataset.stPerk; D.perks = D.perks.includes(id) ? D.perks.filter((x) => x !== id) : [...D.perks, id]; pk.setAttribute('aria-pressed', D.perks.includes(id)); return; }
+      if (!t) return;
+      const a = t.dataset.st;
+      if (a === 'closed') { readForm(); const d = +t.closest('.st-day').dataset.day; D.week[d] = D.week[d] ? null : (Object.values(D.week).find(Boolean) || [10, 22]).slice(); return repaint(); }
+      if (a === 'same') { readForm(); const f = ORDER.map((d) => D.week[d]).find(Boolean) || [10, 22]; for (let d = 0; d < 7; d++) D.week[d] = f.slice(); return repaint(); }
+      if (a === 'h24') { readForm(); for (let d = 0; d < 7; d++) D.week[d] = [0, 24]; return repaint(); }
+      if (a === 'nophoto') { readForm(); D.photo = ''; return repaint(); }
+      if (a === 'save') return save(t);
+    });
+    async function save(btn) {
+      readForm();
+      if (D.busy) return toast('Wait for the photo to finish uploading');
+      const open = ORDER.filter((d) => D.week[d]);
+      if (!open.length) return toast('Your place can’t be closed every day');
+      const bad = open.find((d) => D.week[d][1] <= D.week[d][0]); if (bad != null) return toast(DAYN[bad] + ': closing time has to be after opening time');
+      // the most common hours become the usual hours; days that differ are kept separately
+      const cnt = {}; open.forEach((d) => { const k = D.week[d].join('-'); cnt[k] = (cnt[k] || 0) + 1; });
+      const usual = Object.entries(cnt).sort((a, b) => b[1] - a[1])[0][0].split('-').map(Number);
+      const days = {}; open.forEach((d) => { if (D.week[d].join('-') !== usual.join('-')) days[d] = D.week[d]; });
+      const ct = {}; for (const k of ['phone', 'fb', 'ig', 'web']) { const x = k === 'phone' ? clean(D.ct[k], 40) : bare(D.ct[k]); if (x) ct[k] = x; }
+      const p = { blurb: clean(D.blurb, 300), hours: usual, days: Object.keys(days).length ? days : null, off_days: [0, 1, 2, 3, 4, 5, 6].filter((d) => !D.week[d]),
+        hours_note: clean(D.note, 120), price: D.price == null ? null : D.price, contacts: ct, perks: D.perks };
+      if (D.photo !== D.photo0) p.photo = D.photo || null; // only when it changed: the old cover may be a built-in picture
+      btn.disabled = true; btn.innerHTML = 'Saving…';
+      const { data, error } = await rpc('owner_update', { p_place: D.id, p });
+      if (error) { btn.disabled = false; btn.innerHTML = `Save changes ${icon('check')}`; return toast(/not yours/.test(error.message) ? 'You don’t manage this place any more' : /hours|days/.test(error.message) ? 'Check your hours' : 'Couldn’t save. Check your connection.'); }
+      // show it straight away on this phone; everyone else gets it the next time Keni loads the places
+      const v = VBY[D.id], r = data || p;
+      Object.assign(v, { blurb: r.blurb || v.blurb, hours: r.hours || v.hours, hoursKnown: !!r.hours, days: r.days || null, off: r.off_days || [], hoursNote: r.hours_note || '',
+        price: r.price ?? null, ct: r.contacts || {}, perks: r.perks || [], img: 'photo' in r ? (r.photo || undefined) : v.img });
+      const mc = mineOf(D.id); if (mc) mc.photo = v.img || null;
+      K.closeModal(); if (K.reanalyze) K.reanalyze(); K.render(); paint(true);
+      burst(innerWidth / 2, innerHeight * 0.4, { n: 22, spread: 190 });
+      toast('<b>' + esc(v.name) + '</b> is updated', () => K.openDetail(v.id), 'View');
+    }
+  }
+
+  /* ═════════════════════ REPORTS ABOUT YOUR PLACE ═════════════════════ */
+  async function openReports(vid) {
+    const v = VBY[vid] || { name: (mineOf(vid) || {}).name || 'Your place' };
+    const m = K.openModal(`<div class="fm st-rep"><span class="eyebrow">Studio · reports</span><h2 class="display">What people <em>reported</em></h2><p class="sub">${esc(v.name)}</p><div class="st-replist"><p class="fine">Loading…</p></div></div>`, 'login-sheet');
+    const { data, error } = await rpc('owner_reports', { p_place: vid });
+    const box = $('.st-replist', m); if (!box) return;
+    if (error) { box.innerHTML = '<p class="fine">Couldn’t load the reports. Check your connection.</p>'; return; }
+    box.innerHTML = (data || []).length ? data.map((r, i) => `<div class="st-repr" style="--i:${Math.min(i, 8)}"><span class="st-dot ${r.status === 'new' ? 'new' : ''}"></span><div><b>${esc(REPN[r.reason] || r.reason)}</b>
+        ${r.reason === 'kind' && CAT[r.kind] ? `<small>Someone thinks it’s a ${esc(CAT[r.kind].label.toLowerCase())}</small>` : ''}${r.note ? `<small>“${esc(r.note)}”</small>` : ''}
+        <small>${ago(r.at)} · ${r.status === 'new' ? 'The Keni team will look at it' : 'Checked by the Keni team'}</small></div></div>`).join('')
+      : `<div class="st-empty">${icon('check')}<b>No reports</b><small>Nobody has reported a problem with your place. Nice.</small></div>`;
   }
 
   /* ═════════════════════ STUDIO VIEW ═════════════════════ */
-  const SOON = [['edit', 'Edit your listing', 'hours, description, vibes'], ['menu', 'Your menu', 'dishes and prices'], ['tag', 'Promos', 'deals tropas can use'], ['chart', 'Reports', 'what visitors say is wrong']];
   function studioHTML() {
-    const b = biz();
-    const row = (th, name, sub, id, kind) => `<div class="pf-plan pf-req">${th}<span><b>${esc(name)}</b><small>${sub}</small><em class="rq-st">⏳ Waiting for a check</em></span><button class="link-btn" data-b="cancel" data-k="${kind}" data-id="${id}">Cancel</button></div>`;
-    const claims = b.claims.filter((c) => VBY[c.vid]).map((c) => { const v = VBY[c.vid]; return row(`<span class="cr-th">${venueArt(v, '', 1)}</span>`, v.name, 'Claim', c.id, 'claims'); });
-    const reqs = b.requests.map((r) => row(r.photo ? `<img src="${r.photo}" alt="">` : '<i>📍</i>', r.name, `New listing${CAT[r.cat] ? ` · ${CAT[r.cat].ic} ${esc(CAT[r.cat].label)}` : ''}${AREA[r.area] ? ` · ${esc(AREA[r.area].name)}` : ''}`, r.id, 'requests'));
-    const all = [...claims, ...reqs];
-    return `<div class="bz"><div class="bz-body"><section class="bz-card glass wide"><h4>Your requests</h4>
-        ${all.length ? all.join('') : '<p class="fine">Nothing yet. Claim your place if it’s already on the map, or request a new listing.</p>'}
-        <button class="btn primary sm" data-b="own">${icon('plus')} ${all.length ? 'Add another place' : 'Claim or add your place'}</button></section>
-      <section class="bz-card glass wide"><h4>Once your place is checked</h4>
-        ${SOON.map(([ic, t, d]) => `<p class="pf-line">${icon(ic)} <b>${t}</b> <small>${d}</small></p>`).join('')}</section></div></div>`;
+    if (!uid()) return `<div class="bz"><div class="bz-body"><section class="bz-card glass wide st-in"><h4>Your place on Keni</h4><p class="sub">Sign in to claim your place, keep its hours and photos right, and see what people say.</p>
+      <button class="btn primary sm" data-b="signin">Sign in</button></section></div></div>`;
+    if (!M) return `<div class="bz"><div class="bz-body"><section class="bz-card glass wide"><h4>Your places</h4><p class="fine">Loading…</p></section></div></div>`;
+    const th = (c) => { const v = VBY[c.place], ph = c.photo || (v && v.img); return ph ? `<img class="st-th" src="${esc(ph)}" alt="">` : v ? `<span class="cr-th">${venueArt(v, '', 1)}</span>` : `<span class="st-th ph">${icon('pin')}</span>`; };
+    const mine = owned(), wait = M.filter((c) => c.status === 'pending'), no = M.filter((c) => c.status === 'rejected');
+    const own = mine.map((c, i) => `<div class="st-place" style="--i:${i}">${th(c)}<div class="st-pt"><b>${esc(c.name)}</b><small>${esc(ROLES.find((r) => r[0] === c.role)[1])}${AREA[c.area] ? ' · ' + esc(AREA[c.area].name) : ''}</small>
+        ${c.reports ? `<em class="st-badge">${c.reports} new report${c.reports === 1 ? '' : 's'}</em>` : ''}${K.posts ? K.posts.badge(c.place) : ''}</div>
+        <div class="st-pa"><button class="btn primary sm" data-b="edit" data-id="${esc(c.place)}">${icon('edit')} Edit listing</button><button class="btn ghost sm" data-pe-open="${esc(c.place)}">${icon('tag')} Promos &amp; events</button><button class="btn ghost sm" data-b="reports" data-id="${esc(c.place)}">Reports</button><button class="btn ghost sm" data-b="view" data-id="${esc(c.place)}">View</button></div></div>`).join('');
+    const row = (c, sub, act) => `<div class="pf-plan pf-req">${th(c)}<span><b>${esc(c.name)}</b><small>${sub}</small></span>${act}</div>`;
+    const waits = wait.map((c) => row(c, `<em class="rq-st">Waiting for a check · sent ${ago(c.at)}</em>`, `<button class="link-btn" data-b="cancel" data-id="${c.id}">Cancel</button>`)).join('');
+    const nos = no.map((c) => row(c, `<em class="rq-st no">Not approved${c.reason ? ': ' + esc(c.reason) : ''}</em>`, `<button class="link-btn" data-b="again" data-id="${esc(c.place)}" data-c="${c.id}">Try again</button>`)).join('');
+    return `<div class="bz"><div class="bz-body">
+      ${mine.length ? `<section class="bz-card glass wide"><h4>Places you manage</h4>${own}</section>` : ''}
+      ${wait.length || no.length || !mine.length ? `<section class="bz-card glass wide"><h4>${mine.length ? 'Your claims' : 'Your place on Keni'}</h4>
+        ${waits}${nos}${!wait.length && !no.length ? '<p class="fine">Run a café, bar or restaurant that’s on the map? Claim it to keep the hours, photos and contacts right.</p>' : ''}
+        <button class="btn ${mine.length ? 'ghost' : 'primary'} sm" data-b="own">${icon('plus')} ${M.length ? 'Claim another place' : 'Claim your place'}</button></section>`
+        : `<button class="btn ghost sm st-more" data-b="own">${icon('plus')} Claim another place</button>`}
+      <section class="bz-card glass wide st-soon"><h4>Coming soon</h4>
+        <p class="pf-line">${icon('star')} <b>Your numbers</b> <small>how many people viewed and saved your place each week</small></p></section></div></div>`;
+  }
+  let sig = '';
+  function paint(force) {
+    if (!bizview || K.ui.view !== 'biz') return;
+    const s = JSON.stringify([uid(), M, K.posts ? K.posts.ver() : 0]); if (!force && s === sig) return; sig = s;
+    bizview.innerHTML = studioHTML();
   }
   K.views.biz = {
-    intro: () => ['Studio', 'Your <em>place</em>', 'Claim your place or request a listing. Owner tools open once it’s checked.'],
-    render(el) {
-      const sig = JSON.stringify([S.biz && S.biz.requests, S.biz && S.biz.claims]);
-      if (el._sig !== sig) { el.innerHTML = studioHTML(); el._sig = sig; }
-    },
+    intro: () => ['Studio', 'Your <em>place</em>', owned().length ? 'Keep your listing fresh. Changes show up on Keni right away.' : 'Claim your place. Owner tools open once the Keni team checks it.'],
+    render() { if (uid() && !M) loadMine(); paint(); },
   };
-  bizview.addEventListener('click', (e) => {
+  bizview.addEventListener('click', async (e) => {
     const t = e.target.closest('[data-b]'); if (!t) return;
-    if (t.dataset.b === 'own') { const m = K.openModal('', 'login-sheet'); return ownerFlow(m); }
-    if (t.dataset.b === 'cancel') { const b = biz(), k = t.dataset.k; b[k] = b[k].filter((x) => x.id !== t.dataset.id); persist(); K.render(); return toast('Request cancelled'); }
+    const a = t.dataset.b, id = t.dataset.id;
+    if (a === 'signin') return K.openLogin && K.openLogin('business');
+    if (a === 'own') return ownerFlow(K.openModal('', 'login-sheet'));
+    if (a === 'edit') return openEditor(id);
+    if (a === 'reports') return openReports(id);
+    if (a === 'view') return K.openDetail(id);
+    if (a === 'again') { await rpc('claim_cancel', { p_id: +t.dataset.c }); M = (M || []).filter((c) => String(c.id) !== t.dataset.c); return ownerFlow(K.openModal('', 'login-sheet'), null, id); }
+    if (a === 'cancel') {
+      if (!t.dataset.sure) { t.dataset.sure = 1; t.textContent = 'Tap again to cancel'; return; }
+      t.disabled = true;
+      const { data, error } = await rpc('claim_cancel', { p_id: +id });
+      if (error) { t.disabled = false; return toast('Couldn’t cancel. Check your connection.'); }
+      if (data && data.proof) K.sb.storage.from('claim-proofs').remove([data.proof]).catch(() => {});
+      M = (M || []).filter((c) => String(c.id) !== String(id)); paint(true); return toast('Claim cancelled');
+    }
   });
 
-  K.biz = { ownerFlow, venueId: () => null };
+  // Activity: the Studio button on a claim notification
+  document.addEventListener('click', (e) => { if (!e.target.closest('[data-st-open]')) return; if (K.tchat && K.tchat.close) K.tchat.close(); setTimeout(() => { M = null; loadMine(); K.setView('biz'); }, 320); });
+  // a push about a claim opens /#studio
+  const fromHash = () => { if (location.hash !== '#studio') return; try { history.replaceState(history.state, '', location.pathname + location.search); } catch { /* fine */ } if (uid()) { S.user.role = 'business'; persist(); } K.setView('biz'); };
+  setTimeout(fromHash, 600);
+  // owners who sign in on a new phone get their Studio back
+  setTimeout(() => { if (uid() && !M) loadMine(); }, 2500);
+
+  K.biz = { ownerFlow, openEditor, openReports, refresh: () => { M = null; return loadMine(); }, owns: (vid) => !!(mineOf(vid) && mineOf(vid).status === 'approved'), venueId: () => null };
   K.render();
 })();
 </script>
+<style>
+/* Studio (owner side) */
+.cr-tag { flex: none; font-style: normal; font-size: .7rem; font-weight: 700; padding: .25em .6em; border-radius: 99px; background: rgba(255, 255, 255, .1); color: var(--ink-2); }
+.cr-tag.ok { background: rgba(110, 231, 183, .16); color: #8ff0c4; }
+.st-roles .chip { min-width: 84px; justify-content: center; }
+.st-proof { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 18px; border: 1px dashed rgba(196, 176, 255, .45); background: rgba(196, 176, 255, .06); cursor: pointer; text-align: left; }
+.st-proof .ic { width: 26px; height: 26px; flex: none; color: #c4b0ff; }
+.st-proof span { display: grid; gap: 2px; flex: 1; min-width: 0; } .st-proof small { color: var(--ink-3); font-size: .8rem; }
+.st-proof.has { border-style: solid; cursor: default; } .st-proof img { width: 54px; height: 54px; object-fit: cover; border-radius: 12px; flex: none; animation: stPop .45s var(--spring) both; }
+.st-th { width: 54px; height: 54px; border-radius: 14px; object-fit: cover; flex: none; }
+.st-th.ph { display: grid; place-items: center; background: rgba(255, 255, 255, .07); }
+.st-place { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px 14px; align-items: center; padding: 12px; border-radius: 22px; background: rgba(255, 255, 255, .05); border: 1px solid var(--line); animation: stUp .5s var(--spring) both; animation-delay: calc(var(--i, 0) * 60ms); }
+.st-place .st-th, .st-place .cr-th { width: 64px; height: 64px; }
+.st-pt { display: grid; gap: 3px; min-width: 0; } .st-pt b { font-size: 1.05rem; } .st-pt small { color: var(--ink-3); }
+.st-badge { justify-self: start; font-style: normal; font-size: .72rem; font-weight: 700; padding: .2em .65em; border-radius: 99px; background: rgba(255, 143, 200, .16); color: #ffb3d9; }
+.st-pa { grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap; }
+.st-more { justify-self: start; }
+.rq-st.no { color: #ffb3b3; }
+.pf-req > .cr-th { display: block; overflow: hidden; } .pf-req > .cr-th .art { width: 100%; border-radius: 12px; }
+.st-sheet .sheet, .st-sheet { max-width: 560px; }
+.st-ed { gap: 18px; }
+.st-sec { display: grid; gap: 10px; padding-top: 14px; border-top: 1px solid var(--line); animation: stUp .5s var(--spring) both; }
+.st-sec h4 { font-size: .74rem; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3); }
+.st-cover { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 14px; align-items: center; }
+.st-cover img, .st-cover-none { width: 120px; height: 90px; border-radius: 16px; object-fit: cover; overflow: hidden; display: block; animation: stPop .45s var(--spring) both; }
+.st-cover-none .art { --ar: 4/3; border-radius: 16px; }
+.st-cover-acts { display: grid; gap: 6px; justify-items: start; } .st-cover-acts small { color: var(--ink-3); font-size: .8rem; }
+.st-cover-acts .ic { width: 16px; height: 16px; vertical-align: -3px; }
+.st-week { display: grid; gap: 8px; }
+.st-day { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto minmax(0, 1fr) auto; gap: 8px; align-items: center; transition: opacity .25s; }
+.st-day b { font-size: .86rem; } .st-day > span { color: var(--ink-3); font-size: .8rem; }
+.st-day select { min-width: 0; height: 42px; padding: 0 .6rem; font: inherit; font-size: .88rem; color: #fff; border-radius: 14px; background: rgba(255, 255, 255, .08); border: 1px solid var(--line); }
+.st-day.off select { opacity: .35; }
+.st-day .chip.sm { padding: .45em .8em; font-size: .78rem; }
+.st-ct { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.st-foot { position: sticky; bottom: -1px; padding: 12px 0 4px; background: linear-gradient(transparent, rgba(16, 11, 34, .96) 30%); }
+.st-replist { display: grid; gap: 8px; }
+.st-repr { display: flex; gap: 12px; padding: 12px 14px; border-radius: 18px; background: rgba(255, 255, 255, .05); border: 1px solid var(--line); animation: stUp .45s var(--spring) both; animation-delay: calc(var(--i, 0) * 50ms); }
+.st-repr div { display: grid; gap: 3px; } .st-repr small { color: var(--ink-3); }
+.st-dot { width: 9px; height: 9px; border-radius: 50%; margin-top: 6px; flex: none; background: rgba(255, 255, 255, .25); } .st-dot.new { background: #ff8fc8; box-shadow: 0 0 0 4px rgba(255, 143, 200, .18); }
+.st-empty { display: grid; justify-items: center; gap: 6px; padding: 26px 10px; text-align: center; } .st-empty .ic { width: 34px; height: 34px; color: #8ff0c4; animation: stPop .5s var(--spring) both; } .st-empty small { color: var(--ink-3); }
+@keyframes stUp { from { transform: translateY(14px); } }
+@keyframes stPop { from { transform: scale(.6); } }
+@media (max-width: 520px) {
+  .st-ct { grid-template-columns: 1fr; }
+  .st-day { grid-template-columns: 34px minmax(0, 1fr) minmax(0, 1fr) auto; } .st-day > span { display: none; }
+  .st-cover { grid-template-columns: 96px minmax(0, 1fr); } .st-cover img, .st-cover-none { width: 96px; height: 72px; }
+}
+</style>
+  <script>/* Keni · promos and events (added 2026-10-28). Owners who manage a place (Studio) post a promo ("Buy 1 Take 1, Mon–Thu, until Nov 30")
+   or an event ("Acoustic night, Fri 8 PM"). public.place_posts, through post_save / post_end / posts_mine; everyone reads posts_live.
+   Up to 3 live per place; a post stops showing after its last day by itself. People see them on the place's page, as a badge on its pin,
+   on cards, in Explore ("Deals & events") and in a tropa vote. Anyone can report one as fake (post_report); the Keni team can take it down (admin). */
+(() => {
+  'use strict';
+  const K = window.KeniCore; if (!K) return;
+  const { S, persist, VBY, VENUES, $, esc, icon, toast, burst, venueArt, fmtH } = K;
+  const $$ = (q, el = document) => [...el.querySelectorAll(q)];
+  const DB = window.KENI_DB;
+  const PUB = 'https://wlxkdivnktxdbwbertjw.supabase.co/storage/v1/object/public/place-photos/';
+  const DAY = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], ORDER = [1, 2, 3, 4, 5, 6, 0];
+  const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const lic = (n) => (K.lic ? K.lic(n) : '');
+  const uid = () => (S.user && S.user.account && S.user.id && K.sb ? S.user.id : null);
+  const clean = (s, n) => String(s || '').trim().replace(/[<>]/g, '').slice(0, n);
+  const rid = () => Array.from(crypto.getRandomValues(new Uint8Array(12)), (x) => x.toString(16).padStart(2, '0')).join('');
+  const pad = (n) => String(n).padStart(2, '0');
+  const ymd = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const dOf = (s) => new Date(s + 'T12:00:00');
+  const today = () => ymd(new Date());
+  const addDays = (s, n) => { const d = dOf(s); d.setDate(d.getDate() + n); return ymd(d); };
+  const nice = (s) => { const d = dOf(s); return `${DAY[d.getDay()]} ${MON[d.getMonth()]} ${d.getDate()}`; };
+  const dayName = (s) => { const t = today(); return s === t ? 'Today' : s === addDays(t, 1) ? 'Tomorrow' : nice(s); };
+  // Mon, Tue, Wed, Thu → "Mon–Thu"; Mon, Wed → "Mon, Wed"
+  const daysTxt = (days) => {
+    if (!days || days.length >= 7) return 'Every day';
+    const ix = ORDER.filter((d) => days.includes(d)).map((d) => ORDER.indexOf(d));
+    const run = ix.every((x, i) => !i || x === ix[i - 1] + 1);
+    return run && ix.length > 2 ? `${DAY[ORDER[ix[0]]]}–${DAY[ORDER[ix[ix.length - 1]]]}` : ix.map((x) => DAY[ORDER[x]]).join(', ');
+  };
+
+  /* ═════════════════════ LIVE POSTS (everyone) ═════════════════════ */
+  let ALL = [], BY = {}, ver = 0, at = 0;
+  const onToday = (p, t = today()) => p.starts <= t && t <= p.ends && (!p.days || p.days.includes(dOf(t).getDay()));
+  const liveOf = (vid) => BY[vid] || [];
+  const nowOf = (vid) => liveOf(vid).filter((p) => onToday(p));
+  function load() {
+    at = Date.now();
+    const go = K.sb ? K.sb.rpc('posts_live').then(({ data, error }) => { if (error) throw error; return data; })
+      : DB ? fetch(`${DB.url}/rest/v1/rpc/posts_live`, { method: 'POST', headers: { apikey: DB.key, 'content-type': 'application/json' }, body: '{}' }).then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+      : Promise.resolve([]);
+    return go.then((d) => put(Array.isArray(d) ? d : []), (e) => console.warn('Keni posts:', e));
+  }
+  function put(list) {
+    ALL = list.filter((p) => p && VBY[p.place]); BY = {};
+    ALL.forEach((p) => (BY[p.place] = BY[p.place] || []).push(p));
+    ver++;
+    for (const v of VENUES) { const on = nowOf(v.id).length > 0; if (!!v.deal !== on) { v.deal = on; if (K.repin) K.repin(v); } }
+    K.render();
+    const box = $('.modal .pe-list'); if (box) { const id = box.dataset.pePlace; if (VBY[id]) box.outerHTML = postsHTML(VBY[id]); }
+  }
+  (K.placesReady ? K.placesReady.then(load, load) : load());
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - at > 10 * 6e4) load(); });
+
+  const whenLine = (p) => {
+    if (p.kind === 'event') return `${dayName(p.starts)} · ${fmtH(+p.time)}${p.ends > p.starts ? ` until ${nice(p.ends)}` : ''}`;
+    return `${p.starts > today() ? `From ${nice(p.starts)} · ` : ''}${daysTxt(p.days)} · until ${nice(p.ends)}`;
+  };
+  const dateChip = (s) => { const d = dOf(s); return `<span class="pe-date"><small>${DAY[d.getDay()]}</small><b>${d.getDate()}</b></span>`; };
+  const reported = () => (Array.isArray(S.peRep) ? S.peRep : (S.peRep = []));
+  function postsHTML(v) {
+    const list = liveOf(v.id).slice().sort((a, b) => onToday(b) - onToday(a) || a.starts.localeCompare(b.starts));
+    if (!list.length) return `<div class="pe-list" data-pe-place="${esc(v.id)}" hidden></div>`;
+    return `<div class="pe-list" data-pe-place="${esc(v.id)}">${list.map((p, i) => `<article class="pe-card ${p.kind}${onToday(p) ? ' now' : ''}" style="--i:${i}">
+      ${p.photo ? `<img class="pe-ph" src="${esc(p.photo)}" alt="" loading="lazy">` : p.kind === 'event' ? dateChip(p.starts) : `<span class="pe-ic">${icon('tag')}</span>`}
+      <div class="pe-t"><em class="pe-k">${p.kind === 'event' ? 'Event' : 'Promo'}${onToday(p) ? ' · on today' : ''}</em><b>${esc(p.title)}</b>${p.details ? `<p>${esc(p.details)}</p>` : ''}
+        <small>${esc(whenLine(p))}${p.price ? ` · ${esc(p.price)}` : ''}</small>
+        ${reported().includes(p.id) ? '<small class="pe-repd">You reported this</small>' : `<button class="link-btn pe-rep" data-pe-rep="${p.id}">${lic('flag')} Report</button>`}</div></article>`).join('')}</div>`;
+  }
+  const device = () => { if (!S.device) { S.device = [...crypto.getRandomValues(new Uint8Array(16))].map((b) => b.toString(16).padStart(2, '0')).join(''); persist(); } return S.device; };
+  document.addEventListener('click', (e) => {
+    const t = e.target.closest('[data-pe-rep]'); if (!t) return;
+    if (!t.dataset.sure) { t.dataset.sure = 1; t.innerHTML = 'Fake or wrong? Tap again to report'; return; }
+    const id = +t.dataset.peRep; t.disabled = true;
+    const args = { p_id: id, p_device: device() };
+    const go = K.sb ? K.sb.rpc('post_report', args).then(({ error }) => { if (error) throw error; })
+      : fetch(`${DB.url}/rest/v1/rpc/post_report`, { method: 'POST', headers: { apikey: DB.key, 'content-type': 'application/json' }, body: JSON.stringify(args) }).then((r) => { if (!r.ok) throw new Error(r.status); });
+    go.then(() => { reported().push(id); persist(); t.outerHTML = '<small class="pe-repd">Thanks. The Keni team will check it.</small>'; },
+      () => { t.disabled = false; delete t.dataset.sure; t.innerHTML = `${lic('flag')} Report`; toast('Couldn’t send. Check your connection.'); });
+  });
+
+  // the place's page: posts go first, above everything else the page adds
+  const prevDetail = K.hooks.detailExtra;
+  K.hooks.detailExtra = (v) => postsHTML(v) + (prevDetail ? prevDetail(v) : '');
+  // cards: the deal on today wins over other little tags
+  const prevCard = K.hooks.cardTag;
+  K.hooks.cardTag = (v) => { const p = nowOf(v.id)[0]; return p ? `${icon('tag')} ${p.kind === 'event' ? `Today ${esc(fmtH(+p.time))}: ` : ''}${esc(p.title)}` : prevCard ? prevCard(v) : ''; };
+
+  // Explore: deals on today and events in the next week
+  function exploreRow() {
+    const t = today(), soon = addDays(t, 7);
+    const items = ALL.filter((p) => !S.hidden.includes(p.place) && (onToday(p, t) || (p.kind === 'event' && p.starts > t && p.starts <= soon)))
+      .sort((a, b) => onToday(b, t) - onToday(a, t) || a.starts.localeCompare(b.starts)).slice(0, 12);
+    if (!items.length) return '';
+    return `<section class="xrow" data-x="deals"><div class="xh"><h2 class="display">Deals &amp; <em>events</em></h2><small>straight from the places</small></div>
+      <div class="xscroll">${items.map((p, i) => { const v = VBY[p.place];
+        return `<button class="xcard pe-x" data-act="open-detail" data-id="${esc(v.id)}" style="--i:${i}"><span class="xart">${p.photo ? `<img src="${esc(p.photo)}" alt="" loading="lazy">` : venueArt(v, '', 1)}
+          <em class="pe-xk ${p.kind}">${onToday(p, t) ? (p.kind === 'event' ? 'Today ' + esc(fmtH(+p.time)) : 'On today') : esc(dayName(p.starts))}</em></span><b>${esc(p.title)}</b><small>${esc(v.name)}</small></button>`; }).join('')}</div></section>`;
+  }
+  // a tropa vote: a little tag on places with something on today
+  const voteTag = (v) => { const p = nowOf(v.id)[0]; return p ? `<em class="vt-deal">${icon('tag')} ${p.kind === 'event' ? 'Event tonight' : 'Deal today'}</em>` : ''; };
+  // Studio: "1 live" on a place you manage
+  const badge = (vid) => { const n = liveOf(vid).length; return n ? `<em class="st-badge ok">${n} live promo${n === 1 ? '' : 's'} or event${n === 1 ? '' : 's'}</em>` : ''; };
+
+  /* ═════════════════════ STUDIO · YOUR PROMOS AND EVENTS ═════════════════════ */
+  document.body.insertAdjacentHTML('beforeend', '<input type="file" accept="image/*" id="pe-file" class="tz-file" aria-hidden="true" tabindex="-1">');
+  let onFile = null;
+  document.addEventListener('change', (e) => { if (e.target.id !== 'pe-file') return; const f = e.target.files && e.target.files[0]; e.target.value = ''; if (f && onFile) onFile(f); });
+  const shrink = (file, max = 1600) => new Promise((ok, no) => {
+    const img = new Image(), u = URL.createObjectURL(file);
+    img.onload = () => {
+      const k = Math.min(1, max / Math.max(img.width, img.height)), w = Math.max(50, Math.round(img.width * k)), h = Math.max(50, Math.round(img.height * k));
+      const c = document.createElement('canvas'); c.width = w; c.height = h; c.getContext('2d').drawImage(img, 0, 0, w, h); URL.revokeObjectURL(u);
+      c.toBlob((b) => (b ? ok(b) : no(new Error('read'))), 'image/jpeg', 0.82);
+    };
+    img.onerror = () => { URL.revokeObjectURL(u); no(new Error('read')); }; img.src = u;
+  });
+  const hourOpts = (sel) => { const out = []; for (let h = 0; h <= 23.5; h += 0.5) out.push(`<option value="${h}"${h === sel ? ' selected' : ''}>${fmtH(h)}</option>`); return out.join(''); };
+  const blank = (kind) => ({ id: null, kind, title: '', details: '', photo: '', starts: today(), ends: kind === 'event' ? today() : addDays(today(), 13), time: 20, price: '', days: null, busy: false });
+  const fromPost = (p, again) => ({ id: again ? null : p.id, kind: p.kind, title: p.title, details: p.details || '', photo: p.photo || '', price: p.price || '', days: p.days || null, time: p.time == null ? 20 : +p.time,
+    starts: again || p.starts < today() ? today() : p.starts, ends: again || p.ends < today() ? (p.kind === 'event' ? today() : addDays(today(), 13)) : p.ends, busy: false });
+  const STATUS = (p) => p.status === 'down' ? `<em class="rq-st no">Taken down by the Keni team${p.reason ? ': ' + esc(p.reason) : ''}</em>`
+    : p.status === 'ended' ? '<em class="rq-st">You ended it</em>' : p.over ? '<em class="rq-st">Over</em>'
+    : p.starts > today() ? `<em class="rq-st">Starts ${esc(dayName(p.starts))}</em>` : onToday(p) ? '<em class="rq-st ok">Live now</em>' : '<em class="rq-st">Live, not on today</em>';
+
+  function openManage(vid) {
+    const v = VBY[vid]; if (!v) return toast('Couldn’t find that place. Try again in a moment.');
+    if (!uid()) return K.openLogin && K.openLogin('business');
+    const m = K.openModal('<div class="fm"><p class="fine">Loading…</p></div>', 'login-sheet st-sheet');
+    const sheet = $('.sheet', m);
+    let PM = null, F = null;
+    const draw = (html) => { const top = sheet.scrollTop; sheet.innerHTML = `<button class="icon-btn close" data-m="close" aria-label="Close">${icon('x')}</button>${html}`; sheet.scrollTop = F ? top : 0; };
+    const live = () => (PM || []).filter((p) => p.status === 'live' && !p.over);
+    const listHTML = () => {
+      const full = live().length >= 3;
+      const row = (p, i) => { const on = p.status === 'live' && !p.over;
+        return `<div class="pe-row${on ? '' : ' old'}" style="--i:${Math.min(i, 8)}">${p.photo ? `<img class="st-th" src="${esc(p.photo)}" alt="">` : p.kind === 'event' ? dateChip(p.starts) : `<span class="pe-ic">${icon('tag')}</span>`}
+        <div class="pe-t"><b>${esc(p.title)}</b><small>${p.kind === 'event' ? 'Event' : 'Promo'} · ${esc(whenLine(p))}</small>${STATUS(p)}</div>
+        <div class="pe-ra">${on ? `<button class="btn ghost sm" data-pm="edit" data-id="${p.id}">${icon('edit')} Edit</button><button class="link-btn" data-pm="end" data-id="${p.id}">End it</button>`
+          : p.status !== 'down' ? `<button class="link-btn" data-pm="again" data-id="${p.id}">Post again</button>` : ''}</div></div>`; };
+      return `<div class="fm pe-man"><span class="eyebrow">Studio · promos &amp; events</span><h2 class="display">What’s on at <em>${esc(v.name)}</em></h2>
+        <p class="sub">Post a deal or a night. It shows on your page, on your pin and in Explore, and comes down by itself after the last day.</p>
+        <div class="pe-new"><button class="pe-nb" data-pm="new" data-k="promo"${full ? ' disabled' : ''}><span class="pe-ic">${icon('tag')}</span><b>New promo</b><small>A deal, like Buy 1 Take 1</small></button>
+          <button class="pe-nb" data-pm="new" data-k="event"${full ? ' disabled' : ''}><span class="pe-ic ev">${lic('cal')}</span><b>New event</b><small>A night, like acoustic Friday</small></button></div>
+        ${full ? '<p class="fine">You have 3 live. End one to post another.</p>' : ''}
+        ${PM == null ? '<p class="fine">Loading…</p>' : PM.length ? `<div class="pe-rows">${PM.map(row).join('')}</div>` : `<div class="st-empty">${icon('tag')}<b>Nothing posted yet</b><small>Your first promo or event shows up for everyone nearby.</small></div>`}</div>`;
+    };
+    const formHTML = () => {
+      const ev = F.kind === 'event', t = today();
+      return `<div class="fm pe-form"><span class="eyebrow">Studio · ${F.id ? 'edit' : 'new'} ${ev ? 'event' : 'promo'}</span><h2 class="display">${F.id ? 'Edit your' : 'Post a'} <em>${ev ? 'event' : 'promo'}</em></h2>
+        ${F.id ? '' : `<div class="chips pe-kind" role="group" aria-label="Promo or event"><button type="button" class="chip" data-pm="kind" data-k="promo" aria-pressed="${!ev}">${icon('tag')} Promo</button><button type="button" class="chip" data-pm="kind" data-k="event" aria-pressed="${ev}">${lic('cal')} Event</button></div>`}
+        <label class="fm-l">${ev ? 'Name of the event' : 'The deal'} <small>(${F.title.length}/60)</small><input id="pe-title" maxlength="60" value="${esc(F.title)}" placeholder="${ev ? 'e.g. Acoustic night with Banda Uno' : 'e.g. Buy 1 Take 1 on all milk teas'}" autocomplete="off"></label>
+        <label class="fm-l">Details <small>(optional, ${F.details.length}/300)</small><textarea id="pe-details" maxlength="300" rows="2" placeholder="${ev ? 'Who’s playing, what to expect, reserve a table…' : 'What’s included, how to get it. e.g. Show this at the counter.'}">${esc(F.details)}</textarea></label>
+        ${ev ? `<div class="pe-two"><label class="fm-l">Date<input id="pe-starts" type="date" min="${t}" max="${addDays(t, 60)}" value="${F.starts}"></label>
+            <label class="fm-l">Starts at<select id="pe-time" class="pe-sel">${hourOpts(F.time)}</select></label></div>
+            <label class="fm-l">Entrance <small>(optional)</small><input id="pe-price" maxlength="30" value="${esc(F.price)}" placeholder="Free, or ₱200 at the door" autocomplete="off"></label>`
+          : `<div class="pe-two"><label class="fm-l">Starts<input id="pe-starts" type="date" min="${t}" max="${addDays(t, 60)}" value="${F.starts}"></label>
+            <label class="fm-l">Last day<input id="pe-ends" type="date" min="${F.starts}" max="${addDays(F.starts, 92)}" value="${F.ends}"></label></div>
+            <div class="fm-l">Which days?<div class="chips wrap pe-days">${ORDER.map((d) => `<button type="button" class="chip sm" data-pm="day" data-d="${d}" aria-pressed="${!F.days || F.days.includes(d)}">${DAY[d]}</button>`).join('')}</div></div>
+            <label class="fm-l">Price <small>(optional)</small><input id="pe-price" maxlength="30" value="${esc(F.price)}" placeholder="e.g. ₱99 or 20% off" autocomplete="off"></label>`}
+        <div class="fm-l">Photo <small>(optional)</small><div class="st-cover">${F.photo ? `<img src="${esc(F.photo)}" alt="Photo for this post">` : `<span class="st-cover-none pe-noph">${ev ? lic('cal') : icon('tag')}</span>`}
+          <div class="st-cover-acts"><label class="btn ghost sm" for="pe-file">${lic('cam')} ${F.photo ? 'Change photo' : 'Add a photo'}</label>${F.photo ? '<button type="button" class="link-btn" data-pm="nophoto">Remove</button>' : ''}<small>${F.busy ? 'Uploading…' : 'A poster or a photo of the food works best.'}</small></div></div></div>
+        <div class="fm-acts st-foot"><button class="btn ghost" data-pm="back">Back</button><span></span><button class="btn primary" data-pm="save">${F.id ? 'Save' : 'Post it'} ${icon('check')}</button></div></div>`;
+    };
+    const readForm = () => {
+      if (!F) return;
+      const g = (id) => $('#' + id, sheet);
+      if (g('pe-title')) F.title = g('pe-title').value; if (g('pe-details')) F.details = g('pe-details').value; if (g('pe-price')) F.price = g('pe-price').value;
+      if (g('pe-starts') && g('pe-starts').value) F.starts = g('pe-starts').value;
+      if (g('pe-ends') && g('pe-ends').value) F.ends = g('pe-ends').value;
+      if (g('pe-time')) F.time = +g('pe-time').value;
+      if (F.kind === 'event') F.ends = F.starts; else if (F.ends < F.starts) F.ends = F.starts;
+    };
+    const showList = async () => {
+      F = null; onFile = null; draw(listHTML());
+      const { data, error } = await K.sb.rpc('posts_mine', { p_place: vid });
+      if (!document.body.contains(sheet) || F) return;
+      if (error) { PM = PM || []; toast(/not yours/.test(error.message) ? 'You don’t manage this place any more' : 'Couldn’t load your posts. Check your connection.'); }
+      else PM = Array.isArray(data) ? data : [];
+      draw(listHTML());
+    };
+    const showForm = (f) => {
+      F = f; draw(formHTML()); sheet.scrollTop = 0;
+      onFile = async (file) => {
+        if (!uid()) return toast('Sign in again to add a photo');
+        readForm(); F.busy = true; draw(formHTML());
+        try {
+          const b = await shrink(file), path = uid() + '/' + rid() + '.jpg';
+          const up = await K.sb.storage.from('place-photos').upload(path, b, { contentType: 'image/jpeg', upsert: false }); if (up.error) throw up.error;
+          if (F) F.photo = PUB + path;
+        } catch (x) { toast(/read/.test((x && x.message) || '') ? 'Couldn’t read that photo. Try another one.' : 'Couldn’t upload. Check your connection.'); }
+        if (F) { F.busy = false; if (document.body.contains(sheet)) draw(formHTML()); }
+      };
+    };
+    async function save(btn) {
+      readForm();
+      if (F.busy) return toast('Wait for the photo to finish uploading');
+      const title = clean(F.title, 60); if (title.length < 3) { toast(F.kind === 'event' ? 'Give the event a name' : 'Say what the deal is'); return $('#pe-title', sheet).focus(); }
+      const t = today();
+      if (!F.starts || F.starts > addDays(t, 60)) return toast('Pick a start date in the next 2 months');
+      if (F.ends < t) return toast('The last day can’t be in the past');
+      if (F.kind === 'promo' && F.ends > addDays(F.starts, 92)) return toast('A promo can run for 3 months at most');
+      const p = { kind: F.kind, title, details: clean(F.details, 300) || null, photo: F.photo || null, starts: F.starts, ends: F.ends, price: clean(F.price, 30) || null,
+        time: F.kind === 'event' ? F.time : null, days: F.kind === 'promo' && F.days && F.days.length < 7 ? F.days : null };
+      btn.disabled = true; btn.innerHTML = 'Posting…';
+      const { error } = await K.sb.rpc('post_save', { p_id: F.id, p_place: vid, p });
+      if (error) {
+        btn.disabled = false; btn.innerHTML = `${F.id ? 'Save' : 'Post it'} ${icon('check')}`;
+        const m = error.message || '';
+        return toast(/three live/.test(m) ? 'You already have 3 live. End one first.' : /dates/.test(m) ? 'Check the dates' : /title|details|price/.test(m) ? 'Take out the < and > signs' : /not yours/.test(m) ? 'You don’t manage this place any more' : 'Couldn’t post. Check your connection.');
+      }
+      const was = F; F = null;
+      burst(innerWidth / 2, innerHeight * 0.4, { n: 24, spread: 200 });
+      try { if (navigator.vibrate) navigator.vibrate(14); } catch { /* not supported */ }
+      toast(was.id ? 'Saved' : was.starts > t ? `Your ${was.kind} is set for <b>${esc(nice(was.starts))}</b>` : `Your ${was.kind} is <b>live</b>`, () => { K.closeModal(); setTimeout(() => K.openDetail(vid), 320); }, 'View');
+      load(); showList();
+    }
+    sheet.addEventListener('input', (e) => {
+      const i = e.target; if (i.id !== 'pe-title' && i.id !== 'pe-details') return;
+      const s = i.closest('label').querySelector('small'); if (s) s.textContent = i.id === 'pe-title' ? `(${i.value.length}/60)` : `(optional, ${i.value.length}/300)`;
+    });
+    sheet.addEventListener('change', (e) => { if (e.target.id === 'pe-starts' && F && F.kind === 'promo') { readForm(); draw(formHTML()); } });
+    sheet.addEventListener('click', async (e) => {
+      const t = e.target.closest('[data-pm]'); if (!t) return;
+      const a = t.dataset.pm, p = PM && PM.find((x) => String(x.id) === t.dataset.id);
+      if (a === 'new') return showForm(blank(t.dataset.k));
+      if (a === 'edit' && p) return showForm(fromPost(p));
+      if (a === 'again' && p) { if (live().length >= 3) return toast('You have 3 live. End one first.'); return showForm(fromPost(p, true)); }
+      if (a === 'back') return showList();
+      if (a === 'kind') { readForm(); const k = t.dataset.k; if (k === F.kind) return; F.kind = k; F.ends = k === 'event' ? F.starts : addDays(F.starts, 13); return draw(formHTML()); }
+      if (a === 'day') {
+        readForm(); const d = +t.dataset.d, cur = F.days || [0, 1, 2, 3, 4, 5, 6];
+        const next = cur.includes(d) ? cur.filter((x) => x !== d) : [...cur, d];
+        if (!next.length) return toast('Pick at least one day');
+        F.days = next.length === 7 ? null : next; t.setAttribute('aria-pressed', next.includes(d)); return;
+      }
+      if (a === 'nophoto') { readForm(); F.photo = ''; return draw(formHTML()); }
+      if (a === 'save') return save(t);
+      if (a === 'end' && p) {
+        if (!t.dataset.sure) { t.dataset.sure = 1; t.textContent = 'Tap again to end it'; return; }
+        t.disabled = true;
+        const { error } = await K.sb.rpc('post_end', { p_id: p.id });
+        if (error) { t.disabled = false; return toast('Couldn’t end it. Check your connection.'); }
+        toast('Ended. It’s off Keni now.'); load(); return showList();
+      }
+    });
+    showList();
+  }
+  document.addEventListener('click', (e) => { const t = e.target.closest('[data-pe-open]'); if (t) openManage(t.dataset.peOpen); });
+
+  K.posts = { load, liveOf, nowOf, exploreRow, voteTag, badge, openManage, ver: () => ver, html: postsHTML };
+})();
+</script>
+<style>
+/* promos and events */
+.pe-list { display: grid; gap: 10px; margin: 4px 0 12px; }
+.pe-card { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: start; padding: 12px; border-radius: 20px;
+  background: linear-gradient(135deg, rgba(255, 143, 200, .14), rgba(196, 176, 255, .1)); border: 1px solid rgba(255, 143, 200, .3); overflow: hidden;
+  animation: peIn .55s var(--spring, cubic-bezier(.2, .9, .3, 1.2)) both; animation-delay: calc(var(--i, 0) * 70ms); }
+.pe-card.event { background: linear-gradient(135deg, rgba(130, 200, 255, .14), rgba(196, 176, 255, .1)); border-color: rgba(130, 200, 255, .3); }
+.pe-card.now::after { content: ''; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, .12) 50%, transparent 70%); transform: translateX(-100%); animation: peShine 3.2s 1s ease-in-out infinite; pointer-events: none; }
+.pe-ph { width: 76px; height: 76px; border-radius: 14px; object-fit: cover; }
+.pe-ic { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; flex: none; background: rgba(255, 143, 200, .2); color: #ffb3d9; }
+.pe-ic.ev { background: rgba(130, 200, 255, .2); color: #a8d8ff; }
+.pe-ic .ic { width: 22px; height: 22px; }
+.pe-date { width: 50px; height: 54px; border-radius: 14px; display: grid; place-content: center; text-align: center; background: rgba(130, 200, 255, .2); color: #cfe9ff; flex: none; }
+.pe-date small { font-size: .66rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; } .pe-date b { font-size: 1.3rem; line-height: 1; }
+.pe-t { display: grid; gap: 3px; min-width: 0; }
+.pe-t p { margin: 0; color: var(--ink-2); font-size: .88rem; } .pe-t small { color: var(--ink-3); font-size: .8rem; }
+.pe-k { font-style: normal; font-size: .68rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #ffb3d9; }
+.pe-card.event .pe-k { color: #a8d8ff; }
+.pe-rep { justify-self: start; font-size: .76rem; opacity: .7; } .pe-rep .ic { width: 13px; height: 13px; vertical-align: -2px; }
+.pe-repd { font-style: italic; }
+.xcard.pe-x .xart { border-color: rgba(255, 143, 200, .35); }
+.xart > .pe-xk { position: absolute; left: 8px; top: 8px; width: auto; height: auto; font-style: normal; font-size: .7rem; font-weight: 700; padding: .3em .7em; border-radius: 99px;
+  background: rgba(255, 143, 200, .92); color: #2a0b1c; box-shadow: 0 4px 14px rgba(0, 0, 0, .3); animation: pePop .5s .2s var(--spring, ease) both; }
+.xart > .pe-xk.event { background: rgba(130, 200, 255, .95); color: #08233a; }
+.vt-deal { display: inline-flex; align-items: center; gap: 4px; font-style: normal; font-size: .72rem; font-weight: 700; color: #ffb3d9; }
+.vt-deal .ic { width: 13px; height: 13px; }
+.kpin .pdeal { position: absolute; left: -7px; top: -7px; width: 19px; height: 19px; border-radius: 50%; display: grid; place-items: center; rotate: 45deg; font-style: normal;
+  background: linear-gradient(135deg, #ff8fc8, #c4b0ff); color: #fff; border: 1.5px solid rgba(16, 11, 32, .9); animation: pePop .5s .3s var(--spring, ease) both, peRing 2.4s 1s ease-out infinite; }
+.kpin .pdeal .ic { width: 11px; height: 11px; stroke-width: 2.4; }
+.st-badge.ok { background: rgba(110, 231, 183, .16); color: #8ff0c4; }
+.rq-st.ok { color: #8ff0c4; }
+.pe-new { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.pe-nb { display: grid; justify-items: start; gap: 4px; padding: 14px; border-radius: 20px; text-align: left; color: inherit; background: rgba(255, 255, 255, .05); border: 1px solid var(--line);
+  transition: transform .2s var(--spring, ease), background .2s; animation: peIn .5s var(--spring, ease) both; }
+.pe-nb:nth-child(2) { animation-delay: 70ms; }
+.pe-nb:active { transform: scale(.96); } .pe-nb:disabled { opacity: .45; }
+.pe-nb small { color: var(--ink-3); font-size: .8rem; }
+.pe-rows { display: grid; gap: 8px; }
+.pe-row { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px 12px; align-items: center; padding: 12px; border-radius: 18px; background: rgba(255, 255, 255, .05); border: 1px solid var(--line);
+  animation: peIn .45s var(--spring, ease) both; animation-delay: calc(var(--i, 0) * 50ms); }
+.pe-row.old { opacity: .65; }
+.pe-ra { grid-column: 1 / -1; display: flex; gap: 10px; align-items: center; } .pe-ra:empty { display: none; }
+.pe-kind .chip .ic, .pe-nb .ic { width: 16px; height: 16px; }
+.pe-two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.pe-form input[type="date"], .pe-sel { width: 100%; min-width: 0; height: 46px; padding: 0 .7rem; font: inherit; color: #fff; border-radius: 14px; background: rgba(255, 255, 255, .08); border: 1px solid var(--line); color-scheme: dark; }
+.pe-days .chip { min-width: 52px; justify-content: center; }
+.pe-noph { display: grid !important; place-items: center; background: rgba(255, 255, 255, .06); color: var(--ink-3); } .pe-noph .ic { width: 28px; height: 28px; }
+@keyframes peIn { from { transform: translateY(14px) scale(.97); opacity: 0; } }
+@keyframes pePop { from { transform: scale(0); } }
+@keyframes peShine { 0%, 60% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+@keyframes peRing { 0% { box-shadow: 0 0 0 0 rgba(255, 143, 200, .55); } 70%, 100% { box-shadow: 0 0 0 9px rgba(255, 143, 200, 0); } }
+@media (prefers-reduced-motion: reduce) { .pe-card.now::after, .kpin .pdeal { animation: none; } }
+@media (max-width: 520px) { .pe-ph { width: 64px; height: 64px; } }
+</style>
   <script>/* Keni · Profile + sign-in. Until there are real accounts (step 2: Supabase Auth), "signing in" is just your name,
    kept in this browser (S.user). */
 (() => {
@@ -7465,13 +8007,14 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
   function draw() {
     const on = plain(); box.hidden = !on; document.body.classList.toggle('x-on', on);
     if (!on) { sig = ''; return; }
-    const all = shown(), key = all.length + '|' + (K.S.loc ? K.S.loc.lat + ',' + K.S.loc.lng : K.S.area) + '|' + new Date().getHours();
+    const all = shown(), key = all.length + '|' + (K.S.loc ? K.S.loc.lat + ',' + K.S.loc.lng : K.S.area) + '|' + new Date().getHours() + '|' + (K.posts ? K.posts.ver() : 0);
     if (key === sig) return; sig = key;
     const open = all.filter((v) => v.hoursKnown !== false && status(v).open).sort((a, b) => distKm(a) - distKm(b)).slice(0, 12);
     const picked = all.slice().sort((a, b) => pct(b) - pct(a)).slice(0, 12);
     const fresh = all.filter((v) => (v.user || v.byPeople) && !v.pending && !v.priv && !v.rejected && Date.now() - (v.at || 0) < 60 * DAY).sort((a, b) => (b.at || 0) - (a.at || 0)).slice(0, 12);
     const craves = (K.cravesHere ? K.cravesHere() : []).map((c) => ({ c, n: all.filter((v) => K.cravesOf(v).includes(c.id)).length })).filter((x) => x.n).sort((a, b) => b.n - a.n);
     box.innerHTML = [
+      K.posts ? K.posts.exploreRow() : '',
       row('open', 'Open now <em>near you</em>', `around ${esc((AREA[K.S.area] || {}).name || 'Angeles')}`, open.map((v, i) => card(v, i, `🟢 Open · ${distKm(v)} km`))),
       row('picked', 'Picked <em>for you</em>', 'matches your taste', picked.map((v, i) => card(v, i, pct(v) >= 60 ? `✨ ${pct(v)}% your vibe` : ''))),
       row('new', 'New on <em>Keni</em>', 'just added', fresh.map((v, i) => card(v, i, `✦ New · ${distKm(v)} km`))),
@@ -12313,6 +12856,9 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
     else if (n.kind === 'ps_cancel') toast(ps + ' was cancelled');
     else if (n.kind === 'menu_ok') toast((d.kind === 'place' ? 'Your photo of <b>' : 'Your menu photo for <b>') + esc(d.name || 'a place') + '</b> is up' + (d.cover ? ' as the cover photo' : '') + '. Thanks!', d.place ? () => { hide(); setTimeout(() => K.menuPhotos && K.menuPhotos.see(d.place, d.kind), 320); } : null, 'View');
     else if (n.kind === 'menu_no') toast((d.kind === 'place' ? 'Your photo of <b>' : 'Your menu photo for <b>') + esc(d.name || 'a place') + '</b> wasn’t added this time');
+    else if (n.kind === 'post_down') toast('Your post <b>' + esc(d.title || '') + '</b> was taken down', () => { hide(); setTimeout(() => K.setView('biz'), 320); }, 'Studio');
+    else if (n.kind === 'claim_ok') toast('You can now manage <b>' + esc(d.name || 'your place') + '</b> on Keni', () => { hide(); setTimeout(() => { if (K.biz) K.biz.refresh(); K.setView('biz'); }, 320); }, 'Studio');
+    else if (n.kind === 'claim_no') toast('Your claim for <b>' + esc(d.name || 'a place') + '</b> wasn’t approved', () => { hide(); setTimeout(() => { if (K.biz) K.biz.refresh(); K.setView('biz'); }, 320); }, 'See why');
     else if (n.kind === 'tropa_invite' && d.code) toast('🧲 <b>' + who + '</b> invited you to ' + esc((d.emoji || '') + ' ' + (d.name || 'a tropa')), () => tjoin(d.code), 'Join');
   }
   const inTropa = (code) => K.tropa && K.tropa.list().some((t) => t.remote && t.remote.code === code);
@@ -12452,6 +12998,9 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
         else if (n.kind === 'friend_accept') { txt = who + ' accepted your friend request'; acts = n.status === 'friends' ? `<button class="btn ghost sm" data-ch-dm="${esc(a.id)}"><svg class="ic " viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 18.5l1.2-3.3A7.5 7.5 0 1 1 9 18.3z"/><path d="M9 11h6M9 14h3.5"/></svg>Say hi</button>` : ''; }
         else if (n.kind === 'tropa_invite') { const d = n.data || {}; txt = who + ' invited you to <b>' + esc((d.emoji || '') + ' ' + (d.name || 'a tropa')) + '</b>'; acts = inTropa(d.code) ? '<small>Joined ✓</small>' : `<button class="btn primary sm" data-ch-tjoin="${esc(d.code || '')}">Join</button>`; }
         else if (n.kind === 'menu_ok') { const d = n.data || {}; txt = (d.kind === 'place' ? 'Your photo of <b>' : 'Your menu photo for <b>') + esc(d.name || 'a place') + '</b> is up' + (d.cover ? ' as the cover photo' : '') + '. Thanks for helping!'; acts = d.place ? `<button class="btn ghost sm" data-mp-see="${esc(d.place)}" data-k="${esc(d.kind || 'menu')}">View</button>` : ''; }
+        else if (n.kind === 'post_down') { const d = n.data || {}; txt = 'The Keni team took down <b>' + esc(d.title || 'your post') + '</b> at ' + esc(d.name || 'your place') + (d.reason ? ': ' + esc(d.reason) : '') + '.'; acts = '<button class="btn ghost sm" data-st-open>Studio</button>'; }
+        else if (n.kind === 'claim_ok') { const d = n.data || {}; txt = 'You can now manage <b>' + esc(d.name || 'your place') + '</b> on Keni. Update its hours, photo and contacts in Studio.'; acts = '<button class="btn primary sm" data-st-open>Studio</button>'; }
+        else if (n.kind === 'claim_no') { const d = n.data || {}; txt = 'Your claim for <b>' + esc(d.name || 'a place') + '</b> wasn’t approved' + (d.reason ? ': ' + esc(d.reason) : '') + '. You can try again with a number or a photo we can check.'; acts = '<button class="btn ghost sm" data-st-open>Studio</button>'; }
         else if (n.kind === 'menu_no') { const d = n.data || {}; txt = (d.kind === 'place' ? 'Your photo of <b>' : 'Your menu photo for <b>') + esc(d.name || 'a place') + '</b> wasn’t added this time. Make sure it’s clear and shows the place.'; }
         else if (n.kind.startsWith('ps_')) {
           const d = n.data || {}, ps = '<b>' + esc((d.emoji || '🧲') + ' ' + (d.title || 'a Pasabit')) + '</b>', at = d.when ? ' · ' + esc(whenShort(d.when)) : '', id = esc(d.ps || '');
