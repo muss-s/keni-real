@@ -74,6 +74,15 @@ header .who { margin-left: auto; display: flex; align-items: center; gap: 10px; 
 @media (max-width: 520px) { .cl-card { flex-direction: column; } .cl-proof { width: 100%; height: 260px; } }
 @media (max-width: 520px) { .mp-card { flex-direction: column; } .mp-img { width: 100%; height: 300px; } }
 .pp-top img, .pp-top .ph { flex: none; width: 76px; height: 76px; border-radius: 18px; object-fit: cover; background: var(--card2); display: grid; place-items: center; font-size: 1.8rem; }
+.pp { container-type: inline-size; }
+.pp-full { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 18px; align-items: start; }
+.pp-full h3 { font-size: 1.35rem; }
+.pp-pics { display: grid; gap: 8px; } .pp-pics a { display: block; border-radius: 16px; overflow: hidden; background: var(--card2); }
+.pp-pics a img { width: 100%; display: block; object-fit: cover; aspect-ratio: 1; } .pp-pics .more { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; } .pp-pics .more a { border-radius: 10px; }
+.pp-pics .none { aspect-ratio: 1; display: grid; place-items: center; border-radius: 16px; background: var(--card2); font-size: 2.4rem; }
+.pp-fields { display: grid; grid-template-columns: 86px minmax(0, 1fr); gap: 7px 12px; margin: 0; font-size: .9rem; } .pp-fields dt { color: var(--ink3); } .pp-fields dd { margin: 0; overflow-wrap: anywhere; } .pp-fields .no { color: #ffc79e; }
+@container (max-width: 600px) { .pp-full { grid-template-columns: 130px minmax(0, 1fr); gap: 14px; } }
+@container (max-width: 380px) { .pp-full { grid-template-columns: 1fr; } }
 .pp-top h3 { font-size: 1.25rem; line-height: 1.1; overflow-wrap: anywhere; }
 .pp-map { width: 100%; height: 150px; border: 0; border-radius: 18px; filter: invert(.9) hue-rotate(200deg) saturate(.7); background: var(--card2); }
 .lvl { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -307,7 +316,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--h
       const [r, cv, pp, mp, cl, po, rp, ov] = await Promise.all([
         sb.from('reports').select('*').order('created_at', { ascending: false }).limit(500),
         sb.rpc('craving_recent'),
-        sb.from('places').select('id,name,kinds,area,blurb,photo,lat,lng,price,hours,cravings,created_at,added_by').eq('visibility', 'public').eq('status', 'pending').not('added_by', 'is', null).order('created_at', { ascending: true }).limit(100),
+        sb.from('places').select('id,name,kinds,area,blurb,photo,more_photos,lat,lng,price,hours,days,off_days,hours_note,addr,vibes,perks,contacts,cravings,created_at,added_by').eq('visibility', 'public').eq('status', 'pending').not('added_by', 'is', null).order('created_at', { ascending: true }).limit(100),
         sb.rpc('menu_photo_pending'),
         sb.rpc('claims_pending'),
         sb.rpc('posts_admin'),
@@ -723,14 +732,34 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--h
     if (error) return toast(/not down/.test(error.message) ? 'It’s already back' : 'Couldn’t put it back');
     p.status = 'live'; p.reason = null; render(); toast('It’s back up');
   }
+  // a place someone added, waiting for approval: everything they filled in, and what they left out
+  const PRICE = ['Free', 'Under ₱200', '₱200–500', '₱500–1,000', '₱1,000+'];
+  const hh = (x) => { x = +x; const h = Math.floor(x) % 24, m = Math.round((x % 1) * 60); return ((h + 11) % 12 + 1) + (m ? ':' + String(m).padStart(2, '0') : '') + (h < 12 ? ' AM' : ' PM'); };
+  const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   function ppHTML(p, i) {
-    const k = (p.kinds || []).find((x) => KIND[x]), b = 0.004;
+    const k = (p.kinds || []).find((x) => KIND[x]), b = 0.004, no = (t = 'Not given') => `<span class="no">${t}</span>`;
     const mapUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${p.lng - b},${p.lat - b / 1.6},${p.lng + b},${p.lat + b / 1.6}&layer=mapnik&marker=${p.lat},${p.lng}`;
+    const pics = [p.photo, ...(Array.isArray(p.more_photos) ? p.more_photos : [])].filter((x) => typeof x === 'string' && x);
+    const pic = (u) => `<a href="${esc(u)}" target="_blank" rel="noopener" title="Open full size"><img src="${esc(u)}" alt="" loading="lazy"></a>`;
+    const ct = Object.entries(p.contacts || {}).filter(([, v]) => v);
+    const hours = Array.isArray(p.hours) ? `${hh(p.hours[0])} – ${hh(p.hours[1])}${Array.isArray(p.off_days) && p.off_days.length ? ` · closed ${p.off_days.map((d) => WD[d] || d).join(', ')}` : ''}${p.hours_note ? ` · ${esc(p.hours_note)}` : ''}` : no();
+    const row = (l, v) => `<dt>${l}</dt><dd>${v}</dd>`;
     return `<section class="card pp in" style="--i:${i}" data-pp="${esc(p.id)}">
-      <div class="pp-top">${p.photo ? `<img src="${esc(p.photo)}" alt="">` : `<span class="ph">${KIND[k] || '📍'}</span>`}
-        <div style="min-width:0"><h3>${esc(p.name)}</h3><div class="meta">${KIND[k] || ''} ${esc(k || 'place')} · ${esc(area(p.area))} · added ${ago(p.created_at)} ${whoHTML(p.added_by).replace('from', 'by')}</div>
-        ${p.blurb ? `<p class="note" style="margin:6px 0 0">“${esc(p.blurb)}”</p>` : ''}</div></div>
-      <div class="tags">${p.price != null ? `<span class="tag">${p.price ? '₱'.repeat(p.price) : 'Free'}</span>` : ''}${Array.isArray(p.hours) ? `<span class="tag">🕒 ${p.hours[0]}:00 – ${p.hours[1]}:00</span>` : '<span class="tag warn">Hours not listed</span>'}${(p.cravings || []).map((c) => `<span class="tag">${esc(c)}</span>`).join('')}</div>
+      <div class="pp-full"><div class="pp-pics">${pics.length ? pic(pics[0]) + (pics.length > 1 ? `<div class="more">${pics.slice(1).map(pic).join('')}</div>` : '') : `<div class="none">${KIND[k] || '📍'}</div>`}
+          <span class="meta">${pics.length ? `${pics.length} photo${pics.length === 1 ? '' : 's'} · tap to open full size` : 'No photo'}</span></div>
+        <div style="min-width:0;display:grid;gap:12px"><div><h3>${esc(p.name)}</h3><div class="meta">added ${ago(p.created_at)} ${whoHTML(p.added_by).replace('from', 'by')}</div></div>
+          <dl class="pp-fields">
+            ${row('Kind', (p.kinds || []).length ? (p.kinds || []).map((x) => `${KIND[x] || ''} ${esc(x)}`).join(', ') : no())}
+            ${row('Area', esc(area(p.area)))}
+            ${row('Address', p.addr ? esc(p.addr) : no())}
+            ${row('Price', p.price != null ? esc(PRICE[p.price] || '₱'.repeat(p.price)) : no())}
+            ${row('Hours', hours)}
+            ${row('Description', p.blurb ? `“${esc(p.blurb)}”` : no())}
+            ${row('Cravings', (p.cravings || []).length ? (p.cravings || []).map(esc).join(', ') : no('None'))}
+            ${row('Vibes', (p.vibes || []).length ? (p.vibes || []).map(esc).join(', ') : no('None'))}
+            ${row('Perks', (p.perks || []).length ? (p.perks || []).map(esc).join(', ') : no('None'))}
+            ${row('Contacts', ct.length ? ct.map(([k2, v]) => `${esc({ phone: 'Phone', fb: 'Facebook', ig: 'Instagram', web: 'Website' }[k2] || k2)}: ${esc(v)}`).join('<br>') : no())}
+          </dl></div></div>
       <iframe class="pp-map" loading="lazy" title="Where ${esc(p.name)} is" src="${mapUrl}"></iframe>
       <div class="lvl" role="radiogroup" aria-label="How it shows on the map"><span class="meta">Show it as</span>
         <button type="button" class="lvl-b" data-lvl="full" role="radio" aria-checked="${(st.lvl[p.id] || 'full') === 'full'}"><i class="big">📍</i><span><b>Big pin</b><small>Full listing: card, photo, hours</small></span></button>
