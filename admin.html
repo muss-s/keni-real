@@ -20,7 +20,7 @@ body { margin: 0; min-height: 100vh; color: var(--ink); font: 15px/1.45 Geist, s
 button, input, select, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; border: 0; background: none; -webkit-tap-highlight-color: transparent; }
 a { color: var(--hi); }
-.wrap { max-width: 760px; margin: 0 auto; padding: max(14px, env(safe-area-inset-top)) 16px 90px; }
+.wrap { min-height: 100vh; }
 h1, h2, h3 { font-family: var(--display); font-weight: 800; letter-spacing: -.02em; margin: 0; }
 .grad { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
 header { display: flex; align-items: center; gap: 12px; padding: 4px 0 14px; }
@@ -155,12 +155,96 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--h
 @keyframes spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 @media (max-width: 520px) { .edit .row { grid-template-columns: 1fr; } header .who .em-t { display: none; } .tab { font-size: .8rem; gap: 4px; } }
+/* ── PC layout (2026-10-29): sidebar + wide main. Under 900px it folds back into tabs on top. ── */
+.shell { display: grid; grid-template-columns: 216px minmax(0, 1fr); min-height: 100vh; }
+.side { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; gap: 4px; padding: 22px 14px; border-right: 1px solid var(--line); background: rgba(10, 8, 20, .7); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+.side .logo { padding: 2px 10px 18px; }
+.nav { display: grid; gap: 2px; }
+.nav .tab { justify-content: flex-start; height: 42px; padding: 0 12px; border-radius: 12px; gap: 11px; font-size: .92rem; }
+.nav .tab svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; opacity: .85; }
+.nav .tab:hover { background: var(--card2); color: var(--ink); }
+.nav .tab[aria-pressed="true"] { box-shadow: none; }
+.nav .tab b { margin-left: auto; }
+.side-foot { margin-top: auto; display: grid; gap: 8px; padding: 12px 10px 0; border-top: 1px solid var(--line); font-size: .8rem; color: var(--ink3); overflow-wrap: anywhere; }
+.side-foot .link { justify-self: start; font-size: .82rem; }
+.m-out { display: none; }
+.main { min-width: 0; padding: 26px 28px 80px; max-width: 1440px; }
+.top { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
+.top h1 { font-size: 1.9rem; }
+.top .sub { color: var(--ink3); font-size: .9rem; }
+.top .right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.kbd { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 6px; border: 1px solid var(--line); background: var(--card2); font: 600 .74rem Geist, sans-serif; color: var(--ink2); }
+.keys { color: var(--ink3); font-size: .8rem; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+/* wide grids for the card tabs */
+.list.cols { grid-template-columns: repeat(auto-fill, minmax(440px, 1fr)); align-items: start; }
+.narrow { max-width: 920px; }
+/* To do: queue on the left, the item on the right */
+.split { display: grid; grid-template-columns: minmax(280px, 360px) minmax(0, 1fr); gap: 20px; align-items: start; }
+.queue { position: sticky; top: 20px; max-height: calc(100vh - 140px); overflow: auto; padding: 6px; }
+.qgrp { margin: 10px 8px 4px; font-size: .72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ink3); }
+.qgrp:first-child { margin-top: 4px; }
+.qi { width: 100%; display: flex; align-items: center; gap: 11px; padding: 10px; border-radius: 14px; text-align: left; transition: background .15s; }
+.qi:hover { background: var(--card2); }
+.qi[aria-current="true"] { background: rgba(176, 124, 255, .18); box-shadow: inset 0 0 0 1px rgba(196, 176, 255, .55); }
+.qi .qd { flex: none; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: var(--card2); font-size: 1rem; }
+.qi span:last-child { min-width: 0; display: grid; gap: 1px; } .qi b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .92rem; }
+.qi small { color: var(--ink3); font-size: .76rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pane > .card { animation: slide .3s var(--spring); }
+.pane .mp-img { width: 240px; height: 320px; } .pane .cl-card, .pane .mp-card { gap: 20px; }
+.pane .pp-map { height: 240px; }
+.pane-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+/* tables */
+.tbl-wrap { overflow-x: auto; padding: 0; }
+.tbl { width: 100%; border-collapse: collapse; font-size: .88rem; }
+.tbl .tag { white-space: nowrap; }
+.tbl td.edrow .list { max-width: 760px; }
+.tbl th { position: sticky; top: 0; text-align: left; font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink3); padding: 12px 14px; background: rgba(16, 11, 32, .96); border-bottom: 1px solid var(--line); white-space: nowrap; }
+.tbl td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.tbl tr:last-child td { border-bottom: 0; }
+.tbl tbody tr.prow { display: table-row; cursor: pointer; }
+.tbl tbody tr.prow:hover td { background: rgba(255, 255, 255, .035); }
+.tbl tbody tr.open td { background: rgba(176, 124, 255, .1); }
+.tbl td.num { text-align: right; font-variant-numeric: tabular-nums; } .tbl th.num { text-align: right; }
+.tbl .nm2 { display: flex; align-items: center; gap: 10px; min-width: 0; } .tbl .nm2 b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 280px; }
+.tbl .av { flex: none; width: 30px; height: 30px; border-radius: 50%; object-fit: cover; background: var(--card2); display: grid; place-items: center; font-weight: 700; font-size: .8rem; color: var(--ink2); }
+.tbl .meta { white-space: nowrap; }
+.tbl td.edrow { padding: 0 10px 10px; background: rgba(176, 124, 255, .06); }
+.toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.toolbar .search { flex: 1 1 320px; max-width: 460px; margin: 0; }
+.toolbar .seg { margin: 0; }
+/* overview */
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; }
+.tile { padding: 18px; border-radius: 20px; background: var(--card); border: 1px solid var(--line); display: grid; gap: 4px; animation: slide .4s var(--spring) both; }
+.tile .k { font-size: .74rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ink3); }
+.tile .v { font-family: var(--display); font-size: 2.3rem; font-weight: 800; line-height: 1.05; }
+.tile .s { color: var(--ink2); font-size: .82rem; }
+.tile .bar0 { height: 6px; border-radius: 99px; background: var(--card2); overflow: hidden; margin-top: 6px; } .tile .bar0 i { display: block; height: 100%; background: var(--grad); border-radius: 99px; }
+.tile.hot { background: linear-gradient(150deg, rgba(196, 176, 255, .18), rgba(255, 143, 200, .1)); border-color: rgba(196, 176, 255, .45); cursor: pointer; }
+.charts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+.chart { padding: 18px; } .chart h3 { font-size: 1rem; margin-bottom: 14px; } .chart h3 small { font-family: Geist; font-weight: 500; color: var(--ink3); font-size: .8rem; margin-left: 6px; }
+.cbars { display: grid; grid-template-columns: repeat(14, 1fr); gap: 6px; height: 140px; align-items: end; }
+.cbar { display: grid; grid-template-rows: auto 1fr auto; height: 100%; justify-items: center; gap: 4px; }
+.cbar i { align-self: end; width: 100%; max-width: 30px; height: var(--h); min-height: 3px; border-radius: 7px 7px 3px 3px; background: rgba(196, 176, 255, .4); transform-origin: bottom; animation: grow .6s var(--spring) both; animation-delay: calc(var(--i) * 35ms); }
+.cbar.today i { background: var(--grad); }
+.cbar small { font-size: .7rem; color: var(--ink2); min-height: 1em; } .cbar b { font-size: .66rem; color: var(--ink3); font-weight: 500; }
+@keyframes grow { from { transform: scaleY(0); } }
+@media (max-width: 900px) {
+  .shell { display: block; }
+  .side { position: sticky; top: 0; z-index: 6; height: auto; flex-direction: row; align-items: center; padding: 10px 12px; border-right: 0; border-bottom: 1px solid var(--line); }
+  .side .logo { display: none; } .side-foot { display: none; }
+  .nav { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; } .nav::-webkit-scrollbar { display: none; }
+  .nav .tab { flex: none; height: 38px; font-size: .84rem; gap: 7px; } .nav .tab svg { display: none; }
+  .main { padding: 16px 14px 80px; }
+  .top h1 { font-size: 1.5rem; } .top .keys { display: none; } .m-out { display: inline; }
+  .list.cols { grid-template-columns: 1fr; }
+  .charts { grid-template-columns: 1fr; }
+}
 </style>
 </head>
 <body>
 <div class="wrap" id="app"><div class="empty"><b>⏳</b>Loading…</div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js" crossorigin="anonymous"></script>
-<script>/* Keni Admin — one page with 4 tabs: To do (places waiting for approval + new reports), Places (search and fix any place), Reports (all of them), Cravings (tags people added).
+<script>/* Keni Admin — built for a computer: a sidebar with Overview, To do (a queue with J/K/A/R keys), Places, Owners, People, Place reports, Promos and Tags. On a phone the sidebar becomes tabs.
    Sign in with a Keni account that is in public.admins. The database decides who sees what (row level security), so this page shows nothing to anyone else.
    Spots (Gatekeep?, visibility = 'tropa') are personal, so this page never lists them. */
 (() => {
@@ -181,7 +265,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--h
   const handle = (id) => { const p = st.people[id]; return p ? (p.username ? '@' + p.username : p.name) : 'someone'; };
   const byList = (ids = []) => { const n = ids.map(handle); return n.length > 3 ? `${n.slice(0, 3).join(', ')} and ${n.length - 3} more` : n.join(', '); };
   const ago = (t) => { const m = Math.round((Date.now() - new Date(t)) / 6e4); return m < 1 ? 'just now' : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} d ago`; };
-  const st = { user: null, tab: 'todo', rfilter: 'new', reports: [], places: {}, pp: [], cv: [], editing: null, busy: false, lvl: {}, people: {}, q: '', pf: 'all', plist: null, pBusy: false };
+  const st = { user: null, tab: '', sel: '', selIdx: 0, ofilter: 'approved', oq: '', pq2: '', ppl: null, own: null, ov: null, rpt: { users: [], pasabits: [] }, popen: '', rfilter: 'new', reports: [], places: {}, pp: [], cv: [], editing: null, busy: false, lvl: {}, people: {}, q: '', pf: 'all', plist: null, pBusy: false };
 
   /* ── toast, with Undo for 5 seconds ── */
   let toastT = 0;
@@ -220,17 +304,21 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--h
   async function load(quiet) {
     if (st.busy) return; st.busy = true;
     try {
-      const [r, cv, pp, mp, cl, po] = await Promise.all([
+      const [r, cv, pp, mp, cl, po, rp, ov] = await Promise.all([
         sb.from('reports').select('*').order('created_at', { ascending: false }).limit(500),
         sb.rpc('craving_recent'),
         sb.from('places').select('id,name,kinds,area,blurb,photo,lat,lng,price,hours,cravings,created_at,added_by').eq('visibility', 'public').eq('status', 'pending').not('added_by', 'is', null).order('created_at', { ascending: true }).limit(100),
         sb.rpc('menu_photo_pending'),
         sb.rpc('claims_pending'),
         sb.rpc('posts_admin'),
+        sb.rpc('people_reports_admin'),
+        sb.rpc('admin_overview'),
       ]);
       st.mp = Array.isArray(mp && mp.data) ? mp.data : (st.mp || []);
       st.cl = Array.isArray(cl && cl.data) ? cl.data : (st.cl || []);
       st.po = Array.isArray(po && po.data) ? po.data : (st.po || []);
+      if (rp && rp.data && !rp.error) st.rpt = rp.data;
+      if (ov && ov.data && !ov.error) st.ov = ov.data;
       if (r.error) { toast('Couldn’t load. Check your connection.'); return; }
       st.reports = r.data || []; st.cv = cv.data || []; st.pp = pp.data || [];
       const who = [...new Set([...st.reports.map((x) => x.reporter), ...st.pp.map((x) => x.added_by), ...st.cv.flatMap((x) => x.voters || [])].filter(Boolean))].filter((id) => !st.people[id]);
@@ -247,7 +335,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--h
   let qT = 0;
   async function findPlaces() {
     st.pBusy = true;
-    let q = sb.from('places').select('id,name,level,kinds,hours,hidden,lat,lng,addr,area,added_by,status,visibility').or('visibility.is.null,visibility.neq.tropa').order('name').limit(60);
+    let q = sb.from('places').select('id,name,level,kinds,hours,hidden,lat,lng,addr,area,added_by,status,visibility').or('visibility.is.null,visibility.neq.tropa').order('name').limit(100);
     if (st.q.trim()) q = q.ilike('name', `%${st.q.trim().replace(/[%_,()]/g, ' ')}%`);
     if (st.pf === 'people') q = q.not('added_by', 'is', null);
     if (st.pf === 'hidden') q = q.eq('hidden', true);
@@ -259,30 +347,275 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--h
   }
 
   /* ── page ── */
-  const counts = () => ({ newRep: new Set(st.reports.filter((r) => r.status === 'new').map((r) => r.place_id)).size, pp: st.pp.length, cv: st.cv.length, mp: (st.mp || []).length, cl: (st.cl || []).length, po: poRep().length });
+  const counts = () => ({ newRep: new Set(st.reports.filter((r) => r.status === 'new').map((r) => r.place_id)).size, pp: st.pp.length, cv: st.cv.length, mp: (st.mp || []).length, cl: (st.cl || []).length, po: poRep().length, ur: st.rpt.users.filter((r) => !r.handled).length, pr: st.rpt.pasabits.filter((r) => !r.handled).length });
   const poRep = () => (st.po || []).filter((p) => p.status === 'live' && p.reports > 0);
+  /* ── PC admin (2026-10-29): a sidebar, a split To do with keyboard keys, tables, Overview, Owners and People ── */
+  const wide = () => window.innerWidth >= 900;
+  const NAVI = {
+    overview: '<path d="M4 13h6V4H4zM14 20h6v-9h-6zM4 20h6v-3H4zM14 4v3h6V4z"/>',
+    todo: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+    places: '<path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>',
+    owners: '<path d="M4 9.5L5.5 4h13L20 9.5"/><path d="M4 9.5a2.7 2.7 0 0 0 5.3 0 2.7 2.7 0 0 0 5.4 0 2.7 2.7 0 0 0 5.3 0"/><path d="M5.5 12.5V20h13v-7.5"/>',
+    people: '<circle cx="9" cy="8.5" r="3.2"/><path d="M3 20c.4-3.4 2.8-5.2 6-5.2s5.6 1.8 6 5.2"/><circle cx="17" cy="9.5" r="2.4"/><path d="M16.5 14.8c2.6.2 4.2 1.7 4.5 4.6"/>',
+    reports: '<path d="M5 21V4h11l-1.5 4H20l-2 6h-9.5"/>',
+    promos: '<path d="M3.5 12.2V4.5a1 1 0 0 1 1-1h7.7a1 1 0 0 1 .7.3l7.3 7.3a1 1 0 0 1 0 1.4l-7.7 7.7a1 1 0 0 1-1.4 0l-7.3-7.3a1 1 0 0 1-.3-.7z"/><circle cx="8" cy="8" r="1.3"/>',
+    tags: '<path d="M4 7h16M4 12h16M4 17h10"/>',
+  };
+  const TITLES = { overview: ['Overview', 'Keni at a glance'], todo: ['To do', 'Everything waiting for you'], places: ['Places', 'Search and fix any place'], owners: ['Owners', 'Who manages which place'],
+    people: ['People', 'Everyone with a Keni account'], reports: ['Place reports', 'What people say is wrong with a place'], promos: ['Promos', 'Promos and events owners posted'], tags: ['Tags', 'Cravings, vibes and kinds'] };
+  const RREASON = { spam: 'Spam', harassment: 'Harassment', fake: 'Fake', inappropriate: 'Inappropriate', other: 'Something else' };
+  const nameOf = (n, u) => (u ? '@' + u : n || 'someone');
+
   function render() {
-    const c = counts(), todo = c.pp + c.newRep + c.mp + c.cl + c.po;
-    const tabs = [['todo', 'To do', todo], ['places', 'Places', 0], ['reports', 'Reports', 0], ['promos', 'Promos', 0], ['tags', 'Tags', 0]];
-    app.innerHTML = `<header><div class="logo">keni <span class="grad">admin</span></div><div class="who"><span class="em-t">${esc(st.user.email)}</span><button class="icon-btn" data-a="reload" aria-label="Refresh" title="Refresh">↻</button><button class="link" data-a="out">Sign out</button></div></header>
-      <nav class="tabs" role="tablist">${tabs.map(([k, l, n]) => `<button class="tab" role="tab" data-tab="${k}" aria-pressed="${st.tab === k}">${l}${n ? `<b>${n}</b>` : ''}</button>`).join('')}</nav>
-      <main id="body">${st.tab === 'todo' ? todoHTML() : st.tab === 'reports' ? reportsHTML() : st.tab === 'tags' ? tagsShell() : st.tab === 'promos' ? promosHTML() : placesShell()}</main>`;
+    const c = counts(), todo = c.pp + c.newRep + c.mp + c.cl + c.po + c.ur + c.pr;
+    if (!st.tab) st.tab = todo ? 'todo' : 'overview';
+    const tabs = [['overview', 'Overview', 0], ['todo', 'To do', todo], ['places', 'Places', 0], ['owners', 'Owners', 0], ['people', 'People', c.ur], ['reports', 'Place reports', c.newRep], ['promos', 'Promos', c.po], ['tags', 'Tags', 0]];
+    const [t, sub] = TITLES[st.tab] || ['', ''];
+    app.innerHTML = `<div class="shell"><aside class="side"><div class="logo">keni <span class="grad">admin</span></div>
+      <nav class="nav" role="tablist">${tabs.map(([k, l, n]) => `<button class="tab" role="tab" data-tab="${k}" aria-pressed="${st.tab === k}"><svg viewBox="0 0 24 24" aria-hidden="true">${NAVI[k]}</svg>${l}${n ? `<b>${n}</b>` : ''}</button>`).join('')}</nav>
+      <div class="side-foot"><span>${esc(st.user.email)}</span><button class="link" data-a="out">Sign out</button></div></aside>
+      <div class="main"><div class="top"><div><h1>${t}</h1><div class="sub">${sub}</div></div><div class="right">
+        ${st.tab === 'todo' && wide() && todo ? '<span class="keys"><span class="kbd">J</span><span class="kbd">K</span> move · <span class="kbd">A</span> approve · <span class="kbd">R</span> reject</span>' : ''}
+        <button class="icon-btn" data-a="reload" aria-label="Refresh" title="Refresh">↻</button><button class="link m-out" data-a="out">Sign out</button></div></div>
+      <div id="body">${bodyHTML()}</div></div></div>`;
     if (st.tab === 'places') { if (!st.plist) findPlaces(); paintPlaces(); }
     if (st.tab === 'tags') { if (!T.all) loadAll(); paintTags(); }
+    if (st.tab === 'owners' && !st.own) loadOwners();
+    if (st.tab === 'people') { if (!st.ppl) findPeople(); else paintPeople(); }
+    if (st.tab === 'todo') { setTimeout(fillProofs, 0); const q = $('.qi[aria-current="true"]'); if (q) q.scrollIntoView({ block: 'nearest' }); }
+  }
+  function bodyHTML() {
+    switch (st.tab) {
+      case 'overview': return overviewHTML();
+      case 'todo': return todoHTML();
+      case 'reports': return reportsHTML();
+      case 'promos': return promosHTML();
+      case 'tags': return `<div class="narrow">${tagsShell()}</div>`;
+      case 'owners': return ownersHTML();
+      case 'people': return peopleShell();
+      default: return placesShell();
+    }
+  }
+  let wasWide = wide();
+  window.addEventListener('resize', () => { if (wide() !== wasWide) { wasWide = wide(); if (st.user && st.tab) render(); } });
+
+  /* Overview */
+  function overviewHTML() {
+    const o = st.ov; if (!o) return '<div class="card empty"><b>⏳</b>Loading…</div>';
+    const c = counts(), todo = c.pp + c.newRep + c.mp + c.cl + c.po + c.ur + c.pr, pct = (a, b) => (b ? Math.round((a / b) * 100) : 0);
+    const tile = (k, v, s, i, extra = '') => `<div class="tile" style="animation-delay:${i * 40}ms"><span class="k">${k}</span><span class="v">${v}</span><span class="s">${s}</span>${extra}</div>`;
+    const bar = (p) => `<div class="bar0"><i style="width:${p}%"></i></div>`;
+    const chart = (title, key, note) => {
+      const d = o.days || [], max = Math.max(1, ...d.map((x) => +x[key] || 0)), tot = d.reduce((n, x) => n + (+x[key] || 0), 0);
+      return `<div class="card chart"><h3>${title}<small>${tot} in 14 days${note ? ' · ' + note : ''}</small></h3><div class="cbars">${d.map((x, i) => { const n = +x[key] || 0;
+        return `<div class="cbar${i === d.length - 1 ? ' today' : ''}" style="--h:${Math.round((n / max) * 100)}%;--i:${i}" title="${n} on ${esc(x.day)}"><small>${n || ''}</small><i></i><b>${new Date(x.day + 'T12:00:00').getDate()}</b></div>`; }).join('')}</div></div>`;
+    };
+    return `<div class="tiles">
+      <button class="tile hot" data-tab="todo" style="text-align:left"><span class="k">Waiting for you</span><span class="v">${todo}</span><span class="s">${todo ? 'Open To do →' : 'All clear'}</span></button>
+      ${tile('People', o.users, `+${o.users_new7} this week · ${o.active7} active`, 1)}
+      ${tile('Tropas', o.tropas, `${o.msgs7} messages this week · ${o.friends} friendships`, 2)}
+      ${tile('Places', o.places, `${o.full} full listings`, 3)}
+      ${tile('With hours', pct(o.with_hours, o.places) + '%', `${o.with_hours} of ${o.places} places`, 4, bar(pct(o.with_hours, o.places)))}
+      ${tile('With a photo', pct(o.with_photo, o.places) + '%', `${o.with_photo} of ${o.places} places`, 5, bar(pct(o.with_photo, o.places)))}
+      ${tile('Owners', o.owners, `${o.claims_waiting} claim${o.claims_waiting === 1 ? '' : 's'} waiting · ${o.posts_live} promo${o.posts_live === 1 ? '' : 's'} live`, 6)}
+      ${tile('Place views', o.views7, `this week · ${o.saves7} saves`, 7)}
+      ${tile('Notifications on', o.push, `phones · ${o.pasabits_next} Pasabit${o.pasabits_next === 1 ? '' : 's'} coming up`, 8)}
+    </div>
+    <div class="charts">${chart('Sign-ups', 'signups')}${chart('Place views', 'views', 'each phone once a day')}</div>`;
   }
 
-  // To do: what needs you, places waiting first
+  /* To do: a queue on the left, one item on the right */
+  function qItems() {
+    const it = [];
+    poRep().forEach((p) => it.push({ k: 'po:' + p.id, g: 'Reported promos', d: '🏷️', t: p.title, s: `${p.reports} report${p.reports === 1 ? '' : 's'} · ${p.name || p.place}`, h: () => poHTML(p, 0) }));
+    (st.cl || []).forEach((c) => it.push({ k: 'cl:' + c.id, g: 'Owner claims', d: '🏪', t: c.place, s: `${ROLE[c.role] || c.role} · ${c.by} · ${ago(c.at)}`, h: () => clHTML(c, 0) }));
+    (st.mp || []).forEach((m) => it.push({ k: 'mp:' + m.id, g: 'Photos', d: '📷', t: m.place, s: `${m.kind === 'place' ? 'Place photo' : 'Menu photo'} · ${m.by}`, h: () => mpHTML(m, 0) }));
+    st.pp.forEach((p) => it.push({ k: 'pp:' + p.id, g: 'New places', d: KIND[(p.kinds || []).find((x) => KIND[x])] || '📍', t: p.name, s: `${area(p.area)} · ${ago(p.created_at)}`, h: () => ppHTML(p, 0) }));
+    groupsOf(st.reports.filter((r) => r.status === 'new')).forEach(([id, rs]) => { const p = st.places[id];
+      it.push({ k: 'rg:' + id, g: 'Place reports', d: (REASON[rs[0].reason] || REASON.other)[0], t: p ? p.name : rs[0].place_name, s: `${rs.length} report${rs.length === 1 ? '' : 's'} · ${ago(rs[0].created_at)}`, h: () => groupHTML(id, rs, 0) }); });
+    st.rpt.users.filter((r) => !r.handled).forEach((r) => it.push({ k: 'ur:' + r.id, g: 'Reported people', d: '👤', t: r.who_name || nameOf(null, r.who_user), s: `${RREASON[r.reason] || r.reason} · ${ago(r.at)}`, h: () => urHTML(r) }));
+    st.rpt.pasabits.filter((r) => !r.handled).forEach((r) => it.push({ k: 'pr:' + r.id, g: 'Reported Pasabits', d: '🗓️', t: r.title || 'Pasabit', s: `${RREASON[r.reason] || r.reason} · ${ago(r.at)}`, h: () => prHTML(r) }));
+    return it;
+  }
   function todoHTML() {
+    if (!wide()) return todoStack();
+    const it = qItems();
+    if (!it.length) return '<div class="card empty in"><b>🎉</b><h3>All clear</h3>Nothing waiting for you right now.</div>';
+    let i = it.findIndex((x) => x.k === st.sel); if (i < 0) i = Math.min(st.selIdx, it.length - 1);
+    st.sel = it[i].k; st.selIdx = i;
+    let g = '';
+    const q = it.map((x, j) => { const head = x.g !== g ? `<div class="qgrp">${esc(x.g)}</div>` : ''; g = x.g;
+      return head + `<button class="qi" data-sel="${esc(x.k)}" aria-current="${j === i}"><span class="qd">${x.d}</span><span><b>${esc(x.t)}</b><small>${esc(x.s)}</small></span></button>`; }).join('');
+    return `<div class="split"><div class="card queue">${q}</div><div class="pane">${it[i].h()}<div class="pane-foot"><span class="meta">${i + 1} of ${it.length}</span></div></div></div>`;
+  }
+  const moveSel = (d) => { const it = qItems(); if (!it.length) return; const i = Math.max(0, it.findIndex((x) => x.k === st.sel)), n = Math.min(it.length - 1, Math.max(0, i + d)); st.sel = it[n].k; st.selIdx = n; render(); };
+  document.addEventListener('keydown', (e) => {
+    if (!st.user || st.tab !== 'todo' || !wide() || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.target.closest && e.target.closest('input, textarea, select')) return;
+    const k = e.key.toLowerCase();
+    if (k === 'j' || k === 'arrowdown') { e.preventDefault(); return moveSel(1); }
+    if (k === 'k' || k === 'arrowup') { e.preventDefault(); return moveSel(-1); }
+    const pane = $('.pane'); if (!pane) return;
+    const pick = (sel) => { const b = pane.querySelector(sel); if (b && !b.disabled) { e.preventDefault(); b.click(); } };
+    if (k === 'a') pick('[data-a="clok"], [data-a="mpok"], [data-a="approve"], [data-a="fixed"], [data-a="urok"], [data-a="prok"]');
+    if (k === 'r') pick('[data-a="clno"], [data-a="mpno"], [data-a="reject"], [data-a="dismissed"], [data-a="podown"], [data-a="pscancel"]');
+  });
+
+  /* reports about people and Pasabits */
+  function urHTML(r) {
+    return `<section class="card in" data-ur="${r.id}"><span class="mp-kind">Reported person · ${esc(RREASON[r.reason] || r.reason)}${r.handled ? ' · handled' : ''}</span>
+      <h3 style="margin-top:4px">${esc(r.who_name || 'Someone')}${r.who_user ? ` <span class="meta">@${esc(r.who_user)}</span>` : ''}</h3>
+      <div class="meta" style="margin-top:4px">reported by ${esc(nameOf(r.by_name, r.by_user))} · ${ago(r.at)}</div>
+      ${r.msg ? `<p class="note" style="margin:10px 0 0"><b>The message:</b> “${esc(r.msg)}”</p>` : ''}${r.note ? `<p class="note" style="margin:8px 0 0">“${esc(r.note)}”</p>` : ''}
+      <p class="meta" style="margin:10px 0 0">Keni can’t ban accounts yet. Reach out to them, then mark it handled.</p>
+      <div class="acts big">${r.handled ? '<button class="btn" data-a="urback">Reopen</button>' : '<button class="btn ok" data-a="urok">✓ Handled</button>'}<a class="btn" href="/#friend=${encodeURIComponent(r.who)}" target="_blank" rel="noopener">Their page ↗</a></div></section>`;
+  }
+  function prHTML(r) {
+    const when = r.starts ? new Date(r.starts).toLocaleString('en-PH', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
+    return `<section class="card in" data-pr="${r.id}" data-ps="${esc(r.ps)}"><span class="mp-kind">Reported Pasabit · ${esc(RREASON[r.reason] || r.reason)}${r.cancelled ? ' · cancelled' : ''}${r.handled ? ' · handled' : ''}</span>
+      <h3 style="margin-top:4px">${esc(r.title || 'Pasabit')}</h3>
+      <div class="meta" style="margin-top:4px">hosted by ${esc(nameOf(r.host_name, r.host_user))}${r.place ? ' · ' + esc(r.place) : ''}${when ? ' · ' + esc(when) : ''}</div>
+      <div class="meta">reported by ${esc(nameOf(r.by_name, r.by_user))} · ${ago(r.at)}</div>
+      ${r.note ? `<p class="note" style="margin:10px 0 0">“${esc(r.note)}”</p>` : ''}
+      <div class="acts big">${r.handled ? '<button class="btn" data-a="prback">Reopen</button>' : '<button class="btn ok" data-a="prok">✓ Handled</button>'}${r.cancelled ? '<button class="btn" data-a="psback">Bring it back</button>' : '<button class="btn no" data-a="pscancel">Cancel the Pasabit</button>'}<a class="btn" href="/#ps=${encodeURIComponent(r.ps)}" target="_blank" rel="noopener">Open ↗</a></div></section>`;
+  }
+  async function handleRep(kind, id, done) {
+    const r = (kind === 'user' ? st.rpt.users : st.rpt.pasabits).find((x) => x.id === id); if (!r) return;
+    const { error } = await sb.rpc('report_handle', { p_kind: kind, p_id: id, p_handled: done });
+    if (error) { toast('Couldn’t save that'); return render(); }
+    r.handled = done; render();
+    if (done) toast('Marked handled', async () => { const { error: e2 } = await sb.rpc('report_handle', { p_kind: kind, p_id: id, p_handled: false }); if (e2) return toast('Couldn’t undo'); r.handled = false; render(); toast('Undone'); });
+  }
+  async function cancelPs(psId, cancel, btn) {
+    if (cancel && !btn.dataset.sure) { btn.dataset.sure = 1; btn.textContent = 'Tap again to cancel it'; return; }
+    btn.disabled = true;
+    const { error } = await sb.rpc('pasabit_admin_cancel', { p_id: psId, p_cancel: cancel });
+    if (error) { toast('Couldn’t change the Pasabit'); return render(); }
+    const set = (v) => st.rpt.pasabits.forEach((r) => { if (r.ps === psId) r.cancelled = v; });
+    set(cancel); render();
+    toast(cancel ? 'Pasabit cancelled' : 'The Pasabit is back', cancel ? async () => { const { error: e2 } = await sb.rpc('pasabit_admin_cancel', { p_id: psId, p_cancel: false }); if (e2) return toast('Couldn’t undo'); set(false); render(); toast('Undone'); } : null);
+  }
+
+  /* Owners */
+  async function loadOwners() {
+    const { data, error } = await sb.rpc('owners_admin');
+    if (error) { toast('Couldn’t load owners'); st.own = []; } else st.own = data || [];
+    if (st.tab === 'owners') render();
+  }
+  const removed = (c) => c.status === 'rejected' && c.reason === 'Removed by the Keni team';
+  function ownersHTML() {
+    const n = { approved: 0, pending: 0, rejected: 0 }; (st.own || []).forEach((c) => { n[c.status]++; });
+    const bar = `<div class="toolbar"><div class="search"><span>🔍</span><input id="oq" type="search" placeholder="Search by place, name or email" value="${esc(st.oq)}" autocomplete="off"></div>
+      <div class="seg">${[['approved', 'Owners'], ['pending', 'Waiting'], ['rejected', 'Not approved'], ['all', 'All']].map(([k, l]) => `<button class="chip" data-of="${k}" aria-pressed="${st.ofilter === k}">${l}${k !== 'all' ? ` · ${n[k]}` : ''}</button>`).join('')}</div></div>`;
+    if (!st.own) return bar + '<div class="card empty"><b>⏳</b>Loading owners…</div>';
+    const q = st.oq.trim().toLowerCase();
+    const rows = st.own.filter((c) => (st.ofilter === 'all' || c.status === st.ofilter) && (!q || [c.name, c.by, c.username, c.email].join(' ').toLowerCase().includes(q)));
+    const stTag = (c) => (c.status === 'approved' ? '<span class="tag fixed">Manages it</span>' : c.status === 'pending' ? '<span class="tag new">Waiting</span>' : removed(c) ? '<span class="tag warn">Removed</span>' : '<span class="tag">Not approved</span>');
+    if (!rows.length) return bar + `<div class="card empty in"><b>🏪</b>${st.ofilter === 'approved' && !q ? 'No owners yet. Approved claims show up here.' : 'Nothing here.'}</div>`;
+    return bar + `<div class="card tbl-wrap"><table class="tbl"><thead><tr><th>Place</th><th>Person</th><th>Role · contact</th><th>When</th><th class="num">Promos</th><th class="num" title="Views in the last 7 days">Views</th><th>Status</th><th></th></tr></thead><tbody>
+      ${rows.map((c) => `<tr data-own="${c.id}"><td><a href="/#place=${encodeURIComponent(c.place)}" target="_blank" rel="noopener"><b>${esc(c.name)}</b></a><div class="meta">${c.level === 'basic' ? 'small pin' : c.prev === 'basic' ? 'full listing, was a small pin' : 'full listing'}</div></td>
+        <td><b>${esc(c.by || 'Someone')}</b>${c.username ? ` <span class="meta">@${esc(c.username)}</span>` : ''}<div class="meta">${esc(c.email || '')}</div></td>
+        <td><b>${esc(ROLE[c.role] || c.role)}</b><div class="meta" style="white-space:normal;max-width:200px">${esc(c.contact)}</div></td>
+        <td class="meta">${ago(c.reviewed || c.at)}</td><td class="num">${c.posts || 0}</td><td class="num">${c.views7 || 0}</td>
+        <td>${stTag(c)}${c.reason && !removed(c) ? `<div class="meta" style="white-space:normal;max-width:200px">${esc(c.reason)}</div>` : ''}</td>
+        <td>${c.status === 'approved' ? '<button class="btn sm no" data-a="ownrm">Remove</button>' : removed(c) ? '<button class="btn sm" data-a="ownback">Put back</button>' : c.status === 'pending' ? '<button class="btn sm" data-tab="todo">Review</button>' : ''}</td></tr>`).join('')}</tbody></table></div>`;
+  }
+  async function removeOwner(id, btn) {
+    const c = (st.own || []).find((x) => x.id === id); if (!c) return;
+    if (!btn.dataset.sure) { btn.dataset.sure = 1; btn.textContent = 'Tap again to remove'; return; }
+    btn.disabled = true;
+    const { data, error } = await sb.rpc('owner_remove', { p_id: id });
+    if (error) { btn.disabled = false; return toast('Couldn’t remove them'); }
+    const was = { level: c.level, posts: c.posts };
+    c.status = 'rejected'; c.reason = 'Removed by the Keni team'; if (c.prev === 'basic') c.level = 'basic'; c.posts = 0; render();
+    toast(`${c.by || 'They'} no longer manage${c.by ? 's' : ''} ${c.name}${data && data.ended ? ` · ${data.ended} promo${data.ended === 1 ? '' : 's'} ended` : ''}`, async () => {
+      const { error: e2 } = await sb.rpc('owner_restore', { p_id: id }); if (e2) return toast('Couldn’t undo');
+      c.status = 'approved'; c.reason = null; c.level = was.level; render(); toast('Undone');
+    });
+  }
+  async function restoreOwner(id, btn) {
+    const c = (st.own || []).find((x) => x.id === id); if (!c) return; btn.disabled = true;
+    const { error } = await sb.rpc('owner_restore', { p_id: id });
+    if (error) { btn.disabled = false; return toast('Couldn’t put them back'); }
+    c.status = 'approved'; c.reason = null; if (c.prev === 'basic') c.level = 'full'; render(); toast(`${c.by || 'They'} manage${c.by ? 's' : ''} ${c.name} again`);
+  }
+
+  /* People */
+  let ppT = 0;
+  async function findPeople() {
+    const { data, error } = await sb.rpc('people_admin', { p_q: st.pq2 });
+    if (error) { toast('Couldn’t load people'); st.ppl = []; } else st.ppl = data || [];
+    paintPeople();
+  }
+  function peopleShell() {
+    const open = st.rpt.users.filter((r) => !r.handled).length;
+    return `<div class="toolbar"><div class="search"><span>🔍</span><input id="ppq" type="search" placeholder="Search by name, @username or email" value="${esc(st.pq2)}" autocomplete="off"></div>
+      ${open ? `<button class="chip" data-tab="todo">${open} reported ${open === 1 ? 'person' : 'people'} waiting →</button>` : ''}</div><div id="ppl"></div>`;
+  }
+  function paintPeople() {
+    const box = $('#ppl'); if (!box) return;
+    if (!st.ppl) { box.innerHTML = '<div class="card empty"><b>⏳</b>Loading people…</div>'; return; }
+    if (!st.ppl.length) { box.innerHTML = `<div class="card empty in"><b>🔎</b>No one matches${st.pq2 ? ` “${esc(st.pq2)}”` : ''}.</div>`; return; }
+    const day = (t) => (t ? new Date(t).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : '—');
+    box.innerHTML = `<div class="card tbl-wrap"><table class="tbl"><thead><tr><th>Person</th><th>Joined</th><th>Last sign-in</th><th class="num">Tropas</th><th class="num">Friends</th><th class="num">Places</th><th>Reports</th></tr></thead><tbody>
+      ${st.ppl.map((p) => { const reps = st.rpt.users.filter((r) => r.who === p.id), open = st.popen === p.id;
+        return `<tr class="prow${open ? ' open' : ''}" data-ppl="${esc(p.id)}"><td><div class="nm2">${p.photo ? `<img class="av" src="${esc(p.photo)}" alt="">` : `<span class="av">${esc(String(p.name || p.email || '?')[0].toUpperCase())}</span>`}<span><b>${esc(p.name || 'No profile yet')}</b>${p.username ? ` <span class="meta">@${esc(p.username)}</span>` : ''}${p.admin ? ' <span class="tag fixed">admin</span>' : ''}<div class="meta">${esc(p.email || '')}</div></span></div></td>
+          <td class="meta">${day(p.joined)}</td><td class="meta">${p.seen ? ago(p.seen) : 'never'}</td>
+          <td class="num">${p.tropas}</td><td class="num">${p.friends}</td><td class="num">${p.owns}</td>
+          <td>${p.reported ? `<span class="tag new">${p.reported} open</span>` : reps.length ? `<span class="tag">${reps.length} handled</span>` : '<span class="meta">—</span>'}</td></tr>
+          ${open ? `<tr><td class="edrow" colspan="7"><div class="list" style="padding-top:10px">${reps.length ? reps.map(urHTML).join('') : `<p class="meta" style="margin:6px 4px">No reports about this person.</p><div class="acts" style="margin:0"><a class="btn sm" href="/#friend=${encodeURIComponent(p.id)}" target="_blank" rel="noopener">Their page ↗</a></div>`}</div></td></tr>` : ''}`; }).join('')}</tbody></table></div>
+      ${st.ppl.length >= 50 ? '<p class="meta" style="text-align:center">Showing 50. Search to narrow it down.</p>' : ''}`;
+  }
+
+  /* Places as a table on a computer */
+  function paintPlaces() {
+    const box = $('#plist'); if (!box) return;
+    if (!wide() || !st.plist || !st.plist.length) return paintPlacesList();
+    const hrs = (h) => (Array.isArray(h) ? `${h[0]}:00–${h[1]}:00` : '<span class="tag warn">none</span>');
+    box.innerHTML = `<div class="card tbl-wrap"><table class="tbl"><thead><tr><th>Place</th><th>Kind</th><th>Area</th><th>Pin</th><th>Hours</th><th>Added by</th><th></th></tr></thead><tbody>
+      ${st.plist.map((p) => { const k = (p.kinds || [])[0], open = st.editing === p.id;
+        return `<tr class="prow${open ? ' open' : ''}" data-p="${esc(p.id)}" tabindex="0"><td><div class="nm2"><span class="av">${KIND[k] || '📍'}</span><b>${esc(p.name)}</b></div></td>
+          <td class="meta">${esc(KINDL[k] || k || '—')}</td><td class="meta">${esc(area(p.area))}</td><td>${p.level === 'basic' ? '<span class="tag">Small</span>' : '<span class="tag fixed">Full</span>'}</td>
+          <td class="meta">${hrs(p.hours)}</td><td class="meta">${p.added_by ? `people${p.status === 'pending' ? ' · waiting' : p.status === 'rejected' ? ' · rejected' : ''}` : 'Keni'}</td><td>${p.hidden ? '<span class="tag warn">Hidden</span>' : ''}</td></tr>
+          ${open ? `<tr><td class="edrow" colspan="7"><div data-g="${esc(p.id)}">${editHTML(st.places[p.id] || p)}</div></td></tr>` : ''}`; }).join('')}</tbody></table></div>
+      ${st.plist.length >= 100 ? '<p class="meta" style="text-align:center">Showing the first 100. Search to narrow it down.</p>' : ''}`;
+  }
+
+  app.addEventListener('click', (e) => {
+    const s = e.target.closest('[data-sel]'); if (s) { st.sel = s.dataset.sel; return render(); }
+    const of = e.target.closest('[data-of]'); if (of) { st.ofilter = of.dataset.of; return render(); }
+    const a = e.target.closest('[data-a]');
+    if (a) {
+      const k = a.dataset.a;
+      if (k === 'reload') { st.own = null; st.ppl = null; return; }
+      if (k === 'urok' || k === 'urback') { a.disabled = true; return handleRep('user', +a.closest('[data-ur]').dataset.ur, k === 'urok'); }
+      if (k === 'prok' || k === 'prback') { a.disabled = true; return handleRep('pasabit', +a.closest('[data-pr]').dataset.pr, k === 'prok'); }
+      if (k === 'pscancel' || k === 'psback') return cancelPs(a.closest('[data-ps]').dataset.ps, k === 'pscancel', a);
+      if (k === 'ownrm') return removeOwner(+a.closest('[data-own]').dataset.own, a);
+      if (k === 'ownback') return restoreOwner(+a.closest('[data-own]').dataset.own, a);
+      return;
+    }
+    const pr = e.target.closest('[data-ppl]'); if (pr && !e.target.closest('a')) { st.popen = st.popen === pr.dataset.ppl ? '' : pr.dataset.ppl; return paintPeople(); }
+  });
+  app.addEventListener('input', (e) => {
+    if (e.target.id === 'oq') { st.oq = e.target.value; $('#body').innerHTML = ownersHTML(); const i = $('#oq'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }
+    if (e.target.id === 'ppq') { st.pq2 = e.target.value; clearTimeout(ppT); ppT = setTimeout(findPeople, 250); }
+  });
+
+  // To do: what needs you, places waiting first
+  function todoStack() {
     const groups = groupsOf(st.reports.filter((r) => r.status === 'new'));
     const mps = st.mp || [], cls = st.cl || [];
-    const pos = poRep();
-    if (!st.pp.length && !groups.length && !mps.length && !cls.length && !pos.length) return `<div class="card empty in"><b>🎉</b><h3>All clear</h3>Nothing waiting for you right now.</div>`;
+    const pos = poRep(), urs = st.rpt.users.filter((r) => !r.handled), prs = st.rpt.pasabits.filter((r) => !r.handled);
+    if (!st.pp.length && !groups.length && !mps.length && !cls.length && !pos.length && !urs.length && !prs.length) return `<div class="card empty in"><b>🎉</b><h3>All clear</h3>Nothing waiting for you right now.</div>`;
     setTimeout(fillProofs, 0);
     return `${pos.length ? `<h2 class="sec-h">Reported promos and events <small>${pos.length}</small></h2><div class="list">${pos.map(poHTML).join('')}</div>` : ''}
       ${cls.length ? `<h2 class="sec-h">Owner claims <small>${cls.length}</small></h2><div class="list">${cls.map(clHTML).join('')}</div>` : ''}
       ${mps.length ? `<h2 class="sec-h">Photos waiting <small>${mps.length}</small></h2><div class="list mp-list">${mps.map(mpHTML).join('')}</div>` : ''}
       ${st.pp.length ? `<h2 class="sec-h">Places waiting for approval <small>${st.pp.length}</small></h2><div class="list">${st.pp.map(ppHTML).join('')}</div>` : ''}
-      ${groups.length ? `<h2 class="sec-h">New reports <small>${groups.length} place${groups.length === 1 ? '' : 's'}</small></h2><div class="list">${groups.map(([id, rs], i) => groupHTML(id, rs, i)).join('')}</div>` : ''}`;
+      ${groups.length ? `<h2 class="sec-h">New reports <small>${groups.length} place${groups.length === 1 ? '' : 's'}</small></h2><div class="list">${groups.map(([id, rs], i) => groupHTML(id, rs, i)).join('')}</div>` : ''}
+      ${urs.length ? `<h2 class="sec-h">Reported people <small>${urs.length}</small></h2><div class="list">${urs.map(urHTML).join('')}</div>` : ''}
+      ${prs.length ? `<h2 class="sec-h">Reported Pasabits <small>${prs.length}</small></h2><div class="list">${prs.map(prHTML).join('')}</div>` : ''}`;
   }
   const mpUrl = (path) => sb.storage.from('menu-photos').getPublicUrl(path).data.publicUrl;
   function mpHTML(m, i) {
@@ -372,8 +705,8 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--h
   function promosHTML() {
     const ps = st.po || [], live = ps.filter((p) => p.status === 'live'), down = ps.filter((p) => p.status === 'down');
     if (!ps.length) return '<div class="card empty in"><b>🏷️</b><h3>No promos or events</h3>Nothing live right now. Owners post them from Studio.</div>';
-    return `${live.length ? `<h2 class="sec-h">Live <small>${live.length}</small></h2><div class="list">${live.map(poHTML).join('')}</div>` : ''}
-      ${down.length ? `<h2 class="sec-h">Taken down this week <small>${down.length}</small></h2><div class="list">${down.map(poHTML).join('')}</div>` : ''}`;
+    return `${live.length ? `<h2 class="sec-h">Live <small>${live.length}</small></h2><div class="list cols">${live.map(poHTML).join('')}</div>` : ''}
+      ${down.length ? `<h2 class="sec-h">Taken down this week <small>${down.length}</small></h2><div class="list cols">${down.map(poHTML).join('')}</div>` : ''}`;
   }
   async function takeDown(id, card) {
     const p = (st.po || []).find((x) => x.id === id); if (!p) return;
@@ -413,7 +746,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--h
     const n = { new: 0, fixed: 0, dismissed: 0 }; st.reports.forEach((r) => { n[r.status]++; });
     const groups = groupsOf(st.reports.filter((r) => st.rfilter === 'all' || r.status === st.rfilter));
     return `<div class="seg">${[['new', 'New'], ['fixed', 'Fixed'], ['dismissed', 'Dismissed'], ['all', 'All']].map(([k, l]) => `<button class="chip" data-rf="${k}" aria-pressed="${st.rfilter === k}">${l}${k !== 'all' ? ` · ${n[k]}` : ''}</button>`).join('')}</div>
-      <div class="list">${groups.length ? groups.map(([id, rs], i) => groupHTML(id, rs, i)).join('') : `<div class="card empty in"><b>${st.rfilter === 'new' ? '🎉' : '🗂️'}</b>${st.rfilter === 'new' ? 'No new reports. All clear.' : 'Nothing here.'}</div>`}</div>`;
+      <div class="list cols">${groups.length ? groups.map(([id, rs], i) => groupHTML(id, rs, i)).join('') : `<div class="card empty in"><b>${st.rfilter === 'new' ? '🎉' : '🗂️'}</b>${st.rfilter === 'new' ? 'No new reports. All clear.' : 'Nothing here.'}</div>`}</div>`;
   }
   function groupHTML(id, rs, i) {
     const p = st.places[id], open = rs.filter((r) => r.status === 'new');
@@ -441,11 +774,11 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--h
 
   // Places: search, filters, tap a row to edit it
   function placesShell() {
-    return `<div class="search"><span>🔍</span><input id="pq" type="search" placeholder="Search places by name" value="${esc(st.q)}" autocomplete="off"></div>
-      <div class="seg">${[['all', 'All'], ['people', '✦ Added by people'], ['hidden', '🙈 Hidden'], ['basic', '📍 Small pins']].map(([k, l]) => `<button class="chip" data-pf="${k}" aria-pressed="${st.pf === k}">${l}</button>`).join('')}</div>
+    return `<div class="toolbar"><div class="search"><span>🔍</span><input id="pq" type="search" placeholder="Search places by name" value="${esc(st.q)}" autocomplete="off"></div>
+      <div class="seg">${[['all', 'All'], ['people', '✦ Added by people'], ['hidden', '🙈 Hidden'], ['basic', '📍 Small pins']].map(([k, l]) => `<button class="chip" data-pf="${k}" aria-pressed="${st.pf === k}">${l}</button>`).join('')}</div></div>
       <div id="plist"></div>`;
   }
-  function paintPlaces() {
+  function paintPlacesList() {
     const box = $('#plist'); if (!box) return;
     if (!st.plist) { box.innerHTML = '<div class="card empty"><b>⏳</b>Loading places…</div>'; return; }
     if (!st.plist.length) { box.innerHTML = `<div class="card empty in"><b>🔎</b>No places match${st.q ? ` “${esc(st.q)}”` : ''}.</div>`; return; }
