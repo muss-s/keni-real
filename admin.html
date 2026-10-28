@@ -144,6 +144,9 @@ textarea { height: 80px; padding: 11px 15px; resize: vertical; }
 input:focus, select:focus, textarea:focus { outline: none; border-color: var(--hi); box-shadow: 0 0 0 3px rgba(196, 176, 255, .2); }
 .edit { display: grid; gap: 10px; margin: 4px 4px 10px; padding: 14px; border-radius: 18px; background: rgba(16, 11, 32, .6); border: 1px solid var(--line); animation: up .3s var(--spring); }
 .edit .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.pp-edit, .pp-edit label, .pp-edit .row > * { min-width: 0; }
+.pp-edit input:not([type=checkbox]), .pp-edit select, .pp-edit textarea { width: 100%; min-width: 0; box-sizing: border-box; }
+@container (max-width: 640px) { .pp-edit .row { grid-template-columns: 1fr; } }
 .edit label { display: grid; gap: 5px; font-size: .78rem; color: var(--ink3); }
 .check { display: flex !important; align-items: center; gap: 10px; font-size: .92rem !important; color: var(--ink) !important; }
 .check input { width: 22px; height: 22px; accent-color: #c4b0ff; }
@@ -274,7 +277,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--h
   const handle = (id) => { const p = st.people[id]; return p ? (p.username ? '@' + p.username : p.name) : 'someone'; };
   const byList = (ids = []) => { const n = ids.map(handle); return n.length > 3 ? `${n.slice(0, 3).join(', ')} and ${n.length - 3} more` : n.join(', '); };
   const ago = (t) => { const m = Math.round((Date.now() - new Date(t)) / 6e4); return m < 1 ? 'just now' : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} d ago`; };
-  const st = { user: null, tab: '', sel: '', selIdx: 0, ofilter: 'approved', oq: '', pq2: '', ppl: null, own: null, ov: null, rpt: { users: [], pasabits: [] }, popen: '', rfilter: 'new', reports: [], places: {}, pp: [], cv: [], editing: null, busy: false, lvl: {}, people: {}, q: '', pf: 'all', plist: null, pBusy: false };
+  const st = { user: null, ppEdit: null, tab: '', sel: '', selIdx: 0, ofilter: 'approved', oq: '', pq2: '', ppl: null, own: null, ov: null, rpt: { users: [], pasabits: [] }, popen: '', rfilter: 'new', reports: [], places: {}, pp: [], cv: [], editing: null, busy: false, lvl: {}, people: {}, q: '', pf: 'all', plist: null, pBusy: false };
 
   /* ── toast, with Undo for 5 seconds ── */
   let toastT = 0;
@@ -600,6 +603,9 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--h
       if (k === 'urok' || k === 'urback') { a.disabled = true; return handleRep('user', +a.closest('[data-ur]').dataset.ur, k === 'urok'); }
       if (k === 'prok' || k === 'prback') { a.disabled = true; return handleRep('pasabit', +a.closest('[data-pr]').dataset.pr, k === 'prok'); }
       if (k === 'pscancel' || k === 'psback') return cancelPs(a.closest('[data-ps]').dataset.ps, k === 'pscancel', a);
+      if (k === 'ppedit') { st.ppEdit = a.closest('[data-pp]').dataset.pp; render(); const f = $('[data-ppform] [data-f="name"]'); if (f) f.focus(); return; }
+      if (k === 'ppcancel') { st.ppEdit = null; return render(); }
+      if (k === 'ppsave') { const f = a.closest('[data-ppform]'); return savePP(f.dataset.ppform, f, a); }
       if (k === 'ownrm') return removeOwner(+a.closest('[data-own]').dataset.own, a);
       if (k === 'ownback') return restoreOwner(+a.closest('[data-own]').dataset.own, a);
       return;
@@ -736,6 +742,41 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--h
   const PRICE = ['Free', 'Under ₱200', '₱200–500', '₱500–1,000', '₱1,000+'];
   const hh = (x) => { x = +x; const h = Math.floor(x) % 24, m = Math.round((x % 1) * 60); return ((h + 11) % 12 + 1) + (m ? ':' + String(m).padStart(2, '0') : '') + (h < 12 ? ' AM' : ' PM'); };
   const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  // edit a waiting place before approving it (fill in what the person left out)
+  const toTime = (h) => (h == null ? '' : String(Math.floor(h % 24)).padStart(2, '0') + ':' + String(Math.round((h % 1) * 60)).padStart(2, '0'));
+  function ppForm(p) {
+    const k0 = (p.kinds || []).find((x) => KIND[x]) || 'foodtrip', h = Array.isArray(p.hours) ? p.hours : [null, null], off = p.off_days || [], ct = p.contacts || {};
+    return `<div class="edit pp-edit" data-ppform="${esc(p.id)}" style="margin:0">
+      <label>Name<input data-f="name" value="${esc(p.name)}" maxlength="80"></label>
+      <div class="row"><label>Main kind<select data-f="kind">${KINDS.map((k) => `<option value="${k}"${k === k0 ? ' selected' : ''}>${KIND[k]} ${k}</option>`).join('')}</select></label>
+        <label>Price<select data-f="price"><option value="">Not given</option>${PRICE.map((l, i) => `<option value="${i}"${p.price === i ? ' selected' : ''}>${l}</option>`).join('')}</select></label></div>
+      <label>Address<input data-f="addr" value="${esc(p.addr || '')}" maxlength="160" placeholder="Street, barangay"></label>
+      <div class="row"><label>Opens<input type="time" data-f="open" value="${toTime(h[0])}"></label><label>Closes (after midnight is fine)<input type="time" data-f="close" value="${toTime(h[1])}"></label></div>
+      <div><span class="meta">Closed on</span><div class="tags" style="margin-top:6px">${WD.map((d, i) => `<label class="chip sm" style="display:inline-flex;align-items:center;gap:6px"><input type="checkbox" data-off="${i}"${off.includes(i) ? ' checked' : ''} style="width:16px;height:16px">${d}</label>`).join('')}</div></div>
+      <label>Hours note<input data-f="note" value="${esc(p.hours_note || '')}" maxlength="120" placeholder="e.g. Later on Fridays"></label>
+      <label>Description<textarea data-f="blurb" maxlength="300" placeholder="What it’s like, what to order">${esc(p.blurb || '')}</textarea></label>
+      <div class="row"><label>Phone<input data-f="phone" value="${esc(ct.phone || '')}" maxlength="80"></label><label>Facebook<input data-f="fb" value="${esc(ct.fb || '')}" maxlength="80"></label></div>
+      <label>Instagram<input data-f="ig" value="${esc(ct.ig || '')}" maxlength="80"></label>
+      <div class="acts" style="margin:0"><button class="btn primary" data-a="ppsave">Save details</button><button class="btn" data-a="ppcancel">Cancel</button></div>
+      <span class="meta">Only fill in what you checked (Google Maps, their page, or you went there).</span></div>`;
+  }
+  async function savePP(id, box, btn) {
+    const p = st.pp.find((x) => x.id === id); if (!p) return;
+    const v = (k) => box.querySelector(`[data-f="${k}"]`).value.trim();
+    const name = v('name'); if (!name) return toast('The place needs a name');
+    const o = v('open'), c = v('close'); if (!o !== !c) return toast('Fill in both times, or leave both empty');
+    const t = (s) => { const [a, b] = s.split(':').map(Number); return a + b / 60; };
+    let hours = null; if (o) { const a = t(o); let b = t(c); if (b <= a) b += 24; hours = [Math.round(a * 100) / 100, Math.round(b * 100) / 100]; }
+    const kind = v('kind'), ct = {}; ['phone', 'fb', 'ig'].forEach((k) => { const x = v(k); if (x) ct[k] = x.slice(0, 80); });
+    const patch = { name, kinds: [kind, ...(p.kinds || []).filter((x) => x !== kind)], addr: v('addr') || null, price: v('price') === '' ? null : +v('price'), hours,
+      off_days: [...box.querySelectorAll('[data-off]:checked')].map((x) => +x.dataset.off), hours_note: v('note') || null, blurb: v('blurb') || null, contacts: ct };
+    const old = Object.fromEntries(Object.keys(patch).map((k) => [k, p[k] === undefined ? null : p[k]]));
+    btn.disabled = true;
+    const { error } = await sb.from('places').update(patch).eq('id', id);
+    if (error) { btn.disabled = false; return toast('Couldn’t save that'); }
+    Object.assign(p, patch); st.ppEdit = null; render();
+    toast(`${name} updated`, async () => { const { error: e2 } = await sb.from('places').update(old).eq('id', id); if (e2) return toast('Couldn’t undo'); Object.assign(p, old); render(); toast('Undone'); });
+  }
   function ppHTML(p, i) {
     const k = (p.kinds || []).find((x) => KIND[x]), b = 0.004, no = (t = 'Not given') => `<span class="no">${t}</span>`;
     const mapUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${p.lng - b},${p.lat - b / 1.6},${p.lng + b},${p.lat + b / 1.6}&layer=mapnik&marker=${p.lat},${p.lng}`;
@@ -748,7 +789,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--h
       <div class="pp-full"><div class="pp-pics">${pics.length ? pic(pics[0]) + (pics.length > 1 ? `<div class="more">${pics.slice(1).map(pic).join('')}</div>` : '') : `<div class="none">${KIND[k] || '📍'}</div>`}
           <span class="meta">${pics.length ? `${pics.length} photo${pics.length === 1 ? '' : 's'} · tap to open full size` : 'No photo'}</span></div>
         <div style="min-width:0;display:grid;gap:12px"><div><h3>${esc(p.name)}</h3><div class="meta">added ${ago(p.created_at)} ${whoHTML(p.added_by).replace('from', 'by')}</div></div>
-          <dl class="pp-fields">
+          ${st.ppEdit === p.id ? ppForm(p) : `<dl class="pp-fields">
             ${row('Kind', (p.kinds || []).length ? (p.kinds || []).map((x) => `${KIND[x] || ''} ${esc(x)}`).join(', ') : no())}
             ${row('Area', esc(area(p.area)))}
             ${row('Address', p.addr ? esc(p.addr) : no())}
@@ -759,7 +800,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--h
             ${row('Vibes', (p.vibes || []).length ? (p.vibes || []).map(esc).join(', ') : no('None'))}
             ${row('Perks', (p.perks || []).length ? (p.perks || []).map(esc).join(', ') : no('None'))}
             ${row('Contacts', ct.length ? ct.map(([k2, v]) => `${esc({ phone: 'Phone', fb: 'Facebook', ig: 'Instagram', web: 'Website' }[k2] || k2)}: ${esc(v)}`).join('<br>') : no())}
-          </dl></div></div>
+          </dl><button class="btn sm" data-a="ppedit" style="justify-self:start">Edit details</button>`}</div></div>
       <iframe class="pp-map" loading="lazy" title="Where ${esc(p.name)} is" src="${mapUrl}"></iframe>
       <div class="lvl" role="radiogroup" aria-label="How it shows on the map"><span class="meta">Show it as</span>
         <button type="button" class="lvl-b" data-lvl="full" role="radio" aria-checked="${(st.lvl[p.id] || 'full') === 'full'}"><i class="big">📍</i><span><b>Big pin</b><small>Full listing: card, photo, hours</small></span></button>
