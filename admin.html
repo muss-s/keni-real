@@ -144,6 +144,41 @@ textarea { height: 80px; padding: 11px 15px; resize: vertical; }
 input:focus, select:focus, textarea:focus { outline: none; border-color: var(--hi); box-shadow: 0 0 0 3px rgba(196, 176, 255, .2); }
 .edit { display: grid; gap: 10px; margin: 4px 4px 10px; padding: 14px; border-radius: 18px; background: rgba(16, 11, 32, .6); border: 1px solid var(--line); animation: up .3s var(--spring); }
 .edit .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+#pe { position: fixed; inset: 0; z-index: 1000; isolation: isolate; display: none; background: rgba(4, 3, 10, .6); backdrop-filter: blur(6px); }
+#pe.pe-on { display: flex; justify-content: flex-end; animation: fade .2s ease; }
+.pe-panel { width: min(720px, 100%); height: 100%; display: flex; flex-direction: column; background: #0d0a18; border-left: 1px solid var(--line); box-shadow: -30px 0 80px rgba(0,0,0,.5); animation: peIn .35s var(--spring); }
+@keyframes peIn { from { transform: translateX(40px); opacity: .4; } }
+@keyframes fade { from { opacity: 0; } }
+.pe-head { display: flex; gap: 12px; align-items: flex-start; justify-content: space-between; padding: 18px 20px 12px; border-bottom: 1px solid var(--line); }
+.pe-head h2 { margin: 0; font-family: var(--display); font-size: 1.4rem; overflow-wrap: anywhere; }
+.pe-body { flex: 1; overflow-y: auto; padding: 6px 20px 24px; overscroll-behavior: contain; }
+.pe-body section { display: grid; gap: 10px; padding: 16px 0; border-bottom: 1px solid var(--line); }
+.pe-body h4 { margin: 0; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: var(--hi); }
+.pe-body label { display: grid; gap: 6px; font-size: .85rem; color: var(--ink2); min-width: 0; }
+.pe-body label.check, .pe-body .pe-cl { display: flex; align-items: center; gap: 8px; }
+.pe-body input:not([type=checkbox]), .pe-body select, .pe-body textarea { width: 100%; min-width: 0; box-sizing: border-box; }
+.pe-body .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.pe-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.pe-chips .chip[aria-pressed="true"] { background: var(--hi); color: #120c22; border-color: transparent; }
+.pe-map { height: 260px; border-radius: 16px; overflow: hidden; border: 1px solid var(--line); background: var(--card2); }
+.pe-pin i { display: block; width: 30px; height: 30px; border-radius: 50% 50% 50% 0; rotate: -45deg; background: linear-gradient(135deg, #ff7aa8, #ff5f8f); border: 3px solid #fff; box-shadow: 0 6px 14px rgba(0,0,0,.4); }
+.pe-pin i::after { content: ""; position: absolute; inset: 8px; border-radius: 50%; background: #fff; }
+.pe-pin i { position: relative; }
+.pe-week { display: grid; gap: 6px; }
+.pe-day { display: grid; grid-template-columns: 44px 1fr 1fr auto; gap: 8px; align-items: center; }
+.pe-day input:disabled { opacity: .35; }
+.pe-body input[type=checkbox] { width: 18px; height: 18px; flex: none; margin: 0; padding: 0; }
+.pe-ct { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.pe-pics { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+.pe-pics figure { position: relative; margin: 0; border-radius: 14px; overflow: hidden; background: var(--card2); animation: up .3s var(--spring); }
+.pe-pics img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
+.pe-pics .tag { position: absolute; top: 6px; left: 6px; }
+.pe-pics figcaption { position: absolute; inset: auto 0 0 0; display: flex; gap: 4px; justify-content: flex-end; padding: 6px; background: linear-gradient(transparent, rgba(0,0,0,.75)); }
+.pe-pics figcaption button { padding: 4px 8px; border-radius: 99px; background: rgba(255,255,255,.16); color: #fff; font-size: .75rem; }
+.pe-body .pe-add { display: grid; place-items: center; aspect-ratio: 1; border-radius: 14px; border: 1.5px dashed var(--line); cursor: pointer; color: var(--ink2); transition: background .2s; }
+.pe-add:hover { background: var(--card2); } .pe-add.busy { cursor: progress; opacity: .7; }
+.pe-foot { display: flex; gap: 8px; align-items: center; padding: 12px 20px; border-top: 1px solid var(--line); background: #0d0a18; }
+@media (max-width: 560px) { .pe-foot, .pe-head { padding-left: 14px; padding-right: 14px; } .pe-body { padding-left: 14px; padding-right: 14px; } .pe-foot .btn { padding-left: 12px; padding-right: 12px; } .pe-body .row, .pe-ct { grid-template-columns: 1fr; } .pe-day { grid-template-columns: 38px 1fr 1fr; } .pe-body .pe-cl { grid-column: 2 / -1; } }
 .pp-edit, .pp-edit label, .pp-edit .row > * { min-width: 0; }
 .pp-edit input:not([type=checkbox]), .pp-edit select, .pp-edit textarea { width: 100%; min-width: 0; box-sizing: border-box; }
 @container (max-width: 640px) { .pp-edit .row { grid-template-columns: 1fr; } }
@@ -277,7 +312,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--h
   const handle = (id) => { const p = st.people[id]; return p ? (p.username ? '@' + p.username : p.name) : 'someone'; };
   const byList = (ids = []) => { const n = ids.map(handle); return n.length > 3 ? `${n.slice(0, 3).join(', ')} and ${n.length - 3} more` : n.join(', '); };
   const ago = (t) => { const m = Math.round((Date.now() - new Date(t)) / 6e4); return m < 1 ? 'just now' : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} d ago`; };
-  const st = { user: null, ppEdit: null, tab: '', sel: '', selIdx: 0, ofilter: 'approved', oq: '', pq2: '', ppl: null, own: null, ov: null, rpt: { users: [], pasabits: [] }, popen: '', rfilter: 'new', reports: [], places: {}, pp: [], cv: [], editing: null, busy: false, lvl: {}, people: {}, q: '', pf: 'all', plist: null, pBusy: false };
+  const st = { user: null, tab: '', sel: '', selIdx: 0, ofilter: 'approved', oq: '', pq2: '', ppl: null, own: null, ov: null, rpt: { users: [], pasabits: [] }, popen: '', rfilter: 'new', reports: [], places: {}, pp: [], cv: [], editing: null, busy: false, lvl: {}, people: {}, q: '', pf: 'all', plist: null, pBusy: false };
 
   /* ── toast, with Undo for 5 seconds ── */
   let toastT = 0;
@@ -347,14 +382,20 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--h
   let qT = 0;
   async function findPlaces() {
     st.pBusy = true;
-    let q = sb.from('places').select('id,name,level,kinds,hours,hidden,lat,lng,addr,area,added_by,status,visibility').or('visibility.is.null,visibility.neq.tropa').order('name').limit(100);
-    if (st.q.trim()) q = q.ilike('name', `%${st.q.trim().replace(/[%_,()]/g, ' ')}%`);
-    if (st.pf === 'people') q = q.not('added_by', 'is', null);
-    if (st.pf === 'hidden') q = q.eq('hidden', true);
-    if (st.pf === 'basic') q = q.eq('level', 'basic');
-    const { data, error } = await q; st.pBusy = false;
+    const want = st.q + '|' + st.pf;
+    const page = (i) => { let q = sb.from('places').select('id,name,level,kinds,hours,hidden,lat,lng,addr,area,added_by,status,visibility,created_at').or('visibility.is.null,visibility.neq.tropa');
+      if (st.q.trim()) q = q.ilike('name', `%${st.q.trim().replace(/[%_,()]/g, ' ')}%`);
+      if (st.pf === 'people') q = q.not('added_by', 'is', null);
+      if (st.pf === 'hidden') q = q.eq('hidden', true);
+      if (st.pf === 'basic') q = q.eq('level', 'basic');
+      if (st.pf === 'full') q = q.eq('level', 'full');
+      return q.order('name').order('id').range(i * 1000, i * 1000 + 999); };
+    const rows = []; let error = null;
+    for (let i = 0; i < 20; i++) { const r = await page(i); if (r.error) { error = r.error; break; } rows.push(...(r.data || [])); if ((r.data || []).length < 1000) break; }
+    if (want !== st.q + '|' + st.pf) return; // a newer search started
+    st.pBusy = false;
     if (error) { toast('Couldn’t search places'); return; }
-    st.plist = data || []; st.plist.forEach((p) => { st.places[p.id] = { ...(st.places[p.id] || {}), ...p }; });
+    st.plist = rows; st.plist.forEach((p) => { st.places[p.id] = { ...(st.places[p.id] || {}), ...p }; });
     if (st.tab === 'places') paintPlaces();
   }
 
@@ -462,7 +503,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--h
   }
   const moveSel = (d) => { const it = qItems(); if (!it.length) return; const i = Math.max(0, it.findIndex((x) => x.k === st.sel)), n = Math.min(it.length - 1, Math.max(0, i + d)); st.sel = it[n].k; st.selIdx = n; render(); };
   document.addEventListener('keydown', (e) => {
-    if (!st.user || st.tab !== 'todo' || !wide() || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (!st.user || st.tab !== 'todo' || !wide() || e.metaKey || e.ctrlKey || e.altKey || document.querySelector('#pe.pe-on')) return;
     if (e.target.closest && e.target.closest('input, textarea, select')) return;
     const k = e.key.toLowerCase();
     if (k === 'j' || k === 'arrowdown') { e.preventDefault(); return moveSel(1); }
@@ -590,7 +631,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--h
           <td class="meta">${esc(KINDL[k] || k || '—')}</td><td class="meta">${esc(area(p.area))}</td><td>${p.level === 'basic' ? '<span class="tag">Small</span>' : '<span class="tag fixed">Full</span>'}</td>
           <td class="meta">${hrs(p.hours)}</td><td class="meta">${p.added_by ? `people${p.status === 'pending' ? ' · waiting' : p.status === 'rejected' ? ' · rejected' : ''}` : 'Keni'}</td><td>${p.hidden ? '<span class="tag warn">Hidden</span>' : ''}</td></tr>
           ${open ? `<tr><td class="edrow" colspan="7"><div data-g="${esc(p.id)}">${editHTML(st.places[p.id] || p)}</div></td></tr>` : ''}`; }).join('')}</tbody></table></div>
-      ${st.plist.length >= 100 ? '<p class="meta" style="text-align:center">Showing the first 100. Search to narrow it down.</p>' : ''}`;
+      <p class="meta" style="text-align:center">${st.plist.length.toLocaleString()} place${st.plist.length === 1 ? '' : 's'}</p>`;
   }
 
   app.addEventListener('click', (e) => {
@@ -603,9 +644,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--h
       if (k === 'urok' || k === 'urback') { a.disabled = true; return handleRep('user', +a.closest('[data-ur]').dataset.ur, k === 'urok'); }
       if (k === 'prok' || k === 'prback') { a.disabled = true; return handleRep('pasabit', +a.closest('[data-pr]').dataset.pr, k === 'prok'); }
       if (k === 'pscancel' || k === 'psback') return cancelPs(a.closest('[data-ps]').dataset.ps, k === 'pscancel', a);
-      if (k === 'ppedit') { st.ppEdit = a.closest('[data-pp]').dataset.pp; render(); const f = $('[data-ppform] [data-f="name"]'); if (f) f.focus(); return; }
-      if (k === 'ppcancel') { st.ppEdit = null; return render(); }
-      if (k === 'ppsave') { const f = a.closest('[data-ppform]'); return savePP(f.dataset.ppform, f, a); }
+      if (k === 'ppedit') return openPE(a.closest('[data-pp]').dataset.pp);
       if (k === 'ownrm') return removeOwner(+a.closest('[data-own]').dataset.own, a);
       if (k === 'ownback') return restoreOwner(+a.closest('[data-own]').dataset.own, a);
       return;
@@ -742,40 +781,183 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--h
   const PRICE = ['Free', 'Under ₱200', '₱200–500', '₱500–1,000', '₱1,000+'];
   const hh = (x) => { x = +x; const h = Math.floor(x) % 24, m = Math.round((x % 1) * 60); return ((h + 11) % 12 + 1) + (m ? ':' + String(m).padStart(2, '0') : '') + (h < 12 ? ' AM' : ' PM'); };
   const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  // edit a waiting place before approving it (fill in what the person left out)
+  /* ── Full place editor (admin): every field of a place, in a side panel. Used by Places, new places and reports ── */
+  const SUBK = { specialty: 'Specialty coffee', cowork: 'Laptop-friendly', study: 'Study spot', brunch: 'Silog & brunch', sisig: 'Sisig & Kapampangan', ramen: 'Ramen & noodles', pizza: 'Pizza & pasta', grill: 'Inihaw & BBQ', streetfood: 'Street food', vegan: 'Plant-based', finedining: 'Fine dining', chicken: 'Fried chicken',
+    milktea: 'Milk tea', halo: 'Halo-halo', dessert: 'Cakes & desserts', bakery: 'Bakery', cocktail: 'Cocktail bar', beer: 'Craft beer', rooftop: 'Rooftop', livemusic: 'Live bands', latenight: 'Late night',
+    billiards: 'Billiards', court: 'Courts', bowling: 'Bowling', parks: 'Parks', views: 'Sunset views', pool: 'Pools', arcade: 'Arcade', thrift: 'Ukay-ukay', books: 'Bookstore', museum: 'Museum', pasalubong: 'Pasalubong', boardgames: 'Board games', compshop: 'Computer shop' };
+  const PERKL = { wifi: 'Wi-Fi', plug: 'Outlets', pet: 'Pet friendly', out: 'Outdoor seating', late: 'Open late', live: 'Live music', veg: 'Veg options', res: 'Reservations', view: 'Big views', kids: 'Family friendly', free: 'Free entry', ac: 'Air-conditioned', park: 'Parking', gcash: 'GCash', cr: 'Clean CR' };
+  const CTL = [['phone', 'Phone'], ['fb', 'Facebook'], ['ig', 'Instagram'], ['web', 'Website'], ['tiktok', 'TikTok']];
+  const PE_FIELDS = ['name', 'kinds', 'area', 'addr', 'lat', 'lng', 'price', 'hours', 'days', 'off_days', 'hours_note', 'blurb', 'vibes', 'perks', 'cravings', 'contacts', 'photo', 'more_photos', 'level', 'hidden', 'status', 'symbol'];
+  const PHOTO_URL = 'https://wlxkdivnktxdbwbertjw.supabase.co/storage/v1/object/public/place-photos/';
   const toTime = (h) => (h == null ? '' : String(Math.floor(h % 24)).padStart(2, '0') + ':' + String(Math.round((h % 1) * 60)).padStart(2, '0'));
-  function ppForm(p) {
-    const k0 = (p.kinds || []).find((x) => KIND[x]) || 'foodtrip', h = Array.isArray(p.hours) ? p.hours : [null, null], off = p.off_days || [], ct = p.contacts || {};
-    return `<div class="edit pp-edit" data-ppform="${esc(p.id)}" style="margin:0">
-      <label>Name<input data-f="name" value="${esc(p.name)}" maxlength="80"></label>
-      <div class="row"><label>Main kind<select data-f="kind">${KINDS.map((k) => `<option value="${k}"${k === k0 ? ' selected' : ''}>${KIND[k]} ${k}</option>`).join('')}</select></label>
-        <label>Price<select data-f="price"><option value="">Not given</option>${PRICE.map((l, i) => `<option value="${i}"${p.price === i ? ' selected' : ''}>${l}</option>`).join('')}</select></label></div>
-      <label>Address<input data-f="addr" value="${esc(p.addr || '')}" maxlength="160" placeholder="Street, barangay"></label>
-      <div class="row"><label>Opens<input type="time" data-f="open" value="${toTime(h[0])}"></label><label>Closes (after midnight is fine)<input type="time" data-f="close" value="${toTime(h[1])}"></label></div>
-      <div><span class="meta">Closed on</span><div class="tags" style="margin-top:6px">${WD.map((d, i) => `<label class="chip sm" style="display:inline-flex;align-items:center;gap:6px"><input type="checkbox" data-off="${i}"${off.includes(i) ? ' checked' : ''} style="width:16px;height:16px">${d}</label>`).join('')}</div></div>
-      <label>Hours note<input data-f="note" value="${esc(p.hours_note || '')}" maxlength="120" placeholder="e.g. Later on Fridays"></label>
-      <label>Description<textarea data-f="blurb" maxlength="300" placeholder="What it’s like, what to order">${esc(p.blurb || '')}</textarea></label>
-      <div class="row"><label>Phone<input data-f="phone" value="${esc(ct.phone || '')}" maxlength="80"></label><label>Facebook<input data-f="fb" value="${esc(ct.fb || '')}" maxlength="80"></label></div>
-      <label>Instagram<input data-f="ig" value="${esc(ct.ig || '')}" maxlength="80"></label>
-      <div class="acts" style="margin:0"><button class="btn primary" data-a="ppsave">Save details</button><button class="btn" data-a="ppcancel">Cancel</button></div>
-      <span class="meta">Only fill in what you checked (Google Maps, their page, or you went there).</span></div>`;
+  const t2h = (s) => { if (!s) return null; const [a, b] = s.split(':').map(Number); return a + b / 60; };
+  const r2 = (x) => Math.round(x * 100) / 100;
+  let PE = null; // { id, row (as loaded), d (draft), busy }
+
+  function weekOf(r) { // 7 rows of [open, close] or null (closed), or 'none' when hours aren't listed
+    const base = Array.isArray(r.hours) ? r.hours : null, out = [];
+    for (let d = 0; d < 7; d++) {
+      if (r.days && d in r.days) out.push(r.days[d] ? r.days[d].slice() : null);
+      else if ((r.off_days || []).includes(d)) out.push(null);
+      else out.push(base ? base.slice() : 'none');
+    }
+    return out;
   }
-  async function savePP(id, box, btn) {
-    const p = st.pp.find((x) => x.id === id); if (!p) return;
-    const v = (k) => box.querySelector(`[data-f="${k}"]`).value.trim();
-    const name = v('name'); if (!name) return toast('The place needs a name');
-    const o = v('open'), c = v('close'); if (!o !== !c) return toast('Fill in both times, or leave both empty');
-    const t = (s) => { const [a, b] = s.split(':').map(Number); return a + b / 60; };
-    let hours = null; if (o) { const a = t(o); let b = t(c); if (b <= a) b += 24; hours = [Math.round(a * 100) / 100, Math.round(b * 100) / 100]; }
-    const kind = v('kind'), ct = {}; ['phone', 'fb', 'ig'].forEach((k) => { const x = v(k); if (x) ct[k] = x.slice(0, 80); });
-    const patch = { name, kinds: [kind, ...(p.kinds || []).filter((x) => x !== kind)], addr: v('addr') || null, price: v('price') === '' ? null : +v('price'), hours,
-      off_days: [...box.querySelectorAll('[data-off]:checked')].map((x) => +x.dataset.off), hours_note: v('note') || null, blurb: v('blurb') || null, contacts: ct };
-    const old = Object.fromEntries(Object.keys(patch).map((k) => [k, p[k] === undefined ? null : p[k]]));
+  function draftOf(r) {
+    return { name: r.name || '', kinds: [...(r.kinds || [])], area: r.area || 'balibago', addr: r.addr || '', lat: r.lat, lng: r.lng, price: r.price ?? null, week: weekOf(r), hours_note: r.hours_note || '',
+      blurb: r.blurb || '', vibes: [...(r.vibes || [])], perks: [...(r.perks || [])], cravings: (r.cravings || []).map((c) => String(c).toLowerCase()), contacts: { ...(r.contacts || {}) },
+      photos: [r.photo, ...(Array.isArray(r.more_photos) ? r.more_photos : [])].filter((x) => typeof x === 'string' && x), level: r.level || 'full', hidden: !!r.hidden, status: r.status || 'approved', symbol: r.symbol || '' };
+  }
+  // the week back to the database shape: the most common hours become `hours`, other days go in `days`, closed days in `off_days`
+  function weekOut(week) {
+    const open = week.filter((x) => Array.isArray(x));
+    if (!open.length) return week.every((x) => x === 'none') ? { hours: null, days: null, off_days: [] } : { hours: null, days: null, off_days: week.map((x, d) => (x === null ? d : -1)).filter((d) => d >= 0) };
+    const cnt = {}; open.forEach((x) => { const k = x.join('-'); cnt[k] = (cnt[k] || 0) + 1; });
+    const hours = Object.entries(cnt).sort((a, b) => b[1] - a[1])[0][0].split('-').map(Number), days = {}, off = [];
+    week.forEach((x, d) => { if (x === null) off.push(d); else if (Array.isArray(x) && x.join('-') !== hours.join('-')) days[d] = x; });
+    return { hours, days: Object.keys(days).length ? days : null, off_days: off };
+  }
+  const chipsHTML = (name, list, on) => `<div class="pe-chips">${list.map(([id, l]) => `<button type="button" class="chip sm" data-pe-t="${name}" data-v="${esc(id)}" aria-pressed="${on.includes(id)}">${esc(l)}</button>`).join('')}</div>`;
+  function peHTML() {
+    const d = PE.d, r = PE.row, extra = d.kinds.filter((k) => !KIND[k] && !SUBK[k]);
+    const day = (x, i) => `<div class="pe-day" data-day="${i}"><b>${WD[i]}</b>
+      <input type="time" data-h="o" value="${Array.isArray(x) ? toTime(x[0]) : ''}"${x === null ? ' disabled' : ''} aria-label="${WD[i]} opens">
+      <input type="time" data-h="c" value="${Array.isArray(x) ? toTime(x[1]) : ''}"${x === null ? ' disabled' : ''} aria-label="${WD[i]} closes">
+      <label class="pe-cl"><input type="checkbox" data-h="off"${x === null ? ' checked' : ''}> Closed</label></div>`;
+    return `<div class="pe-head"><div style="min-width:0"><h2>${esc(d.name || 'Place')}</h2><div class="meta">${esc(r.id)} · ${r.added_by ? `added ${ago(r.created_at)} ${whoHTML(r.added_by).replace('from', 'by')}` : `from ${esc(r.source || 'Keni')}`}</div></div>
+        <button class="icon-btn" data-pe="close" aria-label="Close">✕</button></div>
+      <div class="pe-body">
+      <section><h4>Show on the map</h4>
+        <div class="row"><label>Pin<select data-pe-f="level"><option value="full"${d.level === 'full' ? ' selected' : ''}>Big pin (full listing)</option><option value="basic"${d.level === 'basic' ? ' selected' : ''}>Small pin (just a dot)</option></select></label>
+          <label>Status<select data-pe-f="status">${[['approved', 'Approved'], ['pending', 'Waiting for approval'], ['rejected', 'Rejected']].map(([v, l]) => `<option value="${v}"${d.status === v ? ' selected' : ''}>${l}</option>`).join('')}</select></label></div>
+        <label class="check"><input type="checkbox" data-pe-f="hidden"${d.hidden ? ' checked' : ''}> Hidden from everyone (closed for good, or not real)</label></section>
+      <section><h4>Basics</h4>
+        <label>Name<input data-pe-f="name" value="${esc(d.name)}" maxlength="80"></label>
+        <span class="meta">Kinds (the first one you pick is the main one)</span>${chipsHTML('kinds', KINDS.map((k) => [k, `${KIND[k]} ${KINDL[k]}`]), d.kinds)}
+        <span class="meta">More specific</span>${chipsHTML('kinds', Object.entries(SUBK), d.kinds)}
+        ${extra.length ? `<span class="meta">Other tags on it: ${extra.map(esc).join(', ')}</span>` : ''}
+        <label>Map symbol (optional)<input data-pe-f="symbol" value="${esc(d.symbol)}" maxlength="4" style="width:90px"></label></section>
+      <section><h4>Where</h4>
+        <div class="row"><label>Area<select data-pe-f="area">${Object.entries(AREA).map(([k, l]) => `<option value="${k}"${d.area === k ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select></label>
+          <label>Address<input data-pe-f="addr" value="${esc(d.addr)}" maxlength="160" placeholder="Street, barangay"></label></div>
+        <div id="pe-map" class="pe-map"></div><span class="meta">Drag the pin, or tap the map to move it. <span id="pe-ll">${(+d.lat).toFixed(5)}, ${(+d.lng).toFixed(5)}</span></span></section>
+      <section><h4>Hours and price</h4>
+        <label>Price<select data-pe-f="price"><option value="">Not given</option>${PRICE.map((l, i) => `<option value="${i}"${d.price === i ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
+        <div class="pe-week">${d.week.map(day).join('')}</div>
+        <div class="acts" style="margin:0"><button type="button" class="btn sm" data-pe="copy">Copy Monday to every open day</button><button type="button" class="btn sm" data-pe="nohours">Hours not known</button></div>
+        <span class="meta">A closing time earlier than the opening time means after midnight.</span>
+        <label>Hours note<input data-pe-f="hours_note" value="${esc(d.hours_note)}" maxlength="120" placeholder="e.g. Kitchen closes at 9"></label></section>
+      <section><h4>About</h4>
+        <label>Description <small id="pe-bl">(${d.blurb.length}/300)</small><textarea data-pe-f="blurb" maxlength="300" rows="3">${esc(d.blurb)}</textarea></label>
+        <span class="meta">Vibes</span>${chipsHTML('vibes', VIBES.map((v) => [v.id, `${v.e} ${v.l}`]), d.vibes)}
+        <span class="meta">Good to know</span>${chipsHTML('perks', Object.entries(PERKL), d.perks)}
+        <span class="meta">Cravings</span>${chipsHTML('cravings', CRAVES.map((c) => [c.id, `${c.e} ${c.l}`]), d.cravings)}</section>
+      <section><h4>Contacts</h4><div class="pe-ct">${CTL.map(([k, l]) => `<label>${l}<input data-pe-ct="${k}" value="${esc(d.contacts[k] || '')}" maxlength="120"></label>`).join('')}</div></section>
+      <section><h4>Photos</h4><div class="pe-pics">${d.photos.map((u, i) => `<figure data-i="${i}"><img src="${esc(u)}" alt="" loading="lazy">${i === 0 ? '<span class="tag fixed">Cover</span>' : ''}
+          <figcaption>${i ? `<button type="button" data-pe="cover" title="Make it the cover">Cover</button><button type="button" data-pe="left" title="Move left">←</button>` : ''}${i < d.photos.length - 1 ? `<button type="button" data-pe="right" title="Move right">→</button>` : ''}<button type="button" data-pe="rm" title="Remove">✕</button></figcaption></figure>`).join('')}
+          <label class="pe-add${PE.busy ? ' busy' : ''}"><input type="file" accept="image/*" multiple hidden data-pe-file>${PE.busy ? 'Uploading…' : '+ Add photos'}</label></div></section>
+      </div>
+      <div class="pe-foot"><button class="btn primary" data-pe="save">Save changes</button><button class="btn" data-pe="close">Cancel</button><a class="btn sm" target="_blank" rel="noopener" href="./#place=${encodeURIComponent(r.id)}" style="margin-left:auto">Open in Keni ↗</a></div>`;
+  }
+  function peRead() { // what is typed into the inputs → the draft (chips and photos change the draft directly)
+    const box = $('#pe'); if (!box || !PE) return; const d = PE.d, f = (k) => $(`[data-pe-f="${k}"]`, box);
+    ['name', 'addr', 'hours_note', 'blurb', 'symbol', 'area', 'level', 'status'].forEach((k) => { d[k] = f(k).value; });
+    d.price = f('price').value === '' ? null : +f('price').value; d.hidden = f('hidden').checked;
+    box.querySelectorAll('[data-pe-ct]').forEach((i) => { d.contacts[i.dataset.peCt] = i.value.trim(); });
+    box.querySelectorAll('.pe-day').forEach((row) => { const i = +row.dataset.day, o = $('[data-h="o"]', row).value, c = $('[data-h="c"]', row).value;
+      if ($('[data-h="off"]', row).checked) d.week[i] = null; else if (o && c) { const a = t2h(o); let b = t2h(c); if (b <= a) b += 24; d.week[i] = [r2(a), r2(b)]; } else d.week[i] = 'none'; });
+  }
+  let peMap = null;
+  function pePaint() {
+    const box = $('#pe'), body = box && $('.pe-body', box), top = body ? body.scrollTop : 0;
+    box.innerHTML = `<div class="pe-panel">${peHTML()}</div>`; $('.pe-body', box).scrollTop = top; peMapInit();
+  }
+  function peMapInit() {
+    const el = $('#pe-map'); if (!el) return;
+    const go = () => { const L = window.L, d = PE.d; if (peMap) { peMap.remove(); peMap = null; }
+      peMap = L.map(el, { zoomControl: true }).setView([d.lat, d.lng], 17); peMap.attributionControl.setPrefix(false);
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(peMap);
+      const m = L.marker([d.lat, d.lng], { draggable: true, icon: L.divIcon({ className: 'pe-pin', html: '<i></i>', iconSize: [30, 40], iconAnchor: [15, 38] }) }).addTo(peMap);
+      const set = (ll) => { d.lat = +ll.lat.toFixed(6); d.lng = +ll.lng.toFixed(6); const t = $('#pe-ll'); if (t) t.textContent = `${d.lat.toFixed(5)}, ${d.lng.toFixed(5)}`; };
+      m.on('dragend', () => set(m.getLatLng())); peMap.on('click', (e) => { m.setLatLng(e.latlng); set(e.latlng); });
+      setTimeout(() => peMap && peMap.invalidateSize(), 250); };
+    if (window.L) return go();
+    if (!document.getElementById('lf-css')) document.head.insertAdjacentHTML('beforeend', '<link id="lf-css" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">');
+    const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js'; s.onload = () => { if ($('#pe-map')) go(); }; document.head.appendChild(s);
+  }
+  async function openPE(id) {
+    let box = $('#pe'); if (!box) { box = document.createElement('div'); box.id = 'pe'; document.body.appendChild(box); peWire(box); }
+    box.className = 'pe-on'; box.innerHTML = '<div class="pe-panel"><div class="pe-head"><h2>Loading…</h2><button class="icon-btn" data-pe="close" aria-label="Close">✕</button></div></div>';
+    document.body.style.overflow = 'hidden';
+    const { data, error } = await sb.from('places').select('*').eq('id', id).maybeSingle();
+    if (error || !data) { closePE(); return toast('Couldn’t open that place'); }
+    PE = { id, row: data, d: draftOf(data), busy: false }; pePaint(); const n = $('[data-pe-f="name"]'); if (n) n.focus({ preventScroll: true });
+  }
+  function closePE() { const box = $('#pe'); if (peMap) { peMap.remove(); peMap = null; } if (box) { box.className = ''; box.innerHTML = ''; } document.body.style.overflow = ''; PE = null; }
+  function shrinkImg(file) {
+    return new Promise((ok, no) => { const img = new Image(), u = URL.createObjectURL(file); img.onload = () => { const s = Math.min(1, 1600 / Math.max(img.width, img.height)), c = document.createElement('canvas');
+      c.width = Math.round(img.width * s); c.height = Math.round(img.height * s); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(u); c.toBlob((b) => (b ? ok(b) : no(new Error('read'))), 'image/jpeg', 0.85); };
+      img.onerror = () => no(new Error('read')); img.src = u; });
+  }
+  async function peUpload(files) {
+    if (!PE || !files.length) return; peRead(); PE.busy = true; pePaint(); let bad = 0;
+    for (const f of files) {
+      try { const b = await shrinkImg(f), path = `${st.user.id}/${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}.jpg`;
+        const up = await sb.storage.from('place-photos').upload(path, b, { contentType: 'image/jpeg', upsert: false }); if (up.error) throw up.error;
+        if (PE) PE.d.photos.push(PHOTO_URL + path);
+      } catch { bad++; }
+    }
+    if (!PE) return; PE.busy = false; pePaint(); toast(bad ? 'Some photos couldn’t upload' : 'Photos added. Save to put them up.');
+  }
+  async function peSave(btn) {
+    peRead(); const d = PE.d, r = PE.row;
+    if (!d.name.trim()) return toast('The place needs a name');
+    if (!d.kinds.length) return toast('Pick at least one kind');
+    if (PE.busy) return toast('Wait for the photos to finish uploading');
+    const w = weekOut(d.week), ct = {}; Object.entries(d.contacts).forEach(([k, v]) => { if (v) ct[k] = v.slice(0, 120); });
+    const patch = { name: d.name.trim(), kinds: d.kinds, area: d.area, addr: d.addr.trim() || null, lat: d.lat, lng: d.lng, price: d.price, ...w, hours_note: d.hours_note.trim() || null, blurb: d.blurb.trim() || null,
+      vibes: d.vibes, perks: d.perks, cravings: d.cravings, contacts: ct, photo: d.photos[0] || null, more_photos: d.photos.slice(1), level: d.level, hidden: d.hidden, status: d.status, symbol: d.symbol.trim() || null };
+    const old = Object.fromEntries(PE_FIELDS.map((k) => [k, r[k] === undefined ? null : r[k]]));
     btn.disabled = true;
-    const { error } = await sb.from('places').update(patch).eq('id', id);
-    if (error) { btn.disabled = false; return toast('Couldn’t save that'); }
-    Object.assign(p, patch); st.ppEdit = null; render();
-    toast(`${name} updated`, async () => { const { error: e2 } = await sb.from('places').update(old).eq('id', id); if (e2) return toast('Couldn’t undo'); Object.assign(p, old); render(); toast('Undone'); });
+    const { error } = await sb.from('places').update(patch).eq('id', r.id);
+    if (error) { btn.disabled = false; return toast('Couldn’t save. ' + (error.message || '').slice(0, 60)); }
+    const apply = (vals) => { // keep the lists on this page in step
+      if (st.places[r.id]) Object.assign(st.places[r.id], vals);
+      (st.plist || []).forEach((x) => { if (x.id === r.id) Object.assign(x, vals); });
+      const pp = st.pp.find((x) => x.id === r.id); if (pp) Object.assign(pp, vals);
+      if (vals.status && vals.status !== 'pending') st.pp = st.pp.filter((x) => x.id !== r.id);
+      if (T.all) T.all.forEach((x) => { if (x.id === r.id) Object.assign(x, vals); });
+      if (st.tab === 'places') paintPlaces(); else render();
+    };
+    closePE(); apply(patch);
+    toast(`${patch.name} saved`, async () => { const { error: e2 } = await sb.from('places').update(old).eq('id', r.id); if (e2) return toast('Couldn’t undo');
+      if (old.status === 'pending' && !st.pp.some((x) => x.id === r.id) && r.added_by) st.pp = [...st.pp, { ...r }].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+      apply(old); toast('Undone'); });
+  }
+  function peWire(box) {
+    box.addEventListener('click', (e) => {
+      if (e.target === box) return closePE();
+      const t = e.target.closest('[data-pe-t]');
+      if (t && PE) { const list = PE.d[t.dataset.peT], v = t.dataset.v, i = list.indexOf(v); if (i >= 0) list.splice(i, 1); else list.push(v); t.setAttribute('aria-pressed', i < 0); return; }
+      const a = e.target.closest('[data-pe]'); if (!a || !PE) { if (a && a.dataset.pe === 'close') closePE(); return; }
+      const k = a.dataset.pe, fig = a.closest('figure'), i = fig ? +fig.dataset.i : -1, ph = PE.d.photos;
+      if (k === 'close') return closePE();
+      if (k === 'save') return peSave(a);
+      peRead();
+      if (k === 'copy') { const m = PE.d.week[1]; if (!Array.isArray(m)) return toast('Fill in Monday first'); PE.d.week = PE.d.week.map((x) => (x === null ? null : m.slice())); }
+      if (k === 'nohours') PE.d.week = PE.d.week.map(() => 'none');
+      if (k === 'rm') ph.splice(i, 1);
+      if (k === 'cover') ph.unshift(ph.splice(i, 1)[0]);
+      if (k === 'left' && i > 0) [ph[i - 1], ph[i]] = [ph[i], ph[i - 1]];
+      if (k === 'right' && i < ph.length - 1) [ph[i + 1], ph[i]] = [ph[i], ph[i + 1]];
+      pePaint();
+    });
+    box.addEventListener('change', (e) => {
+      if (e.target.matches('[data-pe-file]')) return peUpload([...e.target.files]);
+      if (e.target.matches('[data-h="off"]')) { const row = e.target.closest('.pe-day'); row.querySelectorAll('input[type=time]').forEach((x) => { x.disabled = e.target.checked; }); }
+    });
+    box.addEventListener('input', (e) => { if (e.target.matches('[data-pe-f="blurb"]')) { const s = $('#pe-bl'); if (s) s.textContent = `(${e.target.value.length}/300)`; } });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && PE) closePE(); });
   }
   function ppHTML(p, i) {
     const k = (p.kinds || []).find((x) => KIND[x]), b = 0.004, no = (t = 'Not given') => `<span class="no">${t}</span>`;
@@ -789,7 +971,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--h
       <div class="pp-full"><div class="pp-pics">${pics.length ? pic(pics[0]) + (pics.length > 1 ? `<div class="more">${pics.slice(1).map(pic).join('')}</div>` : '') : `<div class="none">${KIND[k] || '📍'}</div>`}
           <span class="meta">${pics.length ? `${pics.length} photo${pics.length === 1 ? '' : 's'} · tap to open full size` : 'No photo'}</span></div>
         <div style="min-width:0;display:grid;gap:12px"><div><h3>${esc(p.name)}</h3><div class="meta">added ${ago(p.created_at)} ${whoHTML(p.added_by).replace('from', 'by')}</div></div>
-          ${st.ppEdit === p.id ? ppForm(p) : `<dl class="pp-fields">
+          <dl class="pp-fields">
             ${row('Kind', (p.kinds || []).length ? (p.kinds || []).map((x) => `${KIND[x] || ''} ${esc(x)}`).join(', ') : no())}
             ${row('Area', esc(area(p.area)))}
             ${row('Address', p.addr ? esc(p.addr) : no())}
@@ -800,7 +982,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--h
             ${row('Vibes', (p.vibes || []).length ? (p.vibes || []).map(esc).join(', ') : no('None'))}
             ${row('Perks', (p.perks || []).length ? (p.perks || []).map(esc).join(', ') : no('None'))}
             ${row('Contacts', ct.length ? ct.map(([k2, v]) => `${esc({ phone: 'Phone', fb: 'Facebook', ig: 'Instagram', web: 'Website' }[k2] || k2)}: ${esc(v)}`).join('<br>') : no())}
-          </dl><button class="btn sm" data-a="ppedit" style="justify-self:start">Edit details</button>`}</div></div>
+          </dl><button class="btn sm" data-a="ppedit" style="justify-self:start">Edit everything</button></div></div>
       <iframe class="pp-map" loading="lazy" title="Where ${esc(p.name)} is" src="${mapUrl}"></iframe>
       <div class="lvl" role="radiogroup" aria-label="How it shows on the map"><span class="meta">Show it as</span>
         <button type="button" class="lvl-b" data-lvl="full" role="radio" aria-checked="${(st.lvl[p.id] || 'full') === 'full'}"><i class="big">📍</i><span><b>Big pin</b><small>Full listing: card, photo, hours</small></span></button>
@@ -845,7 +1027,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--h
   // Places: search, filters, tap a row to edit it
   function placesShell() {
     return `<div class="toolbar"><div class="search"><span>🔍</span><input id="pq" type="search" placeholder="Search places by name" value="${esc(st.q)}" autocomplete="off"></div>
-      <div class="seg">${[['all', 'All'], ['people', '✦ Added by people'], ['hidden', '🙈 Hidden'], ['basic', '📍 Small pins']].map(([k, l]) => `<button class="chip" data-pf="${k}" aria-pressed="${st.pf === k}">${l}</button>`).join('')}</div></div>
+      <div class="seg">${[['all', 'All'], ['full', 'Full listings'], ['people', '✦ Added by people'], ['hidden', '🙈 Hidden'], ['basic', '📍 Small pins']].map(([k, l]) => `<button class="chip" data-pf="${k}" aria-pressed="${st.pf === k}">${l}</button>`).join('')}</div></div>
       <div id="plist"></div>`;
   }
   function paintPlacesList() {
@@ -856,7 +1038,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--h
       return `<div class="prow in${st.editing === p.id ? ' open' : ''}" style="--i:${Math.min(i, 10)}" data-p="${esc(p.id)}" role="button" tabindex="0"><span class="em">${KIND[k] || '📍'}</span>
         <span class="nm"><b>${esc(p.name)}</b><span class="meta">${esc(area(p.area))}${p.level === 'basic' ? ' · small pin' : ''}${p.added_by ? ` · added by people${p.status === 'pending' ? ' (waiting)' : p.status === 'rejected' ? ' (rejected)' : ''}` : ''}</span></span>
         ${p.hidden ? '<span class="tag warn">Hidden</span>' : ''}</div>${st.editing === p.id ? `<div data-g="${esc(p.id)}">${editHTML(st.places[p.id] || p)}</div>` : ''}`; }).join('')}</div>
-      ${st.plist.length >= 60 ? '<p class="meta" style="text-align:center">Showing the first 60. Search to narrow it down.</p>' : ''}`;
+      <p class="meta" style="text-align:center">${st.plist.length.toLocaleString()} place${st.plist.length === 1 ? '' : 's'}</p>`;
   }
 
   /* ── Tags: cravings, vibes and kinds across every place ── */
@@ -1046,7 +1228,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--h
       { const pl = (T.all || []).find((x) => x.id === p); if (pl && saved(pl).includes(c)) { const next = saved(pl).filter((x) => x !== c); const r0 = await sb.from('places').update({ cravings: next }).eq('id', p); if (!r0.error) pl.cravings = next; } } const { error } = await sb.rpc('craving_clear', { p_place: p, p_craving: c }); if (error) { cc.disabled = false; return toast('Couldn’t remove'); } st.cv = st.cv.filter((x) => !(x.place_id === p && x.craving === c)); toast('Tag removed'); return st.tab === 'tags' ? paintTags() : render(); }
     const lv = e.target.closest('[data-lvl]'); if (lv) { const c = lv.closest('[data-pp]'); st.lvl[c.dataset.pp] = lv.dataset.lvl; c.querySelectorAll('[data-lvl]').forEach((x) => x.setAttribute('aria-checked', x === lv)); return; }
     const a = e.target.closest('[data-a]');
-    const row = !a && e.target.closest('.prow[data-p]'); if (row) { const id = row.dataset.p; st.editing = st.editing === id ? null : id; return paintPlaces(); }
+    const row = !a && e.target.closest('.prow[data-p]'); if (row) return openPE(row.dataset.p);
     if (!a) return;
     const k = a.dataset.a, g = a.closest('[data-g]'), id = g && g.dataset.g, card = a.closest('[data-pp]');
     if (k === 'out') return sb.auth.signOut();
@@ -1059,7 +1241,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--h
     if (k === 'clwhy') { const c = a.closest('[data-cl]'); c.querySelector('.cl-reason').value = a.textContent; return; }
     if (k === 'mpok' || k === 'mpno') { const c = a.closest('[data-mp]'); return reviewMenu(+c.dataset.mp, k === 'mpok', c); }
     if (k === 'approve' || k === 'reject') { card.querySelectorAll('button').forEach((b) => { b.disabled = true; }); return setPlaceStatus(card.dataset.pp, k === 'approve' ? 'approved' : 'rejected', card, k === 'approve' ? (st.lvl[card.dataset.pp] || 'full') : null); }
-    if (k === 'edit') { st.editing = st.editing === id ? null : id; return render(); }
+    if (k === 'edit') return openPE(id);
     if (k === 'cancel') { st.editing = null; return st.tab === 'places' ? paintPlaces() : render(); }
     if (k === 'save') { a.disabled = true; await savePlace(id, a.closest('.edit')); a.disabled = false; return; }
     if (['fixed', 'dismissed', 'new'].includes(k)) { a.disabled = true; return setStatus(id, k); }
