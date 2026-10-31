@@ -7307,7 +7307,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
   };
   const addedStrip = (v) => v.db ? dbStrip(v) : `<div class="added-strip"><span class="tag star">✦ Added by ${esc(v.by)}</span><small>${esc(new Date(v.at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }))} · not verified yet</small>
     <button class="link-btn" data-cm="edit" data-id="${v.id}">${icon('edit')} Edit</button></div>`;
-  K.hooks.overviewExtra = (v) => (v.user ? addedStrip(v) : '') + tagSection(v);
+  K.hooks.overviewExtra = (v) => (v.user ? addedStrip(v) : '') + (K.credit && v.db && !v.pending && !v.rejected && !v.priv ? K.credit.line(v) : '') + tagSection(v);
   K.hooks.hay = (v) => rowsFor(v).filter((r) => r.n > 0).map((r) => r.l).join(' ');
   K.tagRows = (v) => rowsFor(v).filter((r) => r.n > 0 && !r.k.startsWith('v:')); // the tags a place really has (for search)
 
@@ -7624,6 +7624,7 @@ window.KENI_DB = { url: 'https://wlxkdivnktxdbwbertjw.supabase.co', key: 'sb_pub
     K.closeModal();
     toast(edited ? `Saved <b>${esc(name)}</b>` : gate ? `<b>${esc(name)}</b> saved on your map. Only your tropa sees it 🔒` : `<b>${esc(name)}</b> sent for approval. It shows to everyone once it’s checked ✦`);
     if (!edited) burst(innerWidth / 2, innerHeight * 0.4, { n: 30, spread: 230 });
+    if (!edited && !gate && K.credit && K.credit.loaded && !K.credit.on) setTimeout(() => toast('Want your name on it?', () => K.credit.set(true), 'Show my name'), 2800);
     if (K.VBY[id]) setTimeout(() => K.openDetail(id), edited ? 0 : 420);
     else if (K.openSpot && K.mySpots && K.mySpots.get(id)) setTimeout(() => K.openSpot(id), edited ? 0 : 420);
   }
@@ -10858,6 +10859,7 @@ html.keni-nochips body[data-page="map"] #filters > .chips { display: none; }
       <div class="px-l">My photos${seg3('photos', p.photos, W3)}</div>
       ${psw('activity', p.activity, 'Show my activity to friends', 'Places you saved or have been to')}
       ${psw('psName', p.psName, 'Show my name on Pasabits I join', 'Off: others see “a Keni member”')}
+      <label class="px-set pcr-set"><span><b>Show my name on places I add</b><small>Off: your places show without your name</small></span><input type="checkbox" class="pcr-cb" aria-label="Show my name on places I add"${K.credit && K.credit.on ? ' checked' : ''}></label>
       <h4>Who can reach me</h4>
       <div class="px-l">Message me${seg3('messages', p.messages, [['everyone', 'Everyone'], ['friends', 'Friends only']])}</div>
       ${psw('requests', p.requests, 'Allow friend requests', 'Off: nobody new can add you')}
@@ -13717,7 +13719,7 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
 .pp-chip.fave .ic { color: #ff8fc8; fill: rgba(255, 143, 200, .25); }
 .pp-chip.soc svg { width: 16px; height: 16px; flex: none; }
 .pf-facts li i .ic { width: 16px; height: 16px; color: #c4b0ff; }
-.pp-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 18px 0 14px; }
+.pp-stats { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px; margin: 18px 0 14px; }
 .pp-stats > * { display: grid; justify-items: center; gap: 2px; padding: 12px 6px; border-radius: 18px; border: 1px solid var(--line); background: rgba(255, 255, 255, .05); color: var(--ink); font: inherit; animation: chRow .45s var(--spring) both; animation-delay: calc(var(--i) * 60ms); }
 .pp-stats button { cursor: pointer; transition: transform .25s var(--spring); }
 .pp-stats button:active { transform: scale(.94); }
@@ -13769,6 +13771,10 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
 .pp-acts .btn .ic { width: 18px; height: 18px; margin-right: 6px; vertical-align: -3px; }
 @media (prefers-reduced-motion: reduce) { .pp-group > * { animation: none; } }
 .pp-load { text-align: center; color: var(--ink-3); padding: 60px 0; }
+.pcr-pop { display: inline-block; animation: pcrPop .6s var(--spring) .35s both; } @keyframes pcrPop { 0% { transform: scale(.3); } 60% { transform: scale(1.35); } 100% { transform: scale(1); } }
+.pcr { margin: 8px 0; font-size: .9rem; color: var(--ink-2); animation: pcrIn .5s var(--spring) both; } .pcr:empty { display: none; } @keyframes pcrIn { from { transform: translateY(6px) scale(.97); } to { transform: none; } }
+.pcr-set { cursor: pointer; } .pcr-cb { flex: none; width: 24px; height: 24px; accent-color: #a88cff; }
+@media (prefers-reduced-motion: reduce) { .pcr, .pcr-pop { animation: none; } }
 @media (prefers-reduced-motion: reduce) { .pp, .pp-hero .me-av.lg, .pp-hero .fav, .pp-stats > *, .pp-code, .pp-grid .mini, .pp-ps { animation: none; } }
 </style>
 <script>/* Keni · profile pages (added 2026-10-22). Your page opens from your photo in the dock (signed in; otherwise the old sign-in sheet):
@@ -13870,13 +13876,14 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
       Array.isArray(about.free) && about.free.length && ['clock', 'Free ' + about.free.map((k) => FREE[k] || k).join(', ')]].filter(Boolean);
     const socials = [about.ig && ['https://instagram.com/' + encodeURIComponent(about.ig), 'instagram', about.ig], about.tt && ['https://www.tiktok.com/@' + encodeURIComponent(about.tt), 'tiktok', about.tt]].filter(Boolean);
     const beenN = me ? Object.keys(S.been || {}).length : counts.been || 0;
+    const addedL = Array.isArray(d.added) ? d.added : me && K.credit ? K.credit.added : null, addedN = addedL ? addedL.length : null;
     let h = topHTML(handle ? '@' + handle : name || '');
     h += `<div class="pp-in"><div class="pp-hero">${me ? K.meAv(u, true) : pface(d)}<h2>${esc(name || 'Someone')}</h2>${handle ? `<small>@${esc(handle)}</small>` : ''}
       ${bio ? `<p class="pp-bio">${esc(bio)}</p>` : !me && d.private ? '<p class="pp-bio">' + K.lic('lock') + ' This profile is private</p>' : ''}
       ${fave && VBY[fave] || facts.length || socials.length ? `<div class="pp-chips">${fave && VBY[fave] ? `<button class="chip pp-chip fave" data-pp-place="${esc(fave)}">${K.lic('heart')}${esc(VBY[fave].name)}</button>` : ''}${facts.map(([ic, t]) => `<span class="chip pp-chip">${K.lic(ic)}${esc(t)}</span>`).join('')}${socials.map(([href, p, h]) => `<a class="chip pp-chip soc" href="${esc(href)}" target="_blank" rel="noopener noreferrer">${K.pvGlyph ? K.pvGlyph(p) : ''}@${esc(h)}</a>`).join('')}</div>` : ''}</div>
       <div class="pp-stats"><${me ? 'button data-pp="friends"' : 'div'} style="--i:0"><b>${counts.friends != null ? counts.friends : '–'}</b><small>Friends</small></${me ? 'button' : 'div'}>
         <button data-pp-tab="pasabits" style="--i:1"><b>${counts.pasabits != null ? counts.pasabits : '–'}</b><small>Pasabits</small></button>
-        <button data-pp-tab="been" style="--i:2"${!me && d.lists_private ? ' disabled' : ''}><b>${beenN}</b><small>Places been</small></button></div>
+        <button data-pp-tab="been" style="--i:2"${!me && d.lists_private ? ' disabled' : ''}><b>${beenN}</b><small>Places been</small></button>${addedN != null ? `<button data-pp-tab="added" style="--i:3"><b class="pcr-pop">${addedN}</b><small>Places added</small></button>` : ''}</div>
       <div class="pp-acts">${actsHTML(me, d)}</div>`;
     if (!me && d.mutual && d.mutual.count) {
       const ppl = d.mutual.people || [], n = d.mutual.count;
@@ -13884,7 +13891,7 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
     }
     if (!me && d.tropas && d.tropas.length) h += `<div class="pp-mut">${K.lic('people')}<span>In your tropa${d.tropas.length > 1 ? 's' : ''}: ${d.tropas.map((t) => '<b>' + esc((t.emoji || '') + ' ' + t.name) + '</b>').join(', ')}</span></div>`;
     if (me) h += `<div class="pp-code"${codeOpen ? '' : ' hidden'}><div class="qr" id="pp-qr"></div><p>Friends scan this in Keni (Friends → Scan) or with their camera.</p><div class="pp-code-acts"><button class="btn primary sm" data-scan>${K.lic('scan')} Scan a code</button><button class="btn ghost sm" data-pp="share">${K.lic('link')} Share link</button></div></div>`;
-    const tabs = [['saved', 'Saved'], ['been', 'Been there'], ['pasabits', 'Pasabits']];
+    const tabs = [['saved', 'Saved'], ['been', 'Been there'], ['pasabits', 'Pasabits']]; if (addedN != null) tabs.splice(2, 0, ['added', 'Added']);
     h += `<div class="pp-tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" data-pp-tab="${k}" aria-selected="${tab === k}">${l}</button>`).join('')}</div><div class="pp-tab">${tabHTML(me, d)}</div>`;
     if (me) h += moreHTML();
     root.innerHTML = h + '</div>';
@@ -13907,6 +13914,7 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
       if (!list.length) return `<div class="pp-empty"><b>${K.lic('magnet')}</b>${me ? 'No Pasabits coming up. Start one from the map.' : 'No Pasabits you can see right now.'}</div>`;
       return list.map((p, i) => `<button class="pp-ps" data-pp-ps="${esc(p.id)}" style="--i:${i}"><i>${esc(p.emoji || '🧲')}</i><span><b>${esc(p.title)}</b><small>${esc(whenTxt(p.when))} · ${esc(p.place)}</small></span></button>`).join('');
     }
+    if (tab === 'added') { const l = (Array.isArray(d.added) ? d.added : me && K.credit ? K.credit.added : []).map((x) => x.id).filter((id) => VBY[id]); return l.length ? `<div class="pp-grid">${l.map(tile).join('')}</div>` : `<div class="pp-empty"><b>${K.lic('pin')}</b>No approved places yet.</div>`; }
     if (!me && d.lists_private) return '<div class="pp-empty"><b>' + K.lic('lock') + '</b>Saved places and Been there are for friends.</div>';
     const ids = tab === 'saved' ? (me ? S.saved : d.saved || []) : me ? Object.keys(S.been || {}).sort((a, b) => S.been[b] - S.been[a]) : (d.been || []);
     const html = ids.filter((id) => VBY[id]).slice(0, 120).map(tile).join('');
@@ -14320,6 +14328,58 @@ button.ch-row:active, .ch-row.tap:active { background: rgba(255, 255, 255, .06);
   }
   document.addEventListener('click', (e) => { const b = e.target.closest('[data-mp-see]'); if (!b) return; if (K.tchat && K.tchat.close) K.tchat.close(); setTimeout(() => see(b.dataset.mpSee, b.dataset.k), 320); });
   K.menuPhotos = { see, shareData, refresh: (id, kind) => refresh(id, kind || 'menu') };
+})();
+</script>
+
+<script>/* Keni · place credit: opt-in name on places you add, "First pinned by", celebration when a place of yours is approved */
+(() => {
+  const K = window.KeniCore, { S, esc, toast, burst } = K;
+  const uid = () => (S.user && S.user.account && S.user.id && K.sb ? S.user.id : null);
+  const cr = K.credit = { on: false, added: [], loaded: false };
+  const cache = {};
+  async function set(on) {
+    if (!uid()) return false;
+    try { const { error } = await K.sb.rpc('place_credit_set', { p_on: !!on }); if (error) throw error; cr.on = !!on; if (on) toast('Your name will show on places you add ✦'); return true; }
+    catch { toast('Couldn’t save that. Try again.'); return false; }
+  }
+  cr.set = set;
+  cr.line = (v) => {
+    const c = cache[v.id];
+    if (c === undefined) {
+      cache[v.id] = false;
+      Promise.resolve(K.sb && uid() ? K.sb.rpc('place_credit', { p_place: v.id }) : null).then((r) => {
+        cache[v.id] = (r && r.data) || false;
+        const el = document.querySelector('[data-pc-place="' + CSS.escape(v.id) + '"]'); if (el) el.innerHTML = body(cache[v.id]);
+      }).catch(() => {});
+    }
+    return '<div class="pcr" data-pc-place="' + esc(v.id) + '">' + body(c) + '</div>';
+  };
+  const body = (c) => c ? 'First pinned by <button class="link-btn" data-pc-user="' + esc(c.id) + '">' + esc(c.name) + '</button>' : '';
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-pc-user]'); if (!b) return; const id = b.dataset.pcUser;
+    K.closeModal(); setTimeout(() => K.profile && K.profile.open(id), 320);
+  });
+  document.addEventListener('change', async (e) => {
+    const cb = e.target.closest && e.target.closest('.pcr-cb'); if (!cb) return;
+    if (!(await set(cb.checked))) cb.checked = cr.on;
+  });
+  const seenGet = () => { try { const j = localStorage.getItem('keni.creditSeen'); return j ? JSON.parse(j) : null; } catch { return null; } };
+  const seenSet = (a) => { try { localStorage.setItem('keni.creditSeen', JSON.stringify(a)); } catch {} };
+  async function refresh() {
+    if (!uid()) return false;
+    try {
+      const { data, error } = await K.sb.rpc('profile_mine'); if (error) throw error;
+      const d = data || {}; cr.on = !!d.credit; cr.added = Array.isArray(d.added) ? d.added : []; cr.loaded = true;
+      const seen = seenGet(), ids = cr.added.map((x) => x.id);
+      if (!seen) { seenSet(ids); return true; } // first run on this phone: mark, don't celebrate
+      const fresh = cr.added.filter((x) => !seen.includes(x.id)).slice(0, 3);
+      if (fresh.length) seenSet(seen.concat(fresh.map((x) => x.id)));
+      fresh.forEach((x, i) => setTimeout(() => { toast('You’re the first to pin <b>' + esc(x.name) + '</b>! 🎉'); burst(innerWidth / 2, innerHeight * 0.35, { glyph: ['🎉', '✨', '📍'], n: 26, spread: 210 }); }, 2500 + i * 3200));
+      return true;
+    } catch { return false; }
+  }
+  cr.refresh = refresh;
+  let tries = 0; (function wait() { if (uid()) refresh(); else if (++tries < 40) setTimeout(wait, 1500); })();
 })();
 </script>
 
